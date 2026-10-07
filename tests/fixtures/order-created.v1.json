@@ -1,0 +1,10 @@
+{
+  "run_id": "89bb82b6-9ac1-4960-9b79-15e8d260b08f",
+  "event_id": "f42f6cb3-d54f-5a70-b91b-0adb2bd88bf4",
+  "order_id": "e7e2d90f-808b-51ea-917b-334bcde78c5d",
+  "event_type": "ORDER_CREATED",
+  "event_time": "2026-01-01T00:00:00.000000Z",
+  "produced_at": "2026-01-01T00:00:01.000000Z",
+  "order_amount": "13.37",
+  "schema_version": 1
+}

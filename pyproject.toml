@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "streamscale"
+version = "0.1.0"
+description = "Reproducible Kafka-to-PostgreSQL consumer scaling experiment"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "confluent-kafka==2.12.0",
+  "jsonschema==4.26.0",
+  "psycopg[binary]==3.3.3",
+]
+
+[project.scripts]
+streamscale = "streamscale.cli:main"
+
+[dependency-groups]
+dev = ["pytest==9.0.2", "ruff==0.15.6"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/streamscale"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "streamscale/_schemas"
+"db/migrations" = "streamscale/_migrations"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -m 'not integration'"
+markers = ["integration: requires the running local Kafka/PostgreSQL stack"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

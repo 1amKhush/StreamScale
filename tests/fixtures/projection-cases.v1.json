@@ -1,0 +1,9 @@
+[
+  {"case": "newer business time", "stored_time": "2026-01-01T00:00:00Z", "stored_offset": 10, "incoming_time": "2026-01-01T00:00:01Z", "incoming_offset": 11, "apply": true},
+  {"case": "late event with higher offset", "stored_time": "2026-01-01T00:00:02Z", "stored_offset": 10, "incoming_time": "2026-01-01T00:00:01Z", "incoming_offset": 11, "apply": false},
+  {"case": "equal time higher offset", "stored_time": "2026-01-01T00:00:00Z", "stored_offset": 10, "incoming_time": "2026-01-01T00:00:00Z", "incoming_offset": 11, "apply": true},
+  {"case": "equal time lower offset", "stored_time": "2026-01-01T00:00:00Z", "stored_offset": 10, "incoming_time": "2026-01-01T00:00:00Z", "incoming_offset": 9, "apply": false},
+  {"case": "same event replay", "stored_time": "2026-01-01T00:00:00Z", "stored_offset": 10, "incoming_time": "2026-01-01T00:00:00Z", "incoming_offset": 10, "apply": false},
+  {"case": "different offsets same instant", "stored_time": "2026-01-01T00:00:00Z", "stored_offset": 10, "incoming_time": "2026-01-01T05:30:00+05:30", "incoming_offset": 11, "apply": true},
+  {"case": "microsecond difference", "stored_time": "2026-01-01T00:00:00.000001Z", "stored_offset": 10, "incoming_time": "2026-01-01T00:00:00.000002Z", "incoming_offset": 11, "apply": true}
+]
