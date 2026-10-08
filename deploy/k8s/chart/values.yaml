@@ -1,0 +1,31 @@
+image:
+  repository: streamscale
+  tag: local
+  pullPolicy: IfNotPresent
+
+consumer:
+  replicas: 1
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 256Mi}
+
+run:
+  name: demo
+  seed: 42
+  orders: 200
+  scenario: steady
+  profile: correctness
+  paced: false
+
+postgres:
+  image: postgres:17.7-bookworm@sha256:86e0b703649d7a792bd9243ee28afc9d8f7c6b2b5638077c9d6882d4d472bbfd
+  # Existing secret keys: POSTGRES_PASSWORD, DATABASE_URL, GF_SECURITY_ADMIN_PASSWORD.
+  existingSecret: streamscale-local-credentials
+
+kafka:
+  image: apache/kafka:4.1.2@sha256:5cc2a2fd93fa2687b44015eee04fb2c3edd9e526bd64bf8bec5ff1e268772e0e
+
+monitoring:
+  prometheusImage: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+  grafanaImage: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
+  retention: 7d

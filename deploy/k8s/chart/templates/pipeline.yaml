@@ -1,0 +1,108 @@
+{{- if ne (int .Values.consumer.replicas) 1 }}
+{{- fail "M5 requires exactly one fixed consumer; scaling modes are M6" }}
+{{- end }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-workload-{{ .Values.run.name }}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}-workload}
+    spec:
+      restartPolicy: Never
+      securityContext:
+        {{- include "streamscale.security" . | nindent 8 }}
+      initContainers:
+        - name: bootstrap
+          image: {{ include "streamscale.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [bootstrap, --timeout, "240"]
+          env:
+            {{- include "streamscale.env" . | nindent 12 }}
+          securityContext:
+            {{- include "streamscale.containerSecurity" . | nindent 12 }}
+      containers:
+        - name: workload
+          image: {{ include "streamscale.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              /app/.venv/bin/streamscale generate --output /runs/{{ .Values.run.name }} --seed {{ .Values.run.seed }} --orders {{ .Values.run.orders }} --scenario {{ .Values.run.scenario }} --profile {{ .Values.run.profile }} --mode fixed
+              /app/.venv/bin/streamscale publish --run-dir /runs/{{ .Values.run.name }} {{ if not .Values.run.paced }}--no-wait{{ end }}
+          env:
+            {{- include "streamscale.env" . | nindent 12 }}
+          securityContext:
+            {{- include "streamscale.containerSecurity" . | nindent 12 }}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          volumeMounts:
+            - {name: runs, mountPath: /runs}
+      volumes:
+        - name: runs
+          persistentVolumeClaim: {claimName: {{ .Release.Name }}-runs}
+{{- range $role := list "consumer" "exporter" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ $role }}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: {{ $.Release.Name }}-{{ $role }}}
+  template:
+    metadata:
+      labels:
+        app: {{ $.Release.Name }}-{{ $role }}
+        app.kubernetes.io/component: {{ $role }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+      annotations:
+        streamscale/run-name: {{ $.Values.run.name | quote }}
+    spec:
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        {{- include "streamscale.security" $ | nindent 8 }}
+      containers:
+        - name: {{ $role }}
+          image: {{ include "streamscale.image" $ }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          args: [{{ if eq $role "consumer" }}serve{{ else }}exporter{{ end }}, --run-dir, /runs/{{ $.Values.run.name }}, --metrics-port, "9100"]
+          env:
+            {{- include "streamscale.env" $ | nindent 12 }}
+          ports:
+            - {name: metrics, containerPort: 9100}
+          startupProbe:
+            httpGet: {path: /health/live, port: metrics}
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: {path: /health/live, port: metrics}
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: {path: /health/ready, port: metrics}
+            periodSeconds: 3
+          securityContext:
+            {{- include "streamscale.containerSecurity" $ | nindent 12 }}
+          resources:
+            {{- toYaml $.Values.consumer.resources | nindent 12 }}
+          volumeMounts:
+            - {name: runs, mountPath: /runs}
+      volumes:
+        - name: runs
+          persistentVolumeClaim: {claimName: {{ $.Release.Name }}-runs}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-{{ $role }}
+spec:
+  selector: {app: {{ $.Release.Name }}-{{ $role }}}
+  ports:
+    - {name: metrics, port: 9100, targetPort: metrics}
+{{- end }}

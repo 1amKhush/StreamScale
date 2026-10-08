@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-kafka
+spec:
+  # The single KRaft node must reach its controller listener before broker readiness.
+  publishNotReadyAddresses: true
+  selector: {app: {{ .Release.Name }}-kafka}
+  ports:
+    - {name: kafka, port: 9092, targetPort: 9092}
+    - {name: controller, port: 9093, targetPort: 9093}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-kafka
+spec:
+  serviceName: {{ .Release.Name }}-kafka
+  replicas: 1
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-kafka}
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}-kafka}
+    spec:
+      securityContext: {fsGroup: 1000}
+      containers:
+        - name: kafka
+          image: {{ .Values.kafka.image }}
+          ports:
+            - {containerPort: 9092, name: kafka}
+          env:
+            - {name: CLUSTER_ID, value: MkU3OEVBNTcwNTJENDM2Qk}
+            - {name: KAFKA_NODE_ID, value: "1"}
+            - {name: KAFKA_PROCESS_ROLES, value: "broker,controller"}
+            - {name: KAFKA_LISTENERS, value: "INTERNAL://:9092,CONTROLLER://:9093"}
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "INTERNAL://{{ .Release.Name }}-kafka:9092"
+            - {name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP, value: "INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"}
+            - {name: KAFKA_INTER_BROKER_LISTENER_NAME, value: INTERNAL}
+            - {name: KAFKA_CONTROLLER_LISTENER_NAMES, value: CONTROLLER}
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: "1@{{ .Release.Name }}-kafka:9093"
+            - {name: KAFKA_AUTO_CREATE_TOPICS_ENABLE, value: "false"}
+            - {name: KAFKA_NUM_PARTITIONS, value: "3"}
+            - {name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1"}
+            - {name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, value: "1"}
+            - {name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, value: "1"}
+            - {name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS, value: "0"}
+            - {name: KAFKA_LOG_DIRS, value: /var/lib/kafka/data}
+            - {name: KAFKA_HEAP_OPTS, value: "-Xms256m -Xmx512m"}
+          startupProbe:
+            tcpSocket: {port: kafka}
+            failureThreshold: 60
+            periodSeconds: 3
+          readinessProbe:
+            tcpSocket: {port: kafka}
+            periodSeconds: 5
+          resources:
+            requests: {cpu: 250m, memory: 768Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/kafka/data}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: {{ .Release.Name }}-kafka}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-postgres
+spec:
+  selector: {app: {{ .Release.Name }}-postgres}
+  ports:
+    - {name: postgres, port: 5432, targetPort: 5432}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-postgres
+spec:
+  serviceName: {{ .Release.Name }}-postgres
+  replicas: 1
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-postgres}
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}-postgres}
+    spec:
+      securityContext: {fsGroup: 999}
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          env:
+            - {name: POSTGRES_DB, value: streamscale}
+            - {name: POSTGRES_USER, value: streamscale}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.postgres.existingSecret }}, key: POSTGRES_PASSWORD}
+          ports:
+            - {containerPort: 5432, name: postgres}
+          readinessProbe:
+            exec: {command: [pg_isready, -U, streamscale, -d, streamscale]}
+            periodSeconds: 3
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: {{ .Release.Name }}-postgres}

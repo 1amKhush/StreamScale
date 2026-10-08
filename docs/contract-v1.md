@@ -34,7 +34,8 @@ a mathematical proof of no collisions; the database primary key is the guard.
 Stable order index `j` gets
 `UUID5(NAMESPACE_URL, "streamscale:v1:seed:{seed}:order:{j}")` across runs.
 Seeds are integers in `[0, 2**63 - 1]`; logical indices are nonnegative integers.
-The helpers in `src/streamscale/ids.py` freeze these rules without implementing M2.
+The helpers in `src/streamscale/ids.py` freeze these rules; the M2 tool in
+`tools/workload/` uses them when creating each execution's manifest.
 
 The same scenario/seed reproduces order sequence, types, exact amounts,
 relative business timing, publish scheduling and fault positions. Anchor the
@@ -154,4 +155,5 @@ CSV is keyed by run ID. Reconcile acknowledged valid IDs, accepted distinct IDs,
 extra duplicates, invalid attempts and deduplicated DLQ source coordinates.
 Exclude runs with missing acknowledged valid IDs, duplicate stored IDs or state
 regression after controlled restart/drain. Never infer backlog from PostgreSQL
-or rank unreconciled runs. None of these benchmark results exists at M0/M1.
+or rank unreconciled runs. M0–M3 implement the local correctness foundation;
+the measured scaling benchmark remains later work.

@@ -5,12 +5,9 @@ from uuid import uuid4
 
 import psycopg
 import pytest
-from psycopg import sql
-from psycopg.conninfo import make_conninfo
 from psycopg.types.json import Jsonb
 
 from streamscale.assets import asset_directory
-from streamscale.config import Settings
 from streamscale.migrations import migrate
 from streamscale.smoke import smoke
 from streamscale.topics import DLQ_TOPIC, INPUT_TOPIC, ensure_topics
@@ -19,26 +16,6 @@ pytestmark = pytest.mark.integration
 CASES = json.loads(
     (Path(__file__).parents[1] / "fixtures/projection-cases.v1.json").read_text(encoding="utf-8")
 )
-
-
-@pytest.fixture(scope="module")
-def settings():
-    return Settings.from_env()
-
-
-@pytest.fixture(scope="module")
-def scratch_database(settings):
-    # Failure tests use their own schema; preserve the development business tables.
-    schema = f"streamscale_test_{uuid4().hex}"
-    with psycopg.connect(settings.database_url, autocommit=True) as connection:
-        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
-    database = make_conninfo(settings.database_url, options=f"-c search_path={schema}")
-    try:
-        assert migrate(database) == ["0001_initial.sql"]
-        yield database
-    finally:
-        with psycopg.connect(settings.database_url, autocommit=True) as connection:
-            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 def insert_run(connection, run_id):

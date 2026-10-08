@@ -1,0 +1,12 @@
+{{- range $name := list "runs" "kafka" "postgres" "prometheus" "grafana" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: {{ if eq $name "runs" }}1Gi{{ else }}2Gi{{ end }}
+{{- end }}

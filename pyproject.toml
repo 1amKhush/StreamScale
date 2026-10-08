@@ -12,6 +12,7 @@ dependencies = [
   "confluent-kafka==2.12.0",
   "jsonschema==4.26.0",
   "psycopg[binary]==3.3.3",
+  "prometheus-client==0.26.0",
 ]
 
 [project.scripts]
@@ -21,7 +22,7 @@ streamscale = "streamscale.cli:main"
 dev = ["pytest==9.0.2", "ruff==0.15.6"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/streamscale"]
+packages = ["src/streamscale", "tools/workload/streamscale_workload"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "schemas" = "streamscale/_schemas"

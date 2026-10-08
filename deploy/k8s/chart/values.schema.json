@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "consumer": {"type": "object", "properties": {"replicas": {"const": 1}}},
+    "run": {
+      "type": "object",
+      "required": ["name", "seed", "orders", "scenario", "profile", "paced"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", "maxLength": 40},
+        "seed": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "orders": {"type": "integer", "minimum": 1, "maximum": 1000000},
+        "scenario": {"enum": ["steady", "flash-sale", "overload-recovery"]},
+        "profile": {"enum": ["normal", "correctness", "fixtures"]},
+        "paced": {"type": "boolean"}
+      }
+    }
+  }
+}
