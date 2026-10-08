@@ -1,11 +1,13 @@
 # StreamScale
 
 A Python Kafka-to-PostgreSQL flash-sale analytics experiment comparing fixed,
-CPU-HPA and lag-KEDA consumer scaling. **M0–M6 are validated; M7/M8 are in progress:** the contract,
+CPU-HPA and lag-KEDA consumer scaling. **M0–M7 are validated; M8 is in progress:** the contract,
 local pipeline, seeded publisher, safe fault/replay handling, and a working
 kind/Helm deployment with Prometheus and Grafana. M6 adds mutually exclusive
 fixed, CPU-HPA and lag-KEDA controllers. The M7 runner adds a pilot-calibrated,
 frozen 27-run matrix with SQL latency measurements and raw evidence.
+All 27 measured cells passed reconciliation and controlled restart; see
+[M7 evidence](docs/m7-evidence.md).
 M8 produces standalone scientific plots, a report and a presentation PDF after
 the complete matrix passes its independent evidence audit.
 

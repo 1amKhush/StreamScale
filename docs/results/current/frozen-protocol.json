@@ -1,0 +1,92 @@
+{
+  "description": "Pilot-calibrated local kind comparison; frozen before measured executions",
+  "drain_timeout_seconds": 300,
+  "frozen_at": "2026-10-08T11:38:55.412791Z",
+  "maximum_surge_rate": 1000,
+  "order_seed": 4242,
+  "pilot_capacity_per_second": 130.49726151401632,
+  "pilot_orders": 500,
+  "pilot_run_id": "3d565528-85c0-4bbe-81b2-9062021225b2",
+  "protocol_version": 2,
+  "rates": {
+    "steady": 52,
+    "surge": 390
+  },
+  "repetitions": 3,
+  "resource_interval_seconds": 5,
+  "sample_interval_seconds": 1,
+  "scenarios": {
+    "flash-sale": {
+      "phases": [
+        [
+          15,
+          "steady"
+        ],
+        [
+          20,
+          "surge"
+        ],
+        [
+          25,
+          "steady"
+        ]
+      ],
+      "schedule": [
+        [
+          15,
+          52
+        ],
+        [
+          20,
+          390
+        ],
+        [
+          25,
+          52
+        ]
+      ],
+      "seed": 202
+    },
+    "overload-recovery": {
+      "phases": [
+        [
+          35,
+          "surge"
+        ],
+        [
+          25,
+          "steady"
+        ]
+      ],
+      "schedule": [
+        [
+          35,
+          390
+        ],
+        [
+          25,
+          52
+        ]
+      ],
+      "seed": 303
+    },
+    "steady": {
+      "phases": [
+        [
+          60,
+          "steady"
+        ]
+      ],
+      "schedule": [
+        [
+          60,
+          52
+        ]
+      ],
+      "seed": 101
+    }
+  },
+  "steady_capacity_factor": 0.4,
+  "surge_capacity_factor": 3.0,
+  "warmup_seconds": 30
+}

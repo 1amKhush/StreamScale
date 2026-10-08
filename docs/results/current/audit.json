@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "complete": true,
+  "measured_runs": 27,
+  "accepted_executions": 56,
+  "excluded_attempts": 0,
+  "raw_samples": 3818,
+  "actual_consumer_image_ids": [
+    "docker.io/library/import-2026-10-08@sha256:d4939132d5faa570fae131d109e18f4ef6033a4a6467b3efe81a3745d2aac99b"
+  ],
+  "consumer_resources": [
+    {
+      "limits": {
+        "cpu": "500m",
+        "memory": "256Mi"
+      },
+      "requests": {
+        "cpu": "100m",
+        "memory": "128Mi"
+      }
+    }
+  ],
+  "scenario_logical_sha256": {
+    "steady": [
+      "1f9d429ea8c14a1e536665caebbad5838e1911dbbdde8f213eb9b2a6c928dd71"
+    ],
+    "flash-sale": [
+      "9f67a96e4e1e66c1c98af190a64d6f131e5b3c5245a062234230b30a75360df5"
+    ],
+    "overload-recovery": [
+      "fcae2c6e307120b6b0c08b42903d16c33236d98ae2831a21f87a31b1011a5463"
+    ]
+  }
+}
