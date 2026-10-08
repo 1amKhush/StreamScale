@@ -17,6 +17,10 @@ Protocol v2 froze steady at 52 and surge at 390 events/second before the first
 measured execution. The 60-second scenario schedules and separate 30-second
 warmups are documented in [the protocol](experiments.md). These shorter local
 windows are explicitly distinct from the original fixed-rate 120-second plan.
+The common correctness profile delays 5% of base events by ten seconds; actual
+publication lasts about 69–70 seconds. The primary window remains the planned
+base 60 seconds, and all delayed-tail facts are included in reconciliation/p95.
+This also constrains the five-fresh-zero recovery criterion.
 
 All measured runs together produced 256,572 acknowledgements, 249,048 unique
 SQL facts, 5,022 intentional duplicate attempts and 2,502 invalid sources with

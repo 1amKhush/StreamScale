@@ -89,7 +89,7 @@ def report(campaign, state, frozen, rows, aggregates, verification):
         f"{frozen['pilot_capacity_per_second']:.2f} accepted events/second; frozen steady rate "
         f"**{frozen['rates']['steady']}**, surge rate "
         f"**{frozen['rates']['surge']}** events/second. "
-        "Each measured publishing window is 60 seconds, after a separate 30-second cache warmup. "
+        "Each scheduled measurement window is 60 seconds, after a separate 30-second cache warmup. "
         "Each execution uses a fresh run UUID and consumer group. "
         "Measured group startup is included.",
         "",
@@ -118,11 +118,25 @@ def report(campaign, state, frozen, rows, aggregates, verification):
         "",
     ]
     for scenario in SCENARIOS:
+        if scenario == "steady":
+            values = ", ".join(
+                f"{LABELS[mode]} {latency[(scenario, mode)]['median']:.3f}s" for mode in MODES
+            )
+            ready = max(row["max_ready_replicas"] for row in rows if row["scenario"] == scenario)
+            lines.append(
+                f"Steady median run p95 values were **{values}**; the maximum observed "
+                f"ready-consumer count was {ready}. Their small differences are "
+                "descriptive observations from three repetitions."
+            )
+            lines.append("")
+            continue
         best = min(MODES, key=lambda mode: latency[(scenario, mode)]["median"])
         lines.append(
             f"For **{scenario}**, {LABELS[best]} had the lowest observed median run p95 "
-            f"({latency[(scenario, best)]['median']:.2f} seconds). The paired table shows "
-            "the throughput and lag tradeoffs; this describes this local campaign only."
+            f"({latency[(scenario, best)]['median']:.2f} seconds). Its median ready "
+            f"replica-seconds were {replicas[(scenario, best)]['median']:.2f}, compared with "
+            f"{replicas[(scenario, 'fixed')]['median']:.2f} for fixed. The paired table shows "
+            "throughput and lag; these results describe this local campaign only."
         )
         lines.append("")
     lines += [
@@ -146,7 +160,7 @@ def report(campaign, state, frozen, rows, aggregates, verification):
         "![Lag and ready replica trajectories](trajectories.svg)",
         "",
         "Trajectory lines show each repetition separately, aligned to publication start; "
-        "shading indicates the scheduled surge and the vertical line the end of publication. "
+        "shading indicates the scheduled surge and the vertical line the end of the base window. "
         "Lines continue through confirmed drain. Ready pods differ from desired replicas "
         "and Kafka members.",
         "",
@@ -158,6 +172,16 @@ def report(campaign, state, frozen, rows, aggregates, verification):
         "distinct fresh zero-lag observations, including their confirmation delay. "
         "Missing recovery "
         "or scaling response remains missing; it is never filled with zero.",
+        "",
+        "The shared correctness profile delays 5% of the base event count (rounded down "
+        "and selected from valid events) by ten seconds, alongside invalid/duplicate fixtures. "
+        "These late attempts extend actual publication to about 70 seconds; `publish_seconds` "
+        "records the observed duration. The primary window remains the frozen base 60 seconds "
+        "for every mode. Delayed tail arrivals and the five-fresh-zero criterion constrain "
+        "measured recovery, so similar recovery times can coexist with very different burst "
+        "p95 latency. Input-rate labels describe the base logical schedule; fault attempts "
+        "alter the observed attempt rate. The complete delayed tail is reconciled and included "
+        "in p95.",
         "",
         "Resource integrals cover publication through confirmed drain, before the controlled "
         "restart. They use actual observation times with left-step interpolation. Kubernetes CPU "
@@ -254,7 +278,13 @@ def plots(rows, frozen, destination):
                     )
                 axis.set_xticks(range(3), [LABELS[mode] for mode in MODES])
                 axis.set_ylabel(label)
-                axis.set_ylim(bottom=0)
+                values = [
+                    row[metric]
+                    for row in rows
+                    if row["scenario"] == scenario and row.get(metric) is not None
+                ]
+                maximum = max(values, default=0)
+                axis.set_ylim(0, maximum * 1.12 if maximum > 0 else 1)
                 axis.grid(axis="y", alpha=0.2)
                 if index == 0:
                     axis.set_title(scenario.replace("-", " ").title())
@@ -355,7 +385,7 @@ def plots(rows, frozen, destination):
             "27 measured runs · 3 modes × 3 scenarios × 3 repetitions\n"
             "All acknowledged IDs reconciled before/after restart\n"
             "Same image, logical scenario sequence, resources and partitions\n"
-            "30-second warmup + 60-second publishing window per cell\n"
+            "30-second warmup + 60-second base window; late fixtures extend the tail\n"
             f"Frozen rates: {frozen['rates']['steady']}/s steady · "
             f"{frozen['rates']['surge']}/s surge",
             fontsize=14,

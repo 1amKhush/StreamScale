@@ -25,7 +25,14 @@ Each mode/scenario has three repetitions. Seed 4242 shuffles the cell order.
 Every cell first performs a separate 30-second fault-free warmup in the same
 mode, followed by a fresh measured run/group with the correctness profile
 (invalid, duplicate and late attempts). Its complete schedule is generated;
-the number of orders does not truncate a phase. The logical scenario manifest
+the number of orders does not truncate a phase. The correctness profile selects
+valid attempts equal to 5% of the base event count and delays them by ten
+seconds, so the 60-second base schedule has actual late publication through
+about 70 seconds. `publish_seconds` records this; the primary window stays
+60 seconds and all modes use identical delayed manifests. Duplicate/invalid
+fixtures also affect the observed attempt rate. Late tail arrivals constrain
+the five-fresh-zero recovery criterion as well as the final drain.
+The logical scenario manifest
 hash must match across all nine corresponding runs, while run/event/group IDs
 are fresh. The original immutable image, consumer resource requests/limits,
 three partitions and retained broker/SQL installation are shared. Run metadata

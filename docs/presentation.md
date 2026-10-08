@@ -33,7 +33,9 @@ generated report, rather than presuming a winning controller.
 
 Use the resource page and trajectory page to connect the result to ready
 replicas, CPU/memory and broker backlog. Compare replica-seconds as well as
-latency. Show the scheduled burst and the tail after publication ends. Explain
+latency. Show the scheduled burst and the tail after the base measurement window.
+The shared late fixtures can extend actual publication by ten seconds; the
+vertical line marks the base 60-second window. Explain
 that Kubernetes resource metrics are delayed samples and that ready pods,
 desired replicas and active Kafka group members are different measurements.
 
