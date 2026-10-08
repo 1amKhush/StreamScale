@@ -8,6 +8,39 @@ import pytest
 from experiments.run import ROOT, configuration, freeze, plan, validate_matrix, verify_evidence
 
 
+def test_exporter_waits_for_successful_startup_probe(monkeypatch):
+    from types import SimpleNamespace
+
+    import experiments.run as runner
+
+    responses = []
+    for started in (False, True):
+        responses.append(
+            SimpleNamespace(
+                stdout=json.dumps(
+                    {
+                        "items": [
+                            {
+                                "metadata": {
+                                    "name": "exporter",
+                                    "annotations": {"streamscale/run-name": "run"},
+                                },
+                                "status": {
+                                    "phase": "Running",
+                                    "containerStatuses": [{"started": started}],
+                                },
+                            }
+                        ]
+                    }
+                )
+            )
+        )
+    monkeypatch.setattr(runner, "kubectl", lambda *args, **kwargs: responses.pop(0))
+    monkeypatch.setattr(runner.time, "sleep", lambda _: None)
+    assert runner.current_exporter("run") == "exporter"
+    assert not responses
+
+
 def test_plan_has_every_cell_once_in_seeded_order():
     protocol = json.loads((ROOT / "experiments/protocol.json").read_text())
     cells = plan(protocol)

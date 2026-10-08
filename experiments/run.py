@@ -126,6 +126,10 @@ def current_exporter(name, timeout=120):
             if (
                 pod["metadata"].get("annotations", {}).get("streamscale/run-name") == name
                 and pod["status"].get("phase") == "Running"
+                and all(
+                    status.get("started") is True
+                    for status in pod["status"].get("containerStatuses", [{}])
+                )
                 and not pod["metadata"].get("deletionTimestamp")
             ):
                 return pod["metadata"]["name"]
