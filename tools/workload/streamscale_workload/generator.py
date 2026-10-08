@@ -106,10 +106,18 @@ def logical_workload(
 
 
 def generate(
-    directory: Path, seed=42, orders=100, scenario="steady", profile="normal", mode="fixed"
+    directory: Path,
+    seed=42,
+    orders=100,
+    scenario="steady",
+    profile="normal",
+    mode="fixed",
+    group_id=None,
 ) -> dict:
     if mode not in {"fixed", "cpu-hpa", "lag-keda"}:
         raise ValueError("Unsupported experiment mode")
+    if group_id is not None and (not group_id.strip() or len(group_id) > 255):
+        raise ValueError("Consumer group must be nonempty and at most 255 characters")
     run_id = new_run_id()
     attempts = logical_workload(seed, orders, scenario, profile, run_id)
     directory.mkdir(parents=True, exist_ok=False)
@@ -120,7 +128,7 @@ def generate(
         "artifact_version": 1,
         "generator_version": 1,
         "run_id": str(run_id),
-        "group_id": f"streamscale.run.{run_id}",
+        "group_id": group_id or f"streamscale.run.{run_id}",
         "seed": seed,
         "orders": orders,
         "scenario": scenario,

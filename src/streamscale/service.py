@@ -152,7 +152,7 @@ def serve_exporter(settings, directory, port, stop):
                 print(f"Kafka metrics sample failed: {type(error).__name__}", flush=True)
                 errors.inc()
                 server.ready.clear()
-            stop.wait(5)
+            stop.wait(1)
         return {"status": "stopped", "run_id": run["run_id"]}
     finally:
         if probe is not None:

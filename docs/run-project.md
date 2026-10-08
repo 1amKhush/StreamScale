@@ -1,4 +1,4 @@
-# Run and stop StreamScale through M5
+# Run and stop StreamScale through M6
 
 Start Docker Engine/Desktop first. You need Bash, uv and make installed.
 The launcher checks prerequisites and creates the ignored `.env` from
@@ -12,7 +12,7 @@ From the repository root, run everything with:
 
 This performs setup, local smoke and fixture demonstration, unit/lint/integration
 checks (including M4 faults), cluster image build/deployment, SQL/metrics/Grafana
-verification, and finally dashboard access. The last step stays in the terminal
+verification, three scaling-mode exercises, and finally dashboard access. The last step stays in the terminal
 until Ctrl+C. First-time image/tool downloads can take several minutes. For a
 complete check without starting dashboard forwards:
 
@@ -49,7 +49,7 @@ View `artifacts/k8s/credentials.json` for Grafana's generated username/password.
 In Grafana, choose the current run UUID from the Run ID dropdown. The verified
 UUID and current cluster directory are printed by the launcher; metadata also
 lives in `artifacts/k8s/deployment.json`. This is an analytics pipeline with
-Grafana monitoring and SQL/artifact inspection; M6 scaling and M7–M8 measured
+Grafana monitoring and SQL/artifact inspection; M7–M8 measured
 experiments/analysis are not implemented yet.
 
 To run the individual stages manually instead of the launcher:
@@ -79,6 +79,9 @@ make k8s-status
 make k8s-verify
 make k8s-ui
 ```
+
+M6's independent mode and replica-bound exercises run with `./streamscale.sh scaling`
+or `make scaling`. See [scaling operations](scaling.md) for individual-mode commands.
 
 `make k8s-up` installs kind/kubectl/Helm automatically when missing. Standalone
 `./streamscale.sh cluster` also starts retained kind nodes before deployment,
@@ -143,3 +146,8 @@ again with 110 unit tests and 28 live integration tests. Fresh cluster evidence
 is in `artifacts/k8s/run-20261008095358-3edb7b43/`; the console log is
 `artifacts/launcher-metrics-fix-check.log`. The user's earlier failed execution
 also passed the corrected verifier without republishing.
+
+M6's complete launcher validation passed with 118 unit tests and 28 live
+integration tests. Fixed peaked at one ready consumer; CPU-HPA and lag-KEDA
+peaked at three, with successful reconciliation in every mode. See
+[M6 evidence](m6-evidence.md) and `artifacts/m6-full-check.log`.

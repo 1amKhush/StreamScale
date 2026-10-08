@@ -1,6 +1,3 @@
-{{- if ne (int .Values.consumer.replicas) 1 }}
-{{- fail "M5 requires exactly one fixed consumer; scaling modes are M6" }}
-{{- end }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -31,7 +28,8 @@ spec:
           command: [/bin/sh, -ec]
           args:
             - |
-              /app/.venv/bin/streamscale generate --output /runs/{{ .Values.run.name }} --seed {{ .Values.run.seed }} --orders {{ .Values.run.orders }} --scenario {{ .Values.run.scenario }} --profile {{ .Values.run.profile }} --mode fixed
+              /app/.venv/bin/streamscale generate --output /runs/{{ .Values.run.name }} --seed {{ .Values.run.seed }} --orders {{ .Values.run.orders }} --scenario {{ .Values.run.scenario }} --profile {{ .Values.run.profile }} --mode {{ .Values.scaling.mode }} --group-id streamscale.run.{{ .Values.run.name }}
+              sleep {{ .Values.run.startDelay }}
               /app/.venv/bin/streamscale publish --run-dir /runs/{{ .Values.run.name }} {{ if not .Values.run.paced }}--no-wait{{ end }}
           env:
             {{- include "streamscale.env" . | nindent 12 }}
@@ -52,7 +50,9 @@ kind: Deployment
 metadata:
   name: {{ $.Release.Name }}-{{ $role }}
 spec:
+  {{- if or (ne $role "consumer") (eq $.Values.scaling.mode "fixed") }}
   replicas: 1
+  {{- end }}
   strategy: {type: Recreate}
   selector:
     matchLabels: {app: {{ $.Release.Name }}-{{ $role }}}

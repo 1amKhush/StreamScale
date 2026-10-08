@@ -125,6 +125,7 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
         "integration",
         "k8s-up",
         "k8s-verify",
+        "scaling",
     ]
     directory = (checkout / "artifacts/launcher/last-local-run.path").read_text().strip()
     assert Path(directory).parent.is_dir()

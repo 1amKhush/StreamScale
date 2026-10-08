@@ -12,15 +12,16 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M5
+StreamScale launcher — integrated milestones M0–M6
 
 Usage: ./streamscale.sh [command] [--no-ui]
 
-  all [--no-ui]  Setup, local smoke/demo, all checks, cluster demo/verification, dashboards.
+  all [--no-ui]  Setup, local checks, cluster demo, three scaling modes, dashboards.
                 This is the default. --no-ui finishes without opening port forwards.
   local         Setup and run a fresh local Kafka/PostgreSQL fixture demo.
   check         Start local dependencies and run unit, lint and live integration checks.
   cluster       Setup and deploy/verify a fresh kind cluster execution.
+  scaling       Exercise fixed/CPU-HPA/lag-KEDA independently; retain replica evidence.
   verify        Verify the current fresh cluster execution without republishing.
   inspect-local Reinspect the latest local demo made by this launcher.
   ui            Open Grafana/Prometheus forwards; Ctrl+C closes the forwards.
@@ -216,13 +217,16 @@ case "$command" in
         checks
         printf '\n[M5] Deploying a fresh cluster execution and checking SQL/metrics/Grafana.\n'
         cluster_demo
+        printf '\n[M6] Exercising the three isolated scaling modes and replica bounds.\n'
+        make scaling
         status
-        printf '\nM0–M5 passed. Run artifacts are under artifacts/.\n'
+        printf '\nM0–M6 passed. Run artifacts are under artifacts/.\n'
         if [[ "$no_ui" == false ]]; then ui; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
     check) setup; local_start; checks ;;
     cluster) setup; cluster_demo ;;
+    scaling) setup; start_cluster_nodes; make scaling ;;
     verify) require_command make; make k8s-verify ;;
     inspect-local)
         require_command uv

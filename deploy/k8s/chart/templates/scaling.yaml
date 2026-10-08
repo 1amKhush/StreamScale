@@ -1,0 +1,63 @@
+{{- if eq .Values.scaling.mode "cpu-hpa" }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-cpu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-consumer
+  minReplicas: {{ .Values.scaling.minReplicas }}
+  maxReplicas: {{ .Values.scaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.scaling.cpuTarget }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - {type: Pods, value: 2, periodSeconds: 15}
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.scaling.scaleDownSeconds }}
+      policies:
+        - {type: Pods, value: 1, periodSeconds: 15}
+{{- else if eq .Values.scaling.mode "lag-keda" }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Release.Name }}-consumer
+spec:
+  scaleTargetRef:
+    name: {{ .Release.Name }}-consumer
+  minReplicaCount: {{ .Values.scaling.minReplicas }}
+  maxReplicaCount: {{ .Values.scaling.maxReplicas }}
+  pollingInterval: {{ .Values.scaling.pollingInterval }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - {type: Pods, value: 2, periodSeconds: 15}
+        scaleDown:
+          stabilizationWindowSeconds: {{ .Values.scaling.scaleDownSeconds }}
+          policies:
+            - {type: Pods, value: 1, periodSeconds: 15}
+  triggers:
+    - type: kafka
+      useCachedMetrics: true
+      metadata:
+        bootstrapServers: {{ .Release.Name }}-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092
+        consumerGroup: streamscale.run.{{ .Values.run.name }}
+        topic: orders.events.v1
+        lagThreshold: {{ .Values.scaling.lagThreshold | quote }}
+        activationLagThreshold: "0"
+        offsetResetPolicy: latest
+        allowIdleConsumers: "false"
+        excludePersistentLag: "false"
+{{- end }}

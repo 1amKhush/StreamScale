@@ -9,6 +9,15 @@ consumer:
     requests: {cpu: 100m, memory: 128Mi}
     limits: {cpu: 500m, memory: 256Mi}
 
+scaling:
+  mode: fixed
+  minReplicas: 1
+  maxReplicas: 3
+  cpuTarget: 60
+  lagThreshold: 100
+  pollingInterval: 2
+  scaleDownSeconds: 60
+
 run:
   name: demo
   seed: 42
@@ -16,6 +25,7 @@ run:
   scenario: steady
   profile: correctness
   paced: false
+  startDelay: 0
 
 postgres:
   image: postgres:17.7-bookworm@sha256:86e0b703649d7a792bd9243ee28afc9d8f7c6b2b5638077c9d6882d4d472bbfd

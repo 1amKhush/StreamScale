@@ -28,6 +28,9 @@ def call(arguments, *, capture=False, input=None, check=True):
         env=os.environ
         | {
             "KUBECONFIG": str(ROOT / "artifacts/kubeconfig"),
+            "HELM_CACHE_HOME": str(ROOT / ".tools/helm/cache"),
+            "HELM_CONFIG_HOME": str(ROOT / ".tools/helm/config"),
+            "HELM_DATA_HOME": str(ROOT / ".tools/helm/data"),
         },
         input=input,
         text=True,
@@ -148,48 +151,103 @@ def credentials():
     print(f"Grafana login saved in {path.relative_to(ROOT)}")
 
 
+def clear_scaling():
+    # Finish/drain the previous run before switching. Wait for the KEDA-owned HPA to go.
+    if kubectl("get", "crd", "scaledobjects.keda.sh", capture=True, check=False).returncode == 0:
+        kubectl(
+            "delete", "scaledobject", "streamscale-consumer", "--ignore-not-found", "--wait=true"
+        )
+    kubectl(
+        "delete",
+        "hpa",
+        "streamscale-cpu",
+        "keda-hpa-streamscale-consumer",
+        "--ignore-not-found",
+        "--wait=true",
+    )
+    if (
+        kubectl("get", "deployment", "streamscale-consumer", capture=True, check=False).returncode
+        == 0
+    ):
+        kubectl("scale", "deployment/streamscale-consumer", "--replicas=1")
+
+
+def deploy(metadata, args, wait=True, run_name=None):
+    if kubectl("get", "namespace", NAMESPACE, capture=True, check=False).returncode:
+        kubectl("create", "namespace", NAMESPACE)
+    credentials()
+    clear_scaling()
+    name = run_name or "run-" + datetime.now(UTC).strftime("%Y%m%d%H%M%S") + "-" + uuid4().hex[:8]
+    info = metadata | {
+        "run_name": name,
+        "namespace": NAMESPACE,
+        "context": f"kind-{CLUSTER}",
+        "mode": args.mode,
+        "scenario": args.scenario,
+        "seed": args.seed,
+    }
+    write_json(OUTPUT / "deployment.json", info)
+    arguments = [
+        TOOLS / "helm",
+        "upgrade",
+        "--install",
+        "streamscale",
+        "deploy/k8s/chart",
+        "--namespace",
+        NAMESPACE,
+        "--kube-context",
+        f"kind-{CLUSTER}",
+        "--server-side=false",
+        "--set-string",
+        f"image.tag={metadata['image'].split(':')[1]}",
+        "--set-string",
+        f"run.name={name}",
+        "--set",
+        f"run.orders={args.orders}",
+        "--set-string",
+        f"run.profile={args.profile}",
+        "--set-string",
+        f"scaling.mode={args.mode}",
+        "--set-string",
+        f"run.scenario={args.scenario}",
+        "--set",
+        f"run.seed={args.seed}",
+        "--set",
+        f"run.paced={str(args.paced).lower()}",
+        "--set",
+        f"run.startDelay={args.start_delay}",
+        "--timeout",
+        "10m",
+    ]
+    if wait:
+        arguments.extend(["--wait", "--wait-for-jobs"])
+    call(arguments)
+    print(f"Cluster run ready: /runs/{name}; use make k8s-verify and make k8s-ui")
+    return info
+
+
 def up(args):
     metadata = build()
     cluster()
     call([TOOLS / "kind", "load", "docker-image", metadata["image"], "--name", CLUSTER])
-    if kubectl("get", "namespace", NAMESPACE, capture=True, check=False).returncode:
-        kubectl("create", "namespace", NAMESPACE)
-    credentials()
-    name = "run-" + datetime.now(UTC).strftime("%Y%m%d%H%M%S") + "-" + uuid4().hex[:8]
-    info = metadata | {"run_name": name, "namespace": NAMESPACE, "context": f"kind-{CLUSTER}"}
-    write_json(OUTPUT / "deployment.json", info)
-    call(
-        [
-            TOOLS / "helm",
-            "upgrade",
-            "--install",
-            "streamscale",
-            "deploy/k8s/chart",
-            "--namespace",
-            NAMESPACE,
-            "--kube-context",
-            f"kind-{CLUSTER}",
-            "--set-string",
-            f"image.tag={metadata['image'].split(':')[1]}",
-            "--set-string",
-            f"run.name={name}",
-            "--set",
-            f"run.orders={args.orders}",
-            "--set-string",
-            f"run.profile={args.profile}",
-            "--wait",
-            "--wait-for-jobs",
-            "--timeout",
-            "10m",
-        ]
-    )
-    print(f"Cluster run ready: /runs/{name}; use make k8s-verify and make k8s-ui")
+    if args.mode != "fixed":
+        from addons import main as install_addons
+
+        install_addons()
+    return deploy(metadata, args)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("build", "up", "status", "logs", "credentials"))
     parser.add_argument("--orders", type=int, default=200)
+    parser.add_argument("--mode", choices=("fixed", "cpu-hpa", "lag-keda"), default="fixed")
+    parser.add_argument(
+        "--scenario", choices=("steady", "flash-sale", "overload-recovery"), default="steady"
+    )
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--paced", action="store_true")
+    parser.add_argument("--start-delay", type=int, default=0)
     parser.add_argument(
         "--profile", choices=("normal", "correctness", "fixtures"), default="correctness"
     )

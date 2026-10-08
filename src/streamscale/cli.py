@@ -31,6 +31,9 @@ def main() -> int:
         "--profile", choices=("normal", "correctness", "fixtures"), default="normal"
     )
     workload.add_argument("--mode", choices=("fixed", "cpu-hpa", "lag-keda"), default="fixed")
+    workload.add_argument(
+        "--group-id", help="Unique execution group, also used by the Kafka scaler"
+    )
     publisher = commands.add_parser("publish", help="Register and publish this execution once")
     publisher.add_argument("--run-dir", type=Path, required=True)
     publisher.add_argument(
@@ -80,7 +83,13 @@ def main() -> int:
             from streamscale_workload.generator import generate
 
             result = generate(
-                args.output, args.seed, args.orders, args.scenario, args.profile, args.mode
+                args.output,
+                args.seed,
+                args.orders,
+                args.scenario,
+                args.profile,
+                args.mode,
+                group_id=args.group_id,
             )
         elif args.command == "publish":
             from streamscale_workload.publisher import publish

@@ -3,6 +3,19 @@
   "type": "object",
   "properties": {
     "consumer": {"type": "object", "properties": {"replicas": {"const": 1}}},
+    "scaling": {
+      "type": "object",
+      "required": ["mode", "minReplicas", "maxReplicas", "cpuTarget", "lagThreshold", "pollingInterval", "scaleDownSeconds"],
+      "properties": {
+        "mode": {"enum": ["fixed", "cpu-hpa", "lag-keda"]},
+        "minReplicas": {"const": 1},
+        "maxReplicas": {"const": 3},
+        "cpuTarget": {"type": "integer", "minimum": 1, "maximum": 100},
+        "lagThreshold": {"type": "integer", "minimum": 1},
+        "pollingInterval": {"type": "integer", "minimum": 1},
+        "scaleDownSeconds": {"type": "integer", "minimum": 0}
+      }
+    },
     "run": {
       "type": "object",
       "required": ["name", "seed", "orders", "scenario", "profile", "paced"],
@@ -12,7 +25,8 @@
         "orders": {"type": "integer", "minimum": 1, "maximum": 1000000},
         "scenario": {"enum": ["steady", "flash-sale", "overload-recovery"]},
         "profile": {"enum": ["normal", "correctness", "fixtures"]},
-        "paced": {"type": "boolean"}
+        "paced": {"type": "boolean"},
+        "startDelay": {"type": "integer", "minimum": 0, "maximum": 120}
       }
     }
   }
