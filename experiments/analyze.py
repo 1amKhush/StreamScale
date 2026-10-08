@@ -356,7 +356,8 @@ def plots(rows, frozen, destination):
             "All acknowledged IDs reconciled before/after restart\n"
             "Same image, logical scenario sequence, resources and partitions\n"
             "30-second warmup + 60-second publishing window per cell\n"
-            f"Frozen rates: {frozen['rates']['steady']}/s steady · {frozen['rates']['surge']}/s surge",
+            f"Frozen rates: {frozen['rates']['steady']}/s steady · "
+            f"{frozen['rates']['surge']}/s surge",
             fontsize=14,
             linespacing=1.8,
             va="top",
@@ -387,6 +388,7 @@ def main():
     campaign = args.campaign or Path(
         (ROOT / "artifacts/experiments/latest.path").read_text().strip()
     )
+    campaign = campaign.resolve()
     verification = audit(campaign)
     state = read(campaign / "campaign.json")
     frozen = read(campaign / "frozen-protocol.json")
@@ -396,7 +398,7 @@ def main():
         if row["phase"] == "measured"
     ]
     aggregates = aggregate(rows)
-    destination = args.output
+    destination = args.output.resolve()
     destination.mkdir(parents=True, exist_ok=True)
     for name in ("summary.csv", "comparison.csv", "frozen-protocol.json", "failed-attempts.csv"):
         shutil.copy2(campaign / name, destination / name)
@@ -423,7 +425,9 @@ def main():
             }
             for node in environment["nodes"]["items"]
         ],
-        "source_artifact_directory": str(campaign.relative_to(ROOT)),
+        "source_artifact_directory": str(campaign.relative_to(ROOT))
+        if campaign.is_relative_to(ROOT)
+        else str(campaign),
         "source_checksums": {
             name: hashlib.sha256((campaign / name).read_bytes()).hexdigest()
             for name in ("campaign.json", "frozen-protocol.json", "summary.csv", "comparison.csv")
