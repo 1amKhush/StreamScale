@@ -1,7 +1,7 @@
 # StreamScale
 
 A Python Kafka-to-PostgreSQL flash-sale analytics experiment comparing fixed,
-CPU-HPA and lag-KEDA consumer scaling. **M0–M7 are validated; M8 is in progress:** the contract,
+CPU-HPA and lag-KEDA consumer scaling. **M0–M8 are implemented and validated:** the contract,
 local pipeline, seeded publisher, safe fault/replay handling, and a working
 kind/Helm deployment with Prometheus and Grafana. M6 adds mutually exclusive
 fixed, CPU-HPA and lag-KEDA controllers. The M7 runner adds a pilot-calibrated,
@@ -10,6 +10,9 @@ All 27 measured cells passed reconciliation and controlled restart; see
 [M7 evidence](docs/m7-evidence.md).
 M8 produces standalone scientific plots, a report and a presentation PDF after
 the complete matrix passes its independent evidence audit.
+The complete launcher passed with 144 unit tests, 28 live integration tests and
+all three scaling modes. See [the measured report](docs/results/current/report.md),
+[presentation PDF](docs/results/current/presentation.pdf) and [M8 evidence](docs/m8-evidence.md).
 
 One command runs every integrated stage and opens the dashboards:
 
@@ -104,6 +107,8 @@ Use `make k8s-status` or `make k8s-logs` to inspect the service.
 | `deploy/k8s/` | Pinned kind tools, Helm chart, image build, cluster verification and UI access |
 | `src/streamscale/metrics.py`, `service.py` | Run-labelled counters/histograms, health endpoints and singleton Kafka exporter |
 | `tests/` | Contract fixtures, bootstrap guards and live integration tests |
+| `experiments/` | Pilot, frozen matrix, SQL measurements, evidence audit and separate plotting environment |
+| `docs/results/current/` | Audited 27-run CSV snapshot, plots, interpretation and presentation PDF |
 | [Local operations](docs/local-development.md) | Manual publish/consume, inspection and troubleshooting |
 | [Milestone evidence](docs/m0-m1-evidence.md) | Actual commands, results, review and remaining scope |
 | [M2/M3 operations](docs/workload-and-consumer.md) | Generate/publish/consume/inspect commands and crash replay |

@@ -14,9 +14,10 @@ velocity or fabricated sprint points. Timestamps record observed transitions in 
 | M5 | Large: container + kind/Helm + monitoring | Validated M4 | One cluster consumer; SQL reconciliation and inspectable labelled metrics | Complete locally; started 2026-10-08T00:26:31Z, validated 2026-10-08T00:52:16Z |
 | M6 | Medium: controller dependencies, isolated chart modes, live bounds checks | Validated M5 | Exercise fixed/CPU-HPA/lag-KEDA independently; verify 1–3 bounds | Complete locally; started 2026-10-08T10:17:16Z, validated 2026-10-08T10:46:37Z |
 | M7 | Large: pilot, frozen protocol, 27 controlled executions and raw evidence | Validated M6 | Per-run configuration, reconciliation, resources and CSV; correct runs only | Complete locally; started 2026-10-08T10:51:09Z, campaign completed 2026-10-08T12:54:17Z, independent audit validated 2026-10-08T12:55:51Z |
-| M8 | Medium: standalone plots, result report and reproduction guide | Validated M7 | Measured interpretation with explicit limits and presentation evidence | In progress; reporting tools started 2026-10-08T11:49:56Z while M7 collected data; final acceptance requires complete M7 |
+| M8 | Medium: standalone plots, result report and reproduction guide | Validated M7 | Measured interpretation with explicit limits and presentation evidence | Complete locally; tools started 2026-10-08T11:49:56Z while M7 collected data, full M0–M8 launcher validated 2026-10-08T13:13:40Z |
 
 Evidence, defects, review and actual completion timestamps are recorded in
 `docs/m0-m1-evidence.md`, `docs/m2-m3-evidence.md`, `docs/m4-evidence.md` and
-`docs/m5-evidence.md`, `docs/m6-evidence.md` and `docs/m7-evidence.md`. Referenced TeX documents and external tracker were not
+`docs/m5-evidence.md`, `docs/m6-evidence.md`, `docs/m7-evidence.md` and
+`docs/m8-evidence.md`. Referenced TeX documents and external tracker were not
 available locally. No claims are made about reviewing or updating those artifacts.

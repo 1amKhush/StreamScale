@@ -169,3 +169,13 @@ M6's complete launcher validation passed with 118 unit tests and 28 live
 integration tests. Fixed peaked at one ready consumer; CPU-HPA and lag-KEDA
 peaked at three, with successful reconciliation in every mode. See
 [M6 evidence](m6-evidence.md) and `artifacts/m6-full-check.log`.
+
+The final complete M0–M8 launcher passed on 2026-10-08 with 144 unit tests,
+28 live integration tests and clean Ruff checks. It verified fresh M5/M6 runs,
+fixed/CPU-HPA/lag-KEDA isolation with peaks of 1/3/3 ready consumers, the retained
+27-run matrix and the regenerated M8 report/PDF. Its console log is
+`artifacts/m8-full-check.log`. The current fixed demo is
+`run-20261008131220-59df711a`, UUID `427bb2f5-e97c-4232-b6f1-03164fe2eedb`.
+Every measured run reconciled and survived the controlled restart; the matrix
+contains 249,048 unique facts. See [M7 evidence](m7-evidence.md),
+[M8 evidence](m8-evidence.md) and [the report](results/current/report.md).
