@@ -2,6 +2,7 @@
 .env
 .env.*
 .venv
+experiments
 .tools
 artifacts
 __pycache__
