@@ -110,6 +110,33 @@ def audit(campaign, complete=True):
                 1 <= sample["desired"] <= (1 if row["mode"] == "fixed" else 3),
                 "Desired replica count escaped its mode bounds",
             )
+            hpas = sample.get("hpas", [])
+            scaled = sample.get("scaledobjects", [])
+            if row["mode"] == "fixed":
+                require(not hpas and not scaled, "Fixed run has an attached autoscaler")
+            elif row["mode"] == "cpu-hpa":
+                require(len(hpas) == 1 and not scaled, "CPU-HPA controllers are not isolated")
+                metric = hpas[0]["spec"]["metrics"][0]
+                require(
+                    metric["type"] == "Resource"
+                    and metric["resource"]["name"] == "cpu"
+                    and metric["resource"]["target"]["averageUtilization"] == 60,
+                    "CPU-HPA target changed from the frozen 60 percent",
+                )
+            else:
+                require(
+                    len(scaled) == 1
+                    and all(
+                        hpa["metadata"]["name"] == "keda-hpa-streamscale-consumer" for hpa in hpas
+                    ),
+                    "KEDA controllers are not isolated",
+                )
+                trigger = scaled[0]["spec"]["triggers"][0]["metadata"]
+                require(
+                    trigger["consumerGroup"] == run["group_id"]
+                    and trigger["lagThreshold"] == "100",
+                    "KEDA group/lag target changed",
+                )
             for pod in sample["pods"]:
                 require(
                     pod["spec"]["containers"][0]["image"] == run["image"],

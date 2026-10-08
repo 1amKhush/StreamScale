@@ -114,3 +114,24 @@ def test_audit_rejects_changed_actual_consumer_image(campaign):
 def test_partial_evidence_cannot_be_claimed_complete(campaign):
     with pytest.raises(RuntimeError, match="incomplete"):
         audit(campaign[0])
+
+
+def test_audit_rejects_attached_autoscaler_in_fixed_mode(campaign):
+    root, directory = campaign
+    sample = json.loads((directory / "samples.jsonl").read_text())
+    sample["hpas"] = [{"spec": {}}]
+    (directory / "samples.jsonl").write_text(json.dumps(sample) + "\n")
+    hashes(directory)
+    with pytest.raises(RuntimeError, match="attached autoscaler"):
+        audit(root, complete=False)
+
+
+def test_audit_rejects_resource_change_within_execution(campaign):
+    root, directory = campaign
+    original = (directory / "samples.jsonl").read_text()
+    sample = json.loads(original)
+    sample["pods"][0]["spec"]["containers"][0]["resources"]["cpu"] = "200m"
+    (directory / "samples.jsonl").write_text(original + json.dumps(sample) + "\n")
+    hashes(directory)
+    with pytest.raises(RuntimeError, match="image/resources changed"):
+        audit(root, complete=False)
