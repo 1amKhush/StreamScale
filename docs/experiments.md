@@ -70,6 +70,13 @@ as excluded evidence and retried with a new run ID. A completed campaign is
 reused without republishing its 27 cells. A fresh fixed demo is left running
 after new measurements finish, for the normal `verify`/`ui` commands.
 
+`make experiment-audit` independently rechecks preserved file hashes, the
+comparison CSV values, raw SQL p95/window throughput, fresh consumer groups,
+all 27 cells, and the actual pod image IDs and resource settings. This audit
+needs no running cluster. The experiment Make targets include it automatically.
+During an active campaign, `python3 -m experiments.evidence --partial` audits
+completed evidence without claiming the matrix is complete.
+
 The single kind node shares host CPU, broker, database and monitoring resources.
 Small samples (three repetitions), short windows, metrics/controller cadence,
 group startup, retained database growth and cache carryover limit interpretation.
