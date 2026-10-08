@@ -443,7 +443,7 @@ def validate_matrix(state):
 def export_csv(campaign, state):
     rows = state["rows"]
     for name, selected in (
-        ("all-runs.csv", rows),
+        ("all-runs.csv", rows + state["failures"]),
         ("summary.csv", [row for row in rows if row["phase"] == "measured"]),
         (
             "comparison.csv",
@@ -554,10 +554,12 @@ def recover_active(campaign, state):
 def record_capture(campaign, state, cell, config):
     try:
         row = capture(state["image"], cell, config, campaign)
+        if not row["performance_eligible"]:
+            state["failures"].append(row)
+            export_csv(campaign, state)
+            raise RuntimeError("Run failed measurement eligibility: " + row["failure_reason"])
         state["rows"].append(row)
         export_csv(campaign, state)
-        if not row["performance_eligible"]:
-            raise RuntimeError("Run failed measurement eligibility: " + row["failure_reason"])
         return row
     except Exception as error:
         state["status"] = "interrupted"
