@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from experiments.run import ROOT, freeze, plan, validate_matrix, verify_evidence
+from experiments.run import ROOT, configuration, freeze, plan, validate_matrix, verify_evidence
 
 
 def test_plan_has_every_cell_once_in_seeded_order():
@@ -24,6 +24,7 @@ def test_plan_has_every_cell_once_in_seeded_order():
         for scenario in frozen["scenarios"].values()
     )
     assert "rates" not in protocol
+    assert configuration(frozen, "measured", [[60, 36]])["protocol_version"] == 2
 
 
 def test_matrix_refuses_missing_failed_or_different_workloads():

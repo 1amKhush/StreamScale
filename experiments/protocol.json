@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "protocol_version": 2,
   "description": "Pilot-calibrated local kind comparison; frozen before measured executions",
   "repetitions": 3,
   "order_seed": 4242,
