@@ -1,3 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-run
+data:
+  schedule.json: {{ toJson .Values.run.schedule | quote }}
+  configuration.json: {{ toJson .Values.run.configuration | quote }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -28,7 +36,7 @@ spec:
           command: [/bin/sh, -ec]
           args:
             - |
-              /app/.venv/bin/streamscale generate --output /runs/{{ .Values.run.name }} --seed {{ .Values.run.seed }} --orders {{ .Values.run.orders }} --scenario {{ .Values.run.scenario }} --profile {{ .Values.run.profile }} --mode {{ .Values.scaling.mode }} --group-id streamscale.run.{{ .Values.run.name }}
+              /app/.venv/bin/streamscale generate --output /runs/{{ .Values.run.name }} --seed {{ .Values.run.seed }} --orders {{ .Values.run.orders }} --scenario {{ .Values.run.scenario }} --profile {{ .Values.run.profile }} --mode {{ .Values.scaling.mode }} --group-id streamscale.run.{{ .Values.run.name }} --configuration /config/configuration.json {{ if .Values.run.schedule }}--schedule /config/schedule.json{{ end }}
               sleep {{ .Values.run.startDelay }}
               /app/.venv/bin/streamscale publish --run-dir /runs/{{ .Values.run.name }} {{ if not .Values.run.paced }}--no-wait{{ end }}
           env:
@@ -40,7 +48,10 @@ spec:
             limits: {cpu: 500m, memory: 256Mi}
           volumeMounts:
             - {name: runs, mountPath: /runs}
+            - {name: configuration, mountPath: /config, readOnly: true}
       volumes:
+        - name: configuration
+          configMap: {name: {{ .Release.Name }}-run}
         - name: runs
           persistentVolumeClaim: {claimName: {{ .Release.Name }}-runs}
 {{- range $role := list "consumer" "exporter" }}

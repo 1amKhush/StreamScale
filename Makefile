@@ -2,7 +2,7 @@ COMPOSE = docker compose --env-file .env -f deploy/local/compose.yaml
 RUN = uv run --frozen --env-file .env
 RUN_DIR ?= artifacts/demo
 
-.PHONY: install up bootstrap smoke demo test integration faults check down logs k8s-tools k8s-up k8s-verify k8s-ui k8s-status k8s-logs k8s-addons scaling
+.PHONY: install up bootstrap smoke demo test integration faults check down logs k8s-tools k8s-up k8s-verify k8s-ui k8s-status k8s-logs k8s-addons scaling experiments experiments-fresh
 
 install:
 	uv sync --frozen
@@ -68,3 +68,9 @@ k8s-addons: .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
 
 scaling: .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
 	uv run --frozen python deploy/k8s/scaling.py
+
+experiments: .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
+	uv run --frozen python -m experiments.run --resume
+
+experiments-fresh: .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
+	uv run --frozen python -m experiments.run --fresh

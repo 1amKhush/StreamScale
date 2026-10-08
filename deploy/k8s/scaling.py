@@ -5,7 +5,7 @@ import time
 from types import SimpleNamespace
 
 from addons import main as install_addons
-from manage import CLUSTER, OUTPUT, TOOLS, build, call, cluster, deploy, kubectl
+from manage import CLUSTER, OUTPUT, TOOLS, build, call, cluster, deploy, kubectl, workflow
 
 from streamscale.run_artifacts import utc_now, write_json
 
@@ -157,7 +157,7 @@ def exercise(metadata, mode, orders=3000, timeout=300):
     return result
 
 
-def main():
+def run():
     metadata = build()
     cluster()
     call([TOOLS / "kind", "load", "docker-image", metadata["image"], "--name", CLUSTER])
@@ -178,6 +178,11 @@ def main():
     from verify import main as verify
 
     verify()
+
+
+def main():
+    with workflow():
+        run()
 
 
 if __name__ == "__main__":

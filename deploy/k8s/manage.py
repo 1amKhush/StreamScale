@@ -2,16 +2,19 @@
 
 import argparse
 import base64
+import fcntl
 import hashlib
 import json
 import os
 import secrets
 import subprocess
+import time
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
-from streamscale.run_artifacts import revision_snapshot, write_json
+from streamscale.run_artifacts import revision_snapshot, utc_now, write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "artifacts/k8s"
@@ -19,6 +22,56 @@ CLUSTER = "streamscale"
 NAMESPACE = "streamscale"
 SECRET = "streamscale-local-credentials"
 TOOLS = ROOT / ".tools/bin"
+
+
+@contextmanager
+def workflow():
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    with (OUTPUT / "workflow.lock").open("a+") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError(
+                "Another StreamScale cluster workflow is active; wait for it to finish"
+            ) from None
+        lock.seek(0)
+        lock.truncate()
+        json.dump({"pid": os.getpid(), "started_at": utc_now()}, lock)
+        lock.flush()
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def previous_drained():
+    info_file = OUTPUT / "deployment.json"
+    if not info_file.exists():
+        return
+    if kubectl("get", "deployment", "streamscale-consumer", capture=True, check=False).returncode:
+        return
+    previous = json.loads(info_file.read_text())
+    deadline = time.monotonic() + 60
+    while True:
+        result = kubectl(
+            "exec",
+            "deployment/streamscale-consumer",
+            "--",
+            "/app/.venv/bin/streamscale",
+            "inspect",
+            "--run-dir",
+            "/runs/" + previous["run_name"],
+            capture=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            return
+        if time.monotonic() >= deadline:
+            raise RuntimeError(
+                "Previous execution has not reconciled; keep its consumer running "
+                "and recover it before publishing another run"
+            )
+        time.sleep(2)
 
 
 def call(arguments, *, capture=False, input=None, check=True):
@@ -48,7 +101,12 @@ def kubectl(*arguments, **kwargs):
 def build():
     metadata = revision_snapshot()
     tag = hashlib.sha256(
-        (metadata["source_sha256"] + (ROOT / "Dockerfile").read_text()).encode()
+        (
+            metadata["source_sha256"]
+            + metadata["git_commit"]
+            + str(metadata["git_dirty"])
+            + (ROOT / "Dockerfile").read_text()
+        ).encode()
     ).hexdigest()[:16]
     image = f"streamscale:{tag}"
     call(
@@ -173,6 +231,8 @@ def clear_scaling():
 
 
 def deploy(metadata, args, wait=True, run_name=None):
+    if run_name is None:
+        previous_drained()
     if kubectl("get", "namespace", NAMESPACE, capture=True, check=False).returncode:
         kubectl("create", "namespace", NAMESPACE)
     credentials()
@@ -219,6 +279,14 @@ def deploy(metadata, args, wait=True, run_name=None):
         "--timeout",
         "10m",
     ]
+    arguments.extend(
+        [
+            "--set-json",
+            "run.schedule=" + json.dumps(getattr(args, "schedule", [])),
+            "--set-json",
+            "run.configuration=" + json.dumps(getattr(args, "configuration", {})),
+        ]
+    )
     if wait:
         arguments.extend(["--wait", "--wait-for-jobs"])
     call(arguments)
@@ -256,7 +324,8 @@ def main():
     if args.command == "build":
         build()
     elif args.command == "up":
-        up(args)
+        with workflow():
+            up(args)
     elif args.command == "credentials":
         credentials()
     elif args.command == "logs":

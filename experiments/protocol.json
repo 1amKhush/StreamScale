@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "description": "Pilot-calibrated local kind comparison; frozen before measured executions",
+  "repetitions": 3,
+  "order_seed": 4242,
+  "warmup_seconds": 30,
+  "sample_interval_seconds": 1,
+  "resource_interval_seconds": 5,
+  "drain_timeout_seconds": 300,
+  "pilot_orders": 500,
+  "steady_capacity_factor": 0.4,
+  "surge_capacity_factor": 3.0,
+  "maximum_surge_rate": 1000,
+  "scenarios": {
+    "steady": {"seed": 101, "phases": [[60, "steady"]]},
+    "flash-sale": {"seed": 202, "phases": [[15, "steady"], [20, "surge"], [25, "steady"]]},
+    "overload-recovery": {"seed": 303, "phases": [[35, "surge"], [25, "steady"]]}
+  }
+}

@@ -1,4 +1,4 @@
-# Run and stop StreamScale through M6
+# Run and stop StreamScale through M7
 
 Start Docker Engine/Desktop first. You need Bash, uv and make installed.
 The launcher checks prerequisites and creates the ignored `.env` from
@@ -12,7 +12,7 @@ From the repository root, run everything with:
 
 This performs setup, local smoke and fixture demonstration, unit/lint/integration
 checks (including M4 faults), cluster image build/deployment, SQL/metrics/Grafana
-verification, three scaling-mode exercises, and finally dashboard access. The last step stays in the terminal
+verification, three scaling-mode exercises, the measured experiment matrix, and finally dashboard access. The last step stays in the terminal
 until Ctrl+C. First-time image/tool downloads can take several minutes. For a
 complete check without starting dashboard forwards:
 
@@ -49,8 +49,8 @@ View `artifacts/k8s/credentials.json` for Grafana's generated username/password.
 In Grafana, choose the current run UUID from the Run ID dropdown. The verified
 UUID and current cluster directory are printed by the launcher; metadata also
 lives in `artifacts/k8s/deployment.json`. This is an analytics pipeline with
-Grafana monitoring and SQL/artifact inspection; M7–M8 measured
-experiments/analysis are not implemented yet.
+Grafana monitoring and SQL/artifact inspection. The M7 runner also produces a
+pilot and 27 measured runs; M8 analysis follows once those measurements pass.
 
 To run the individual stages manually instead of the launcher:
 
@@ -82,6 +82,16 @@ make k8s-ui
 
 M6's independent mode and replica-bound exercises run with `./streamscale.sh scaling`
 or `make scaling`. See [scaling operations](scaling.md) for individual-mode commands.
+
+M7 uses `./streamscale.sh experiments` (or `make experiments`). A first campaign
+can take over an hour: each of 27 cells has a separate 30-second warmup, a
+60-second publishing window, a drain and a controlled restart. Completed
+campaigns are reused only after raw checksums and matrix invariants pass. An
+interrupted execution is reconciled and excluded before its cell is retried.
+Use `./streamscale.sh experiments --fresh` to retain previous evidence and
+measure a new campaign. Raw evidence and CSV files live under
+`artifacts/experiments/`; `latest.path` identifies the current campaign.
+See [the frozen measurement protocol](experiments.md).
 
 `make k8s-up` installs kind/kubectl/Helm automatically when missing. Standalone
 `./streamscale.sh cluster` also starts retained kind nodes before deployment,

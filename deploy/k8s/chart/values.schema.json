@@ -2,31 +2,121 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "consumer": {"type": "object", "properties": {"replicas": {"const": 1}}},
+    "consumer": {
+      "type": "object",
+      "properties": {
+        "replicas": {
+          "const": 1
+        }
+      }
+    },
     "scaling": {
       "type": "object",
-      "required": ["mode", "minReplicas", "maxReplicas", "cpuTarget", "lagThreshold", "pollingInterval", "scaleDownSeconds"],
+      "required": [
+        "mode",
+        "minReplicas",
+        "maxReplicas",
+        "cpuTarget",
+        "lagThreshold",
+        "pollingInterval",
+        "scaleDownSeconds"
+      ],
       "properties": {
-        "mode": {"enum": ["fixed", "cpu-hpa", "lag-keda"]},
-        "minReplicas": {"const": 1},
-        "maxReplicas": {"const": 3},
-        "cpuTarget": {"type": "integer", "minimum": 1, "maximum": 100},
-        "lagThreshold": {"type": "integer", "minimum": 1},
-        "pollingInterval": {"type": "integer", "minimum": 1},
-        "scaleDownSeconds": {"type": "integer", "minimum": 0}
+        "mode": {
+          "enum": [
+            "fixed",
+            "cpu-hpa",
+            "lag-keda"
+          ]
+        },
+        "minReplicas": {
+          "const": 1
+        },
+        "maxReplicas": {
+          "const": 3
+        },
+        "cpuTarget": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "lagThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pollingInterval": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scaleDownSeconds": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "run": {
       "type": "object",
-      "required": ["name", "seed", "orders", "scenario", "profile", "paced"],
+      "required": [
+        "name",
+        "seed",
+        "orders",
+        "scenario",
+        "profile",
+        "paced"
+      ],
       "properties": {
-        "name": {"type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", "maxLength": 40},
-        "seed": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
-        "orders": {"type": "integer", "minimum": 1, "maximum": 1000000},
-        "scenario": {"enum": ["steady", "flash-sale", "overload-recovery"]},
-        "profile": {"enum": ["normal", "correctness", "fixtures"]},
-        "paced": {"type": "boolean"},
-        "startDelay": {"type": "integer", "minimum": 0, "maximum": 120}
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+          "maxLength": 40
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "orders": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "scenario": {
+          "enum": [
+            "steady",
+            "flash-sale",
+            "overload-recovery"
+          ]
+        },
+        "profile": {
+          "enum": [
+            "normal",
+            "correctness",
+            "fixtures"
+          ]
+        },
+        "paced": {
+          "type": "boolean"
+        },
+        "startDelay": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "configuration": {
+          "type": "object"
+        },
+        "schedule": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
       }
     }
   }

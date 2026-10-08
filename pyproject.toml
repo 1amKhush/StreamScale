@@ -30,6 +30,7 @@ packages = ["src/streamscale", "tools/workload/streamscale_workload"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-ra -m 'not integration'"
 markers = ["integration: requires the running local Kafka/PostgreSQL stack"]
 

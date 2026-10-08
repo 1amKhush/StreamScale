@@ -19,7 +19,7 @@ def unused_port():
 
 
 @contextmanager
-def forward(role, port=None):
+def forward(role, port=None, resource=None):
     port = port or unused_port()
     with socket.socket() as probe:
         try:
@@ -39,7 +39,7 @@ def forward(role, port=None):
                 "--namespace",
                 NAMESPACE,
                 "port-forward",
-                f"service/streamscale-{role}",
+                resource or f"service/streamscale-{role}",
                 f"{port}:{remote}",
                 "--address",
                 "127.0.0.1",

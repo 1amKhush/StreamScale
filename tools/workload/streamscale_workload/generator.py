@@ -19,9 +19,24 @@ SCENARIOS = {
 INVALID_FAULTS = ("invalid_json", "invalid_encoding", "invalid_amount", "invalid_key")
 
 
-def schedule_us(index: int, scenario: str) -> int:
+def validate_schedule(schedule):
+    if not isinstance(schedule, list) or not schedule:
+        raise ValueError("Publishing schedule must be a nonempty list of [seconds, events/second]")
+    if any(
+        not isinstance(phase, (list, tuple))
+        or len(phase) != 2
+        or any(type(value) is not int or value <= 0 for value in phase)
+        for phase in schedule
+    ):
+        raise ValueError("Schedule durations and rates must be positive integers")
+    if sum(seconds * rate for seconds, rate in schedule) > 2_000_000:
+        raise ValueError("Publishing schedule exceeds two million logical events")
+    return schedule
+
+
+def schedule_us(index: int, scenario: str, schedule=None) -> int:
     elapsed = 0
-    for seconds, rate in SCENARIOS[scenario]:
+    for seconds, rate in SCENARIOS[scenario] if schedule is None else schedule:
         count = seconds * rate
         if index < count:
             return elapsed + index * 1_000_000 // rate
@@ -31,7 +46,7 @@ def schedule_us(index: int, scenario: str) -> int:
 
 
 def logical_workload(
-    seed: int, orders: int, scenario: str, profile: str, run_id: UUID
+    seed: int, orders: int, scenario: str, profile: str, run_id: UUID, schedule=None
 ) -> list[dict]:
     if type(seed) is not int or not 0 <= seed <= MAX_SEED:
         raise ValueError("Seed must be in [0, 2**63 - 1]")
@@ -41,7 +56,9 @@ def logical_workload(
         raise ValueError("Unsupported scenario or fault profile")
     if profile == "fixtures" and orders != 2:
         raise ValueError("The fixtures profile requires --orders 2")
-    schedule_us(orders * 2 - 1, scenario)
+    if schedule is not None:
+        validate_schedule(schedule)
+    schedule_us(orders * 2 - 1, scenario, schedule)
     rng = random.Random(seed)
     attempts = []
     for order in range(orders):
@@ -55,8 +72,8 @@ def logical_workload(
                     "event_id": str(event_id(run_id, index)),
                     "order_id": str(order_id(seed, order)),
                     "event_type": kind,
-                    "event_time_us": schedule_us(index, scenario),
-                    "scheduled_at_us": schedule_us(index, scenario),
+                    "event_time_us": schedule_us(index, scenario, schedule),
+                    "scheduled_at_us": schedule_us(index, scenario, schedule),
                     "order_amount": f"{cents // 100}.{cents % 100:02d}",
                     "fault": "none",
                     "duplicate": False,
@@ -113,20 +130,24 @@ def generate(
     profile="normal",
     mode="fixed",
     group_id=None,
+    schedule=None,
+    configuration=None,
 ) -> dict:
     if mode not in {"fixed", "cpu-hpa", "lag-keda"}:
         raise ValueError("Unsupported experiment mode")
     if group_id is not None and (not group_id.strip() or len(group_id) > 255):
         raise ValueError("Consumer group must be nonempty and at most 255 characters")
     run_id = new_run_id()
-    attempts = logical_workload(seed, orders, scenario, profile, run_id)
+    if configuration is not None and not isinstance(configuration, dict):
+        raise ValueError("Execution configuration must be a JSON object")
+    attempts = logical_workload(seed, orders, scenario, profile, run_id, schedule)
     directory.mkdir(parents=True, exist_ok=False)
     with (directory / "manifest.jsonl").open("w", encoding="utf-8") as stream:
         for attempt in attempts:
             stream.write(json.dumps(attempt, sort_keys=True) + "\n")
     run = {
         "artifact_version": 1,
-        "generator_version": 1,
+        "generator_version": 2,
         "run_id": str(run_id),
         "group_id": group_id or f"streamscale.run.{run_id}",
         "seed": seed,
@@ -134,6 +155,8 @@ def generate(
         "scenario": scenario,
         "profile": profile,
         "mode": mode,
+        "publishing_schedule": schedule or SCENARIOS[scenario],
+        "experiment_configuration": configuration or {},
         "created_at": utc_now(),
         "status": "generated",
         "attempts": len(attempts),

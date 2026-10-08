@@ -12,16 +12,17 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M6
+StreamScale launcher — integrated milestones M0–M7
 
 Usage: ./streamscale.sh [command] [--no-ui]
 
-  all [--no-ui]  Setup, local checks, cluster demo, three scaling modes, dashboards.
+  all [--no-ui]  Setup, checks, cluster/scaling demos, measured matrix, dashboards.
                 This is the default. --no-ui finishes without opening port forwards.
   local         Setup and run a fresh local Kafka/PostgreSQL fixture demo.
   check         Start local dependencies and run unit, lint and live integration checks.
   cluster       Setup and deploy/verify a fresh kind cluster execution.
   scaling       Exercise fixed/CPU-HPA/lag-KEDA independently; retain replica evidence.
+  experiments [--fresh]  Pilot and 27 measured runs; resume/reuse retained evidence.
   verify        Verify the current fresh cluster execution without republishing.
   inspect-local Reinspect the latest local demo made by this launcher.
   ui            Open Grafana/Prometheus forwards; Ctrl+C closes the forwards.
@@ -39,6 +40,8 @@ Grafana login: artifacts/k8s/credentials.json
 
 Close the dashboard terminal with Ctrl+C before running stop in another terminal.
 all/local/cluster create fresh executions and preserve earlier runs.
+experiments uses a frozen pilot-calibrated protocol and may take over an hour.
+--fresh creates a new measured campaign while retaining earlier results.
 After resume, use all or cluster for a fresh counter-based acceptance check.
 Cluster verification waits up to 60 seconds for metrics to reflect SQL reconciliation.
 HELP
@@ -197,8 +200,13 @@ resume() {
 command="${1:-all}"
 if [[ $# -gt 0 ]]; then shift; fi
 no_ui=false
+fresh=false
 if [[ "$command" == all && "${1:-}" == --no-ui ]]; then
     no_ui=true
+    shift
+fi
+if [[ "$command" == experiments && "${1:-}" == --fresh ]]; then
+    fresh=true
     shift
 fi
 if [[ $# -gt 0 ]]; then
@@ -219,14 +227,21 @@ case "$command" in
         cluster_demo
         printf '\n[M6] Exercising the three isolated scaling modes and replica bounds.\n'
         make scaling
+        printf '\n[M7] Running or verifying the pilot and frozen 27-run experiment matrix.\n'
+        make experiments
         status
-        printf '\nM0–M6 passed. Run artifacts are under artifacts/.\n'
+        printf '\nM0–M7 passed. Run artifacts are under artifacts/.\n'
         if [[ "$no_ui" == false ]]; then ui; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
     check) setup; local_start; checks ;;
     cluster) setup; cluster_demo ;;
     scaling) setup; start_cluster_nodes; make scaling ;;
+    experiments)
+        setup
+        start_cluster_nodes
+        if [[ "$fresh" == true ]]; then make experiments-fresh; else make experiments; fi
+        ;;
     verify) require_command make; make k8s-verify ;;
     inspect-local)
         require_command uv

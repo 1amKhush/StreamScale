@@ -34,6 +34,8 @@ def main() -> int:
     workload.add_argument(
         "--group-id", help="Unique execution group, also used by the Kafka scaler"
     )
+    workload.add_argument("--schedule", type=Path, help="Versioned JSON publishing phases")
+    workload.add_argument("--configuration", type=Path, help="Frozen execution metadata JSON")
     publisher = commands.add_parser("publish", help="Register and publish this execution once")
     publisher.add_argument("--run-dir", type=Path, required=True)
     publisher.add_argument(
@@ -64,6 +66,8 @@ def main() -> int:
     )
     inspector.add_argument("--run-dir", type=Path, required=True)
     inspector.add_argument("--group")
+    measurements = commands.add_parser("measurements", help="Export committed unique SQL timings")
+    measurements.add_argument("--run-dir", type=Path, required=True)
     initializer = commands.add_parser("bootstrap", help="Wait for cluster Kafka/DB and bootstrap")
     initializer.add_argument("--timeout", type=float, default=180)
     for name in ("serve", "exporter"):
@@ -90,6 +94,10 @@ def main() -> int:
                 args.profile,
                 args.mode,
                 group_id=args.group_id,
+                schedule=json.loads(args.schedule.read_text()) if args.schedule else None,
+                configuration=json.loads(args.configuration.read_text())
+                if args.configuration
+                else None,
             )
         elif args.command == "publish":
             from streamscale_workload.publisher import publish
@@ -117,6 +125,10 @@ def main() -> int:
             from streamscale.inspection import inspect_run
 
             result = inspect_run(args.run_dir, Settings.from_env(), args.group)
+        elif args.command == "measurements":
+            from streamscale.measurements import export_measurements
+
+            result = export_measurements(args.run_dir, Settings.from_env())
         elif args.command == "bootstrap":
             from streamscale.service import bootstrap
 
