@@ -1,4 +1,4 @@
-# Run and stop StreamScale through M7
+# Run and stop StreamScale through M8
 
 Start Docker Engine/Desktop first. You need Bash, uv and make installed.
 The launcher checks prerequisites and creates the ignored `.env` from
@@ -12,7 +12,8 @@ From the repository root, run everything with:
 
 This performs setup, local smoke and fixture demonstration, unit/lint/integration
 checks (including M4 faults), cluster image build/deployment, SQL/metrics/Grafana
-verification, three scaling-mode exercises, the measured experiment matrix, and finally dashboard access. The last step stays in the terminal
+verification, three scaling-mode exercises, the measured experiment matrix,
+plots/report/presentation generation, and finally dashboard access. The last step stays in the terminal
 until Ctrl+C. First-time image/tool downloads can take several minutes. For a
 complete check without starting dashboard forwards:
 
@@ -50,7 +51,7 @@ In Grafana, choose the current run UUID from the Run ID dropdown. The verified
 UUID and current cluster directory are printed by the launcher; metadata also
 lives in `artifacts/k8s/deployment.json`. This is an analytics pipeline with
 Grafana monitoring and SQL/artifact inspection. The M7 runner also produces a
-pilot and 27 measured runs; M8 analysis follows once those measurements pass.
+pilot and 27 measured runs; M8 generates the analysis only once the full matrix passes.
 
 To run the individual stages manually instead of the launcher:
 
@@ -92,6 +93,13 @@ Use `./streamscale.sh experiments --fresh` to retain previous evidence and
 measure a new campaign. Raw evidence and CSV files live under
 `artifacts/experiments/`; `latest.path` identifies the current campaign.
 See [the frozen measurement protocol](experiments.md).
+
+M8 uses `./streamscale.sh analysis` or `make analysis`; it requires complete,
+audited M7 evidence and can run with the cluster stopped. The report, companion
+CSV files, SVG/PNG charts and presentation PDF appear in `docs/results/current/`.
+The plotting environment has its own locked dependencies and does not alter
+the consumer image. See [reproduction](reproduction.md) and
+[presentation steps](presentation.md).
 
 `make k8s-up` installs kind/kubectl/Helm automatically when missing. Standalone
 `./streamscale.sh cluster` also starts retained kind nodes before deployment,

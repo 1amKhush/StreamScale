@@ -1,11 +1,13 @@
 # StreamScale
 
 A Python Kafka-to-PostgreSQL flash-sale analytics experiment comparing fixed,
-CPU-HPA and lag-KEDA consumer scaling. **M0–M6 are validated; M7 is in progress:** the contract,
+CPU-HPA and lag-KEDA consumer scaling. **M0–M6 are validated; M7/M8 are in progress:** the contract,
 local pipeline, seeded publisher, safe fault/replay handling, and a working
 kind/Helm deployment with Prometheus and Grafana. M6 adds mutually exclusive
 fixed, CPU-HPA and lag-KEDA controllers. The M7 runner adds a pilot-calibrated,
 frozen 27-run matrix with SQL latency measurements and raw evidence.
+M8 produces standalone scientific plots, a report and a presentation PDF after
+the complete matrix passes its independent evidence audit.
 
 One command runs every integrated stage and opens the dashboards:
 
@@ -26,6 +28,9 @@ the completed run; `./streamscale.sh verify` repeats that check without republis
 `./streamscale.sh experiments` runs/resumes the measured campaign and verifies
 preserved checksums when reusing completed results. Use `--fresh` for a new
 campaign. See [experiment protocol and evidence](docs/experiments.md).
+`./streamscale.sh analysis` regenerates the report from completed raw measurements.
+Results are written to `docs/results/current/`; see [reproduction](docs/reproduction.md)
+and [the presentation walkthrough](docs/presentation.md).
 
 Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker Engine with
 Docker Compose, and `make`. Run these commands from the repository root:

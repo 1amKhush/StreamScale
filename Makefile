@@ -2,7 +2,7 @@ COMPOSE = docker compose --env-file .env -f deploy/local/compose.yaml
 RUN = uv run --frozen --env-file .env
 RUN_DIR ?= artifacts/demo
 
-.PHONY: install up bootstrap smoke demo test integration faults check down logs k8s-tools k8s-up k8s-verify k8s-ui k8s-status k8s-logs k8s-addons scaling experiments experiments-fresh experiment-audit
+.PHONY: install up bootstrap smoke demo test integration faults check down logs k8s-tools k8s-up k8s-verify k8s-ui k8s-status k8s-logs k8s-addons scaling experiments experiments-fresh experiment-audit analysis
 
 install:
 	uv sync --frozen
@@ -79,3 +79,6 @@ experiments-fresh: .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
 
 experiment-audit:
 	uv run --frozen python -m experiments.evidence
+
+analysis:
+	uv run --project experiments/analysis --frozen python -m experiments.analyze

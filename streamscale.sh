@@ -12,17 +12,18 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M7
+StreamScale launcher — integrated milestones M0–M8
 
 Usage: ./streamscale.sh [command] [--no-ui]
 
-  all [--no-ui]  Setup, checks, cluster/scaling demos, measured matrix, dashboards.
+  all [--no-ui]  Setup, checks, scaling, measured matrix, plots/report, dashboards.
                 This is the default. --no-ui finishes without opening port forwards.
   local         Setup and run a fresh local Kafka/PostgreSQL fixture demo.
   check         Start local dependencies and run unit, lint and live integration checks.
   cluster       Setup and deploy/verify a fresh kind cluster execution.
   scaling       Exercise fixed/CPU-HPA/lag-KEDA independently; retain replica evidence.
   experiments [--fresh]  Pilot and 27 measured runs; resume/reuse retained evidence.
+  analysis      Audit completed measurements and regenerate SVG/PNG/PDF/report.
   verify        Verify the current fresh cluster execution without republishing.
   inspect-local Reinspect the latest local demo made by this launcher.
   ui            Open Grafana/Prometheus forwards; Ctrl+C closes the forwards.
@@ -229,8 +230,10 @@ case "$command" in
         make scaling
         printf '\n[M7] Running or verifying the pilot and frozen 27-run experiment matrix.\n'
         make experiments
+        printf '\n[M8] Auditing measurements and generating plots, report and presentation.\n'
+        make analysis
         status
-        printf '\nM0–M7 passed. Run artifacts are under artifacts/.\n'
+        printf '\nM0–M8 passed. Report: docs/results/current/report.md; raw evidence: artifacts/.\n'
         if [[ "$no_ui" == false ]]; then ui; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
@@ -242,6 +245,7 @@ case "$command" in
         start_cluster_nodes
         if [[ "$fresh" == true ]]; then make experiments-fresh; else make experiments; fi
         ;;
+    analysis) require_command uv; require_command make; make analysis ;;
     verify) require_command make; make k8s-verify ;;
     inspect-local)
         require_command uv
