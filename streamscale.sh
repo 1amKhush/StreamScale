@@ -14,7 +14,7 @@ usage() {
     cat <<'HELP'
 StreamScale launcher — integrated milestones M0–M8
 
-Usage: ./streamscale.sh [command] [--no-ui]
+Usage: ./streamscale.sh [command] [options]
 
   all [--no-ui]  Setup, checks, scaling, measured matrix, plots/report, dashboards.
                 This is the default. --no-ui finishes without opening port forwards.
@@ -26,7 +26,9 @@ Usage: ./streamscale.sh [command] [--no-ui]
   analysis      Audit completed measurements and regenerate SVG/PNG/PDF/report.
   verify        Verify the current fresh cluster execution without republishing.
   inspect-local Reinspect the latest local demo made by this launcher.
-  ui            Open Grafana/Prometheus forwards; Ctrl+C closes the forwards.
+  ui [--grafana-port PORT] [--prometheus-port PORT]
+                Open dashboard forwards; Ctrl+C closes this command's forwards.
+                all accepts these port options too. Use 0 for an available port.
   status        Show this project's containers and, when running, Kubernetes resources.
   stop          Stop local services and kind node containers; keep all stored data.
   stop-local    Stop only the local Compose services; keep their data.
@@ -35,8 +37,8 @@ Usage: ./streamscale.sh [command] [--no-ui]
   help          Show this help.
 
 Prerequisites: Bash, uv, make, and a running Docker Engine with Compose.
-Grafana: http://127.0.0.1:13000/d/streamscale
-Prometheus: http://127.0.0.1:19090
+Preferred ports: Grafana 13000, Prometheus 19090.
+Busy default ports automatically fall back; open the URLs printed by ui.
 Grafana login: artifacts/k8s/credentials.json
 
 Close the dashboard terminal with Ctrl+C before running stop in another terminal.
@@ -172,7 +174,7 @@ status() {
 ui() {
     require_command uv
     # Replace the launcher so Ctrl+C goes to the foreground dashboard command.
-    exec uv run --frozen python deploy/k8s/access.py
+    exec uv run --frozen python deploy/ui.py "${ui_options[@]}"
 }
 
 resume() {
@@ -202,17 +204,46 @@ command="${1:-all}"
 if [[ $# -gt 0 ]]; then shift; fi
 no_ui=false
 fresh=false
-if [[ "$command" == all && "${1:-}" == --no-ui ]]; then
-    no_ui=true
-    shift
-fi
-if [[ "$command" == experiments && "${1:-}" == --fresh ]]; then
-    fresh=true
-    shift
-fi
-if [[ $# -gt 0 ]]; then
-    printf 'Unexpected argument: %s\n' "$1" >&2
-    usage >&2
+ui_options=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-ui)
+            if [[ "$command" != all ]]; then
+                printf '%s is only supported with all.\n' "$1" >&2
+                exit 2
+            fi
+            no_ui=true
+            shift
+            ;;
+        --fresh)
+            if [[ "$command" != experiments ]]; then
+                printf '%s is only supported with experiments.\n' "$1" >&2
+                exit 2
+            fi
+            fresh=true
+            shift
+            ;;
+        --grafana-port|--prometheus-port)
+            if [[ "$command" != ui && "$command" != all ]]; then
+                printf '%s is only supported with ui or all.\n' "$1" >&2
+                exit 2
+            fi
+            if [[ $# -lt 2 || ! "$2" =~ ^[0-9]{1,5}$ ]] || ((10#$2 > 65535)); then
+                printf '%s requires a port from 0 to 65535 (0 chooses an available port).\n' "$1" >&2
+                exit 2
+            fi
+            ui_options+=("$1" "$2")
+            shift 2
+            ;;
+        *)
+            printf 'Unexpected argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+if [[ "$no_ui" == true && ${#ui_options[@]} -gt 0 ]]; then
+    printf 'Dashboard port options cannot be combined with --no-ui.\n' >&2
     exit 2
 fi
 

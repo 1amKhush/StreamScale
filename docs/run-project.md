@@ -41,10 +41,24 @@ incorrect counters or missing series still fail with their observed values.
 To repeat verification without rebuilding or republishing, run
 `./streamscale.sh verify`.
 
-Open the dashboard while the UI command runs:
+Open the URLs printed by the UI command. It prefers these loopback addresses:
 
 - Grafana: http://127.0.0.1:13000/d/streamscale
 - Prometheus: http://127.0.0.1:19090
+
+If either default port is occupied, the command chooses an available port and
+prints the actual URL. Existing listeners keep running. To choose ports explicitly:
+
+```sh
+./streamscale.sh ui --grafana-port 13001 --prometheus-port 19091
+# Or let the operating system choose both ports:
+./streamscale.sh ui --grafana-port 0 --prometheus-port 0
+```
+
+The same port options work with `./streamscale.sh all`. An occupied explicitly
+chosen port produces a short error with the alternative command options.
+If `M0–M8 passed` precedes a dashboard error, the checks and report generation
+have completed; reopen access with `./streamscale.sh ui` without repeating the run.
 
 View `artifacts/k8s/credentials.json` for Grafana's generated username/password.
 In Grafana, choose the current run UUID from the Run ID dropdown. The verified
@@ -174,8 +188,17 @@ The final complete M0–M8 launcher passed on 2026-10-08 with 144 unit tests,
 28 live integration tests and clean Ruff checks. It verified fresh M5/M6 runs,
 fixed/CPU-HPA/lag-KEDA isolation with peaks of 1/3/3 ready consumers, the retained
 27-run matrix and the regenerated M8 report/PDF. Its console log is
-`artifacts/m8-full-check.log`. The current fixed demo is
+`artifacts/m8-full-check.log`. That acceptance left the fixed demo
 `run-20261008131220-59df711a`, UUID `427bb2f5-e97c-4232-b6f1-03164fe2eedb`.
 Every measured run reconciled and survived the controlled restart; the matrix
 contains 249,048 unique facts. See [M7 evidence](m7-evidence.md),
 [M8 evidence](m8-evidence.md) and [the report](results/current/report.md).
+
+The dashboard port-conflict fix passed complete launcher acceptance on
+2026-10-10 with 161 unit tests, 28 live integration tests, clean Ruff checks,
+all three scaling modes and the retained 27-run audit. See
+`artifacts/ui-fix-full-check.log`. Live checks with both default ports occupied
+verified alternate URLs, Grafana/Prometheus health, and scoped Ctrl+C/SIGTERM
+cleanup; evidence is in `artifacts/ui-port-conflict-check.json`. The acceptance
+left fixed demo `run-20261010035945-18f5271f`, UUID
+`fbd2fe2b-bf4d-46bb-8b6f-342a0d5d32ff`, with 396 facts, 200 states and zero lag.

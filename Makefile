@@ -55,7 +55,7 @@ k8s-verify:
 	uv run --frozen python deploy/k8s/verify.py
 
 k8s-ui:
-	uv run --frozen python deploy/k8s/access.py
+	./streamscale.sh ui
 
 k8s-status:
 	uv run --frozen python deploy/k8s/manage.py status

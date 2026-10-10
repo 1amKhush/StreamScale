@@ -83,3 +83,31 @@ Bulky raw evidence and credentials remain ignored; compact measured results
 and plots are committed. Review used local code inspection, regression tests,
 live reconciliation and artifact inspection; CodeRabbit remote review was
 unavailable because its optional CLI was signed out.
+
+## Dashboard access follow-up, 2026-10-10
+
+The user's complete M0–M8 run passed before UI startup failed because loopback
+port 13000 was occupied. Interactive access now prefers 13000/19090 and falls
+back to available ports when defaults are busy, printing the actual URLs.
+`streamscale.sh ui` and `all` accept explicit `--grafana-port` and
+`--prometheus-port` options, including 0 for automatic allocation. An occupied
+explicit port fails with a short actionable error. `make k8s-ui` uses the
+maintained launcher. README, launcher help and run instructions are synchronized.
+
+Interactive startup lives in `deploy/ui.py` and uses the existing forward
+context manager. The measured runner and its forwarding primitive were left
+unchanged, so the preserved experiment fingerprint remains valid. No archived
+measurement or report artifact changed during regeneration.
+
+`./streamscale.sh all --no-ui` exited 0, observed at 2026-10-10T04:00:07Z:
+161 unit tests, 28 live integration tests, clean Ruff, fresh M5 reconciliation,
+M6 peaks 1/3/3 with 5,940 facts in each mode, full retained M7 audit and M8
+regeneration. The console log is `artifacts/ui-fix-full-check.log`.
+
+Live conflict checks held both default ports open while verifying healthy
+Grafana/Prometheus responses on alternate ports. SIGINT and SIGTERM each closed
+only the new command's forwards; the occupied listeners remained accessible.
+An explicitly requested occupied port returned status 1 without a traceback.
+Evidence is in `artifacts/ui-port-conflict-check.json`. Services, volumes, nodes
+and earlier run data were retained. Local review and regression checks passed;
+CodeRabbit remained signed out.

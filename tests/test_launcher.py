@@ -132,7 +132,7 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
     directory = (checkout / "artifacts/launcher/last-local-run.path").read_text().strip()
     assert Path(directory).parent.is_dir()
     assert ["make", "demo", f"RUN_DIR={directory}"] in calls
-    assert not any("access.py" in argument for call in calls for argument in call)
+    assert not any("deploy/ui.py" in argument for call in calls for argument in call)
     # The generated directory itself must not exist before the generator runs.
     assert not Path(directory).exists()
 
@@ -160,3 +160,37 @@ def test_docker_unavailable_is_actionable_and_never_stops_anything(launcher):
     assert result.returncode != 0
     assert "Start Docker" in result.stderr
     assert not any("stop" in call for call in calls)
+
+
+@pytest.mark.parametrize("command", ["ui", "all"])
+def test_dashboard_ports_reach_the_ui_entry_point(launcher, command):
+    result, calls, _ = launcher(command, "--grafana-port", "13001", "--prometheus-port", "0")
+    assert result.returncode == 0, result.stderr
+    assert calls[-1] == [
+        "uv",
+        "run",
+        "--frozen",
+        "python",
+        "deploy/ui.py",
+        "--grafana-port",
+        "13001",
+        "--prometheus-port",
+        "0",
+    ]
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ("ui", "--grafana-port"),
+        ("ui", "--grafana-port", "65536"),
+        ("all", "--grafana-port", "-1"),
+        ("all", "--prometheus-port", "not-a-port"),
+        ("all", "--no-ui", "--grafana-port", "0"),
+        ("verify", "--grafana-port", "13001"),
+    ],
+)
+def test_invalid_ui_options_fail_before_services_or_publication(launcher, arguments):
+    result, calls, _ = launcher(*arguments)
+    assert result.returncode == 2
+    assert calls == []

@@ -10,7 +10,7 @@ All 27 measured cells passed reconciliation and controlled restart; see
 [M7 evidence](docs/m7-evidence.md).
 M8 produces standalone scientific plots, a report and a presentation PDF after
 the complete matrix passes its independent evidence audit.
-The complete launcher passed with 144 unit tests, 28 live integration tests and
+The complete launcher passed with 161 unit tests, 28 live integration tests and
 all three scaling modes. See [the measured report](docs/results/current/report.md),
 [presentation PDF](docs/results/current/presentation.pdf) and [M8 evidence](docs/m8-evidence.md).
 
@@ -24,6 +24,8 @@ It prepares the environment, checks the local pipeline and fault cases, deploys
 and verifies a fresh cluster run, then keeps dashboard forwards open. Add
 `--no-ui` to finish after verification. See [the complete run guide](docs/run-project.md)
 for commands from a fresh checkout, expected results and shutdown/resume.
+Dashboard access chooses another port if a default is busy; open the printed URLs.
+Use `./streamscale.sh ui --grafana-port 13001 --prometheus-port 19091` to choose ports.
 `./streamscale.sh stop` stops both project stacks while retaining data;
 `./streamscale.sh resume` starts their retained services again.
 Cluster verification waits for refreshed Prometheus samples before checking
@@ -90,8 +92,9 @@ states, eight duplicates and four invalid/DLQ sources**.
 `make k8s-verify` checks SQL/DLQ results, one ready consumer, metric values and
 run labels, scrape health and Grafana provisioning. It copies raw evidence to
 `artifacts/k8s/<run-name>/`. `make k8s-ui` keeps loopback port forwards running:
-Grafana at **http://127.0.0.1:13000/d/streamscale**, Prometheus at
-**http://127.0.0.1:19090**. Grafana's generated login is in
+Grafana prefers **http://127.0.0.1:13000/d/streamscale**, Prometheus prefers
+**http://127.0.0.1:19090**; busy defaults fall back to the URLs printed by the command.
+Grafana's generated login is in
 `artifacts/k8s/credentials.json`; keep the command running while viewing it.
 Use `make k8s-status` or `make k8s-logs` to inspect the service.
 
