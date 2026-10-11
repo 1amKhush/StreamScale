@@ -126,6 +126,26 @@ acknowledgement log and still drains and reconciles. Only one console server may
 run at a time. Buttons that appear in place of the one just pressed ignore clicks
 for 0.7 s, so a double click cannot pause a sale it just started.
 
+## Staffing: scaling modes and manual override (M12)
+
+The **Staffing** tab (System lens: *Scaling*) chooses how many console consumers run:
+
+| Mode | Replicas | Who decides |
+| --- | --- | --- |
+| Fixed | 1 | Nobody: the baseline. |
+| Manual | 0–3 | You. Zero stops processing; it is not a crash. |
+| CPU-HPA | 1–3 | Kubernetes, from CPU use relative to the pod's request (target 60%). |
+| Lag-KEDA | 1–3 | KEDA, from consumer-group lag per replica (threshold 100). |
+
+From CPU-HPA or lag-KEDA, **Manual override** removes the autoscaler first and
+then sets replicas directly, so two controllers never compete; *Release* recreates
+it. Every change is a verified transition: the tab shows its steps, then which
+controllers own the console Deployment and whether that matches the mode. A
+failed or interrupted transition is shown with a *Reapply* button. Settings
+(CPU target, lag threshold, scale-down wait, minimum and maximum, never above three)
+apply to the autoscaled modes. Desired replicas, ready pods and group members are
+always shown separately, because they differ during scale-up and rebalances.
+
 ## What is real
 
 - Values come from the cluster. The in-cluster agent samples Kafka offsets and

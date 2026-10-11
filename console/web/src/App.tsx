@@ -11,6 +11,7 @@ import { Inspector } from "./components/Inspector";
 import { SaleBar } from "./components/SaleBar";
 import { Signals } from "./components/Signals";
 import { SalePanel } from "./components/SalePanel";
+import { ScalingPanel } from "./components/ScalingPanel";
 
 function stored<T extends string>(key: string, fallback: T, allowed: readonly T[]): T {
   try {
@@ -106,7 +107,7 @@ export default function App() {
               <Inspector selected={selected} floor={floor} sample={live.sample} onClose={() => setSelected(null)} />
             )}
             {tab === "sale" && <SalePanel live={live} />}
-            {tab === "scaling" && <p className="hint">Scaling controls arrive with M12.</p>}
+            {tab === "scaling" && <ScalingPanel live={live} />}
             {tab === "faults" && <p className="hint">The failure lab arrives with M13.</p>}
           </aside>
         </main>

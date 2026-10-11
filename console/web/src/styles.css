@@ -1340,3 +1340,37 @@ button.danger {
 .checks .bad {
   color: var(--crit);
 }
+
+/* ---- M12: staffing (scaling) panel ---- */
+
+.mode-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.replica-buttons {
+  display: inline-flex;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.replica-buttons button {
+  min-width: 42px;
+  font-weight: 600;
+}
+
+.replica-buttons button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+.override-box {
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
