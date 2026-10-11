@@ -8,7 +8,7 @@ import urllib.request
 import pytest
 from streamscale_console.cluster import AgentForward, kubectl
 
-from .conftest import kube_json
+from .conftest import kube_json, wait_idle
 
 pytestmark = pytest.mark.live
 
@@ -35,6 +35,7 @@ def test_real_cluster_state_reaches_the_console(console):
 
 
 def test_agent_loss_is_shown_as_unreachable_then_recovers(console):
+    wait_idle(console)  # never interrupt another test's sale
     before = console.state()["points"][-1]["sequence"]
     kubectl("scale", "deployment/streamscale-console-agent", "--replicas=0")
     try:

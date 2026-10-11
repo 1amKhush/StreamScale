@@ -37,9 +37,15 @@ def stage(name, arguments, results, cwd=ROOT, env=None):
         raise SystemExit(f"Console check failed at {name}; see the output above")
 
 
+def _record(path):
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 def start_server():
     record = ARTIFACTS / "server.json"
-    record.unlink(missing_ok=True)
     log = (ARTIFACTS / "check-server.log").open("w")
     process = subprocess.Popen(
         [sys.executable, "-m", "streamscale_console", "serve", "--port", "0"],
@@ -51,8 +57,9 @@ def start_server():
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise SystemExit("Console server exited during startup; see artifacts/console")
-        if record.exists():
-            url = json.loads(record.read_text())["url"]
+        details = _record(record)
+        if details and details.get("pid") == process.pid:
+            url = details["url"]
             try:
                 urllib.request.urlopen(url + "/health", timeout=2).read()
                 return process, log

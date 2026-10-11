@@ -74,7 +74,6 @@ class ConsoleClient:
 def console_server():
     """Start a console server on an available port for the whole live session."""
     record_path = ARTIFACTS / "server.json"
-    record_path.unlink(missing_ok=True)
     log = (ARTIFACTS / "live-test-server.log").open("w")
     process = subprocess.Popen(
         [sys.executable, "-m", "streamscale_console", "serve", "--port", "0"],
@@ -84,11 +83,16 @@ def console_server():
         env=os.environ | {"PYTHONUNBUFFERED": "1"},
     )
     deadline = time.monotonic() + 60
-    while not record_path.exists():
+    record = None
+    while record is None:
         if process.poll() is not None or time.monotonic() > deadline:
             raise RuntimeError("Console server did not start; see artifacts/console")
+        try:
+            found = json.loads(record_path.read_text())
+            record = found if found.get("pid") == process.pid else None
+        except (OSError, json.JSONDecodeError):
+            pass
         time.sleep(0.2)
-    record = json.loads(record_path.read_text())
     while True:
         try:
             urllib.request.urlopen(record["url"] + "/health", timeout=2).read()
@@ -115,3 +119,16 @@ def console(console_server):
 
 def kube_json(*arguments):
     return json.loads(kubectl(*arguments, "-o", "json").stdout)
+
+
+def wait_idle(console, timeout=480):
+    """Let any earlier sale finish draining so a test starts from an empty floor."""
+    return console.wait(
+        lambda state: (
+            state["sales"]["session"] is None
+            and (state["sample"].get("sale") or {}).get("state")
+            in {None, "idle", "finished", "failed"}
+        ),
+        timeout=timeout,
+        describe="the previous sale to finish draining",
+    )

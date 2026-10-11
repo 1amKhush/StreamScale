@@ -27,7 +27,9 @@ class FakeForward:
 class FakeHub:
     def __init__(self):
         self.listeners = []
+        self.sample_listeners = []
         self.forward = FakeForward()
+        self.status = {"agent": "connected"}
         self.points = []
         self.latest = None
         self.agent = None

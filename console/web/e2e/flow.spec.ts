@@ -1,0 +1,60 @@
+import { expect, test, type Page } from "@playwright/test";
+import { evidence, login, server } from "./session";
+
+async function startedSales(page: Page) {
+  const response = await page.request.get(`${server().url}/api/state`);
+  const state = await response.json();
+  return state.journal.filter((entry: { kind?: string; state?: string }) => entry.kind === "sale.start" && entry.state === "succeeded").length;
+}
+
+async function lag(page: Page, lane: number) {
+  const text = await page.getByTestId(`lane-${lane}-lag`).innerText();
+  return Number(text.replace(/,/g, "")) || 0;
+}
+
+test("a real flash sale moves the floor, stays bounded under burst, and drains", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(String(error)));
+  await login(page);
+  await expect(page.getByTestId("start-sale")).toBeEnabled({ timeout: 300_000 });
+  const before = await startedSales(page);
+  await page.getByLabel("Sale preset").selectOption("flash-sale");
+  // A double click must start exactly one sale.
+  await page.getByTestId("start-sale").dblclick();
+  await expect(page.getByTestId("sale-state")).toBeVisible({ timeout: 60_000 });
+
+  for (const lane of [0, 1, 2]) {
+    await expect.poll(() => lag(page, lane), { timeout: 120_000, intervals: [1000] }).toBeGreaterThan(200);
+  }
+  await expect(page.getByTestId("node-cashier-" + (await firstCashier(page)))).toContainText("Lane 0");
+  const edges = await page.locator(".react-flow__edge").count();
+  const particles = await page.locator("circle.particle").count();
+  expect(particles).toBeGreaterThan(0);
+  expect(particles).toBeLessThanOrEqual(edges * 6);
+  await page.screenshot({ path: `${evidence}/flow-burst.png`, fullPage: true });
+
+  await page.getByRole("button", { name: /^Motion on/ }).click();
+  await expect(page.locator("circle.particle")).toHaveCount(0);
+  const facts = await page.getByTestId("ledger-facts").innerText();
+  await expect.poll(() => page.getByTestId("ledger-facts").innerText(), { timeout: 15_000 }).not.toBe(facts);
+
+  await page.getByTestId("node-ledger").click();
+  await expect(page.locator("table.facts tbody tr").first()).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("node-desk").click();
+  await expect(page.getByText(/from partition \d+ offset \d+/).first()).toBeVisible({ timeout: 15_000 });
+  await page.screenshot({ path: `${evidence}/flow-inspector-desk.png`, fullPage: true });
+
+  expect(await startedSales(page)).toBe(before + 1);
+  await page.getByTestId("stop-sale").click();
+  await expect(page.getByTestId("sale-draining")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByTestId("start-sale")).toBeVisible({ timeout: 420_000 });
+  await expect(page.getByTestId("timeline")).toContainText("drained; backlog is zero");
+  for (const lane of [0, 1, 2]) expect(await lag(page, lane)).toBe(0);
+  await page.screenshot({ path: `${evidence}/flow-drained.png`, fullPage: true });
+  expect(errors).toEqual([]);
+});
+
+async function firstCashier(page: Page) {
+  const id = await page.locator("[data-testid^='node-cashier-']").first().getAttribute("data-testid");
+  return (id ?? "").replace("node-cashier-", "");
+}

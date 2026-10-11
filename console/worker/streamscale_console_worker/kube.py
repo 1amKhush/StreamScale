@@ -237,9 +237,16 @@ class Kube:
             if error.status != 404:
                 raise
             return self.request("POST", collection, body)
-        body = json.loads(json.dumps(body))
-        body["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
-        return self.request("PUT", f"{collection}/{name}", body)
+        # Merge-patch the spec: a full replace would drop controller-owned metadata such
+        # as KEDA's finalizer. The precondition guards against a concurrent edit.
+        patch = {
+            "metadata": {
+                "labels": body["metadata"].get("labels", {}),
+                "resourceVersion": current["metadata"]["resourceVersion"],
+            },
+            "spec": body["spec"],
+        }
+        return self.request("PATCH", f"{collection}/{name}", patch, "application/merge-patch+json")
 
     def _delete(self, path):
         try:

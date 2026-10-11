@@ -8,6 +8,7 @@ import signal
 import socket
 import sys
 from contextlib import ExitStack
+from pathlib import Path
 
 import uvicorn
 
@@ -45,10 +46,30 @@ def open_dashboards(stack, grafana_port=None, prometheus_port=None):
     }
 
 
+def running_server(record_path):
+    """Another live console server, from its record; stale records are ignored."""
+    try:
+        record = json.loads(record_path.read_text())
+        pid = int(record["pid"])
+        command = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except (OSError, ValueError, KeyError, json.JSONDecodeError):
+        return None
+    if pid != os.getpid() and b"streamscale_console" in command and b"serve" in command:
+        return record
+    return None
+
+
 def serve(args):
     from streamscale_console.app import Console, create_app, register_core_operations
     from streamscale_console.components import attach
 
+    other = running_server(ARTIFACTS / "server.json")
+    if other is not None:
+        # Two servers would compete for session records and the cluster workflow lock.
+        raise SystemExit(
+            f"Another console server is running (pid {other['pid']}) at {other['url']}. "
+            "Use it, or stop it with Ctrl+C first."
+        )
     port = choose_port(args.port)
     token = secrets.token_urlsafe(32)
     console = Console(token, port)

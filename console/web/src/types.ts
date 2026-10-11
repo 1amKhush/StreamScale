@@ -13,7 +13,15 @@ export type PodPoint = {
   deleting: boolean;
   restarts: number;
   cpu_pct: number | null;
+  cpu_request_pct: number | null;
+  cpu_cores: number | null;
   cpu_limit: string | null;
+  cpu_request: string | null;
+  ip: string | null;
+  waiting_reason: string | null;
+  last_termination: { reason: string | null; exit_code: number | null; finished_at: string | null } | null;
+  active_faults: string[] | null;
+  run_id: string | null;
   rss_bytes: number | null;
   state: string | null;
   assigned: number[] | null;
@@ -42,6 +50,9 @@ export type Point = {
     acknowledged: number | null;
     accepted_sql: number | null;
     processed: number | null;
+    arrival_by_partition: number[] | null;
+    drain_by_partition: number[] | null;
+    dead_letters: number | null;
   };
   lag: number[] | null;
   lag_total: number | null;
@@ -61,16 +72,90 @@ export type Point = {
   restarts: number;
   drain_estimate_s: number | null;
   signals: Signal[];
-  sale?: SalePoint | null;
-  mode?: string | null;
+  sale: SalePoint | null;
+  mode: string | null;
+  override: boolean | null;
 };
 
 export type SalePoint = {
   state: string;
+  run_name: string;
   target_rate: number | null;
   attempted: number;
   acknowledged: number;
   failed: number;
+  budget: number;
+  rate_mode: "schedule" | "manual";
+  outcome: string | null;
+  buffer_full: boolean;
+};
+
+export type SaleStatus = SalePoint & {
+  run_id: string;
+  group_id: string;
+  config: {
+    scenario: string;
+    seed: number;
+    schedule: [number, number][];
+    orders: number;
+    faults: Record<string, number>;
+    mode: string;
+    preset: string;
+  };
+  purged: number;
+  paused: boolean;
+  stop_requested: string | null;
+  started_at: number | null;
+  ended_at: number | null;
+  schedule_seconds: number | null;
+  error: string | null;
+  history: { at: number; action: string; rate?: number | null }[];
+  recent: {
+    event_id: string;
+    order_id: string;
+    event_type: string;
+    fault: string;
+    duplicate: boolean;
+    partition: number;
+    offset: number;
+  }[];
+  partition_acks: number[];
+};
+
+export type Preset = {
+  id: string;
+  label: string;
+  scenario: string;
+  seed: number;
+  schedule: [number, number][];
+  description: string;
+  faults: Record<string, number>;
+  events: number;
+  seconds: number;
+};
+
+export type SessionRecord = {
+  id: string;
+  created_at: string;
+  ended_at?: string;
+  state: string;
+  outcome?: string | null;
+  run_name: string;
+  run_id: string;
+  config: Record<string, unknown>;
+  sale_state?: string;
+  reconciliation_status?: string;
+  reconciliation?: Record<string, unknown>;
+  comparable?: boolean;
+  segments?: unknown[];
+  faults?: unknown[];
+};
+
+export type SalesState = {
+  presets: { presets: Preset[]; rates: { steady: number; surge: number }; pilot_capacity_per_second: number | null };
+  saved: Preset[];
+  session: SessionRecord | null;
+  sessions: SessionRecord[];
 };
 
 export type PartitionSample = {
@@ -185,9 +270,10 @@ export type Sample = {
     resources: Record<string, { cpu_cores: number; memory_bytes: number; window: string; timestamp: string }> | null;
   };
   consumers: ConsumerScrape[];
-  sale?: Record<string, unknown> | null;
+  sale?: (SaleStatus & { state: string }) | { state: "idle" } | null;
   scaling?: Record<string, unknown> | null;
   faults?: Record<string, unknown> | null;
+  dlq?: { codes: Record<string, number>; copies_read: number } | null;
 };
 
 export type Operation = {

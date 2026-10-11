@@ -6,9 +6,9 @@ test("live cluster state, lens toggle and timeline render", async ({ page }) => 
   page.on("pageerror", (error) => errors.push(String(error)));
   await login(page);
   await expect(page.getByTestId("freshness")).toContainText("Live");
-  await expect(page.getByText("Checkout lanes").first()).toBeVisible();
+  await expect(page.getByTestId("node-lane-0")).toContainText("Lane 0");
   await page.getByRole("radio", { name: "System lens" }).click();
-  await expect(page.getByText("Kafka partitions").first()).toBeVisible();
+  await expect(page.getByTestId("node-lane-0")).toContainText("Partition 0");
   await page.reload();
   await expect(page.getByRole("radio", { name: "System lens" })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("radio", { name: "Store lens" }).click();

@@ -40,6 +40,44 @@ explanation and the point where the analogy stops being accurate.
 | Sales ledger | PostgreSQL `order_event` and `order_state` |
 | Problem-items desk | Dead-letter topic `orders.events.dlq.v1` |
 
+## The checkout floor (M10)
+
+The centre of the console is a live map of the pipeline:
+
+- **Store doors** (publisher): arrival rate, acknowledged events against the
+  sale's plan, delivery failures, and a warning when the broker stops accepting.
+- **Three lanes** (partitions): queue length (lag) as a belt filling up, its trend
+  over five seconds, tickets issued (high watermark), now serving (committed
+  offset) and the cashier that currently owns the lane.
+- **Cashiers** (console consumer pods): status in plain words (serving, on standby,
+  waiting, retrying, collapsed with its exit code, overwhelmed, leaving), lanes
+  covered, and CPU as a share of the pod's *request* (the CPU-HPA's basis), with
+  the share of its limit and memory beside it.
+- **Floor manager** (scaling controller): policy, and wanted · present · at lanes
+  (desired replicas · ready pods · consumer-group members), shown separately.
+- **Sales ledger** (PostgreSQL) and **problem-items desk** (DLQ): stored facts and
+  rate, the order status board, live DB p95, DLQ copies by reason.
+
+Edges carry the measured rate as a label. Moving dots are a **sampled
+illustration** (at most six per edge, scaled logarithmically), never one dot
+per event; *Motion off*, or the operating system's reduced-motion setting,
+removes them and keeps every number. Above the floor, plain-language signals
+name a growing backlog, missing consumers, saturated consumers, a slow database
+or an unavailable broker/database, each with the measurement behind it.
+
+Below the floor, synchronized charts share one clock and crosshair: arrivals vs
+served, queue by lane (lanes keep their map colours), live p95 wait, cashier
+counts, CPU against the HPA target, DB write p95, problem items, and collapses
+and recoveries. Each chart has a *Table* view, and vertical lines mark console
+actions. Select any component for the inspector: lane offsets and ranges, a
+pod's restarts, exit reasons and per-process counters, controller conditions,
+the latest stored facts, the latest DLQ envelopes, and a lookup by order or
+event ID that shows the broker acknowledgement, the ledger history, the latest
+state and any DLQ reason.
+
+Live p95 values are estimates from histogram buckets over 15 seconds. The exact
+p95 comes from SQL timestamps once a sale has drained.
+
 ## What is real
 
 - Values come from the cluster. The in-cluster agent samples Kafka offsets and

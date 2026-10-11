@@ -96,19 +96,27 @@ class TelemetryHub:
     def ingest(self, payload):
         self.agent = payload.get("agent")
         received = time.time()
-        for sample in payload.get("samples", []):
-            if self.sequence is not None and sample["sequence"] <= self.sequence:
-                continue
+        samples = [
+            sample
+            for sample in payload.get("samples", [])
+            if self.sequence is None or sample["sequence"] > self.sequence
+        ]
+        for index, sample in enumerate(samples):
             self.sequence = sample["sequence"]
             point = self.deriver.point(sample, received)
             self.points.append(point)
             self.latest = sample
+            # Backfilled history feeds charts only; lifecycle decisions use live samples.
+            live = len(samples) <= 3 or index == len(samples) - 1
             for listener in self.sample_listeners:
-                listener(sample, point)
+                listener(sample, point, live)
             self.broadcast({"type": "tick", "point": point, "sample": compact(sample)})
 
     async def poll_once(self):
-        path = "/v1/telemetry" if self.sequence is None else f"/v1/telemetry?after={self.sequence}"
+        # First contact backfills the agent's bounded history, so a restarted console
+        # shows the minutes it missed instead of starting blank.
+        after = 0 if self.sequence is None else self.sequence
+        path = f"/v1/telemetry?after={after}"
         payload = await self.client.call("GET", path, timeout=5)
         if self.sequence is not None and not payload.get("samples"):
             # Either nothing new yet, or the agent restarted with a lower sequence.

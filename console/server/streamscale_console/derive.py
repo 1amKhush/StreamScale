@@ -164,6 +164,9 @@ class Deriver:
             "acknowledged": None,
             "accepted_sql": None,
             "processed": None,
+            "arrival_by_partition": None,
+            "drain_by_partition": None,
+            "dead_letters": None,
         }
         if previous and dt and dt > 0:
             old_parts = (previous.get("kafka") or {}).get("partitions") or []
@@ -196,6 +199,12 @@ class Deriver:
                 if run_id and run_id == ((previous.get("run") or {}).get("run_id")):
                     rates["accepted_sql"] = max(0.0, (sql["facts"] - old_sql["facts"]) / dt)
         rates["processed"] = self.processed_rate(at)
+        rates["dead_letters"] = None
+        if previous and dt and dt > 0:
+            old_dlq = ((previous.get("kafka") or {}).get("dlq") or {}).get("copies")
+            new_dlq = (kafka.get("dlq") or {}).get("copies")
+            if old_dlq is not None and new_dlq is not None and new_dlq >= old_dlq:
+                rates["dead_letters"] = (new_dlq - old_dlq) / dt
         e2e = window_delta(self.history, at, LATENCY_WINDOW, "e2e")
         db = window_delta(self.history, at, LATENCY_WINDOW, "db")
         pod_rows = []
@@ -226,6 +235,25 @@ class Deriver:
             "failed": accumulated["failed"],
             "dlq_copies": (kafka.get("dlq") or {}).get("copies"),
             "restarts": restarts,
+            "sale": None
+            if not sale
+            else {
+                key: sale.get(key)
+                for key in (
+                    "state",
+                    "run_name",
+                    "attempted",
+                    "acknowledged",
+                    "failed",
+                    "budget",
+                    "target_rate",
+                    "rate_mode",
+                    "outcome",
+                    "buffer_full",
+                )
+            },
+            "mode": (sample.get("scaling") or {}).get("mode"),
+            "override": (sample.get("scaling") or {}).get("override"),
         }
         point["drain_estimate_s"] = drain_estimate(point)
         point["signals"] = signals(point, sample)
@@ -246,14 +274,18 @@ class Deriver:
     def pod_point(self, pod, scraped, at):
         metrics = (scraped or {}).get("metrics") or {}
         state = (scraped or {}).get("state") or {}
-        cpu_pct = None
+        cpu_pct = cpu_request_pct = cpu_used = None
         seconds = metrics.get("cpu_seconds")
         previous = self.cpu_last.get(pod["name"])
         limit = cores(pod.get("cpu_limit"))
+        request = cores(pod.get("cpu_request"))
         if seconds is not None and previous and previous[2] == metrics.get("process_start"):
             elapsed = at - previous[0]
-            if elapsed > 0 and limit:
-                cpu_pct = max(0.0, (seconds - previous[1]) / elapsed / limit * 100)
+            if elapsed > 0:
+                cpu_used = max(0.0, (seconds - previous[1]) / elapsed)
+                # Limit basis shows headroom; request basis is what the CPU HPA compares.
+                cpu_pct = cpu_used / limit * 100 if limit else None
+                cpu_request_pct = cpu_used / request * 100 if request else None
         if seconds is not None:
             self.cpu_last[pod["name"]] = (at, seconds, metrics.get("process_start"))
         return {
@@ -263,7 +295,15 @@ class Deriver:
             "deleting": pod.get("deleting"),
             "restarts": pod.get("restarts", 0),
             "cpu_pct": cpu_pct,
+            "cpu_request_pct": cpu_request_pct,
+            "cpu_cores": cpu_used,
             "cpu_limit": pod.get("cpu_limit"),
+            "cpu_request": pod.get("cpu_request"),
+            "ip": pod.get("ip"),
+            "waiting_reason": pod.get("waiting_reason"),
+            "last_termination": pod.get("last_termination"),
+            "active_faults": state.get("active_faults"),
+            "run_id": state.get("run_id"),
             "rss_bytes": metrics.get("rss_bytes"),
             "state": state.get("state"),
             "assigned": state.get("assigned"),

@@ -122,7 +122,7 @@ class AgentForward:
         self.port = None
         self.lock = threading.Lock()
         self.log_directory = log_directory
-        self.restarts = 0
+        self.starts = 0
 
     @property
     def url(self):
@@ -131,9 +131,15 @@ class AgentForward:
     def alive(self):
         return self.process is not None and self.process.poll() is None
 
+    @property
+    def restarts(self):
+        """Forwards re-established after the first, whatever ended the previous one."""
+        return max(0, self.starts - 1)
+
     def start(self, timeout=20):
         with self.lock:
             self._stop()
+            self.starts += 1
             self.port = unused_port()
             self.log_directory.mkdir(parents=True, exist_ok=True)
             log = (self.log_directory / "agent-forward.log").open("a")
@@ -170,7 +176,6 @@ class AgentForward:
                     time.sleep(0.1)
 
     def restart(self):
-        self.restarts += 1
         return self.start()
 
     def _stop(self):

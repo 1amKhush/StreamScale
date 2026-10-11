@@ -44,6 +44,7 @@ class Agent:
         self.busy = []
         self.sections = {}
         self.runners = []
+        self.components = {}
         self.observer = Observer(
             settings, kube, root, extras={"busy": self.busy, "sections": self.sections}
         )
@@ -158,7 +159,7 @@ def handler_factory(agent, token):
 
 def build(settings, kube=None, root=control.ROOT):
     agent = Agent(settings, kube or Kube(), root)
-    for name in ("sale", "scaling", "faults", "inspection"):
+    for name in ("sale", "scaling", "faults", "inspection", "reconcile"):
         # Later milestones add components; each is optional while it is absent.
         try:
             module = __import__(f"streamscale_console_worker.{name}", fromlist=["component"])
@@ -166,7 +167,9 @@ def build(settings, kube=None, root=control.ROOT):
             if error.name != f"streamscale_console_worker.{name}":
                 raise
             continue
-        agent.register(module.component(agent))
+        component = module.component(agent)
+        agent.components[name] = component
+        agent.register(component)
     return agent
 
 
