@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-agent
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-agent}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-agent
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: console-agent
+    spec:
+      serviceAccountName: {{ .Release.Name }}-agent
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        {{- include "console.security" . | nindent 8 }}
+      containers:
+        - name: agent
+          image: {{ include "console.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [streamscale_console_worker.agent]
+          env:
+            {{- include "console.env" . | nindent 12 }}
+            - name: CONSOLE_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.tokenSecret }}, key: token}
+          ports:
+            - {name: http, containerPort: 9200}
+          startupProbe:
+            httpGet: {path: /health, port: http}
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 5
+          securityContext:
+            {{- include "console.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.agent.resources | nindent 12 }}
+          volumeMounts:
+            - {name: runs, mountPath: /runs}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: runs
+          persistentVolumeClaim: {claimName: {{ .Values.pipeline.runsClaim }}}
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-agent
+spec:
+  selector: {app: {{ .Release.Name }}-agent}
+  ports:
+    - {name: http, port: 9200, targetPort: http}

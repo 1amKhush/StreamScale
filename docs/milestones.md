@@ -16,6 +16,17 @@ velocity or fabricated sprint points. Timestamps record observed transitions in 
 | M7 | Large: pilot, frozen protocol, 27 controlled executions and raw evidence | Validated M6 | Per-run configuration, reconciliation, resources and CSV; correct runs only | Complete locally; started 2026-10-08T10:51:09Z, campaign completed 2026-10-08T12:54:17Z, independent audit validated 2026-10-08T12:55:51Z |
 | M8 | Medium: standalone plots, result report and reproduction guide | Validated M7 | Measured interpretation with explicit limits and presentation evidence | Complete locally; tools started 2026-10-08T11:49:56Z while M7 collected data, full M0–M8 launcher validated 2026-10-08T13:13:40Z |
 
+| M9 | Medium: console API, agent, telemetry stream, browser shell | Validated M0–M8 | Real cluster data; explicit stale/disconnected states; cross-project targets rejected | Complete locally; started 2026-10-11T20:44:10Z, validated 2026-10-11T21:07:17Z |
+| M10 | Medium: live flow map, charts, inspector | Validated M9 | A real sale changes topology/backlog/outcomes; usable under burst and reduced motion | Planned |
+| M11 | Large: interactive publisher and session controls | Validated M10 | Pause/resume/rate/stop with acknowledged-event accounting | Planned |
+| M12 | Large: scaling modes and manual override | Validated M11 | Manual rescue and both autoscalers without competing controllers | Planned |
+| M13 | Large: failure lab and recovery | Validated M12 | Crash/replay and outages recover with correct facts and state | Planned |
+| M14 | Medium: replay, comparison, exports, guided demos | Validated M10–M13 | Playback matches evidence; unsuitable runs excluded | Planned |
+| M15 | Medium: browser-to-pipeline acceptance | Validated M9–M14 | Sale → overload → scale → fault → recover → reconcile | Planned |
+
+Console milestones follow [the console plan](interactive-console-plan.md); M9
+evidence is in `docs/m9-evidence.md`.
+
 Evidence, defects, review and actual completion timestamps are recorded in
 `docs/m0-m1-evidence.md`, `docs/m2-m3-evidence.md`, `docs/m4-evidence.md` and
 `docs/m5-evidence.md`, `docs/m6-evidence.md`, `docs/m7-evidence.md` and

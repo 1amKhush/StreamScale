@@ -1,0 +1,53 @@
+# Console consumers deliberately avoid the main release's Prometheus labels, so the
+# measured verification still sees exactly one scraped consumer. The agent samples them.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-consumer
+spec:
+  # Replicas are owned by the console's scaling controller after installation.
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-consumer}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-consumer
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: console-consumer
+    spec:
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        {{- include "console.security" . | nindent 8 }}
+      containers:
+        - name: consumer
+          image: {{ include "console.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [streamscale_console_worker.consumer]
+          env:
+            {{- include "console.env" . | nindent 12 }}
+          ports:
+            - {name: metrics, containerPort: 9100}
+            - {name: state, containerPort: 9101}
+          startupProbe:
+            httpGet: {path: /health/live, port: state}
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: {path: /health/live, port: state}
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: {path: /health/ready, port: state}
+            periodSeconds: 3
+          resizePolicy:
+            - {resourceName: cpu, restartPolicy: NotRequired}
+            - {resourceName: memory, restartPolicy: RestartContainer}
+          securityContext:
+            {{- include "console.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.consumer.resources | nindent 12 }}
+          volumeMounts:
+            - {name: runs, mountPath: /runs}
+      volumes:
+        - name: runs
+          persistentVolumeClaim: {claimName: {{ .Values.pipeline.runsClaim }}}

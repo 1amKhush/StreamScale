@@ -12,12 +12,13 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M8
+StreamScale launcher — integrated milestones M0–M9
 
 Usage: ./streamscale.sh [command] [options]
 
-  all [--no-ui]  Setup, checks, scaling, measured matrix, plots/report, dashboards.
-                This is the default. --no-ui finishes without opening port forwards.
+  all [--no-ui]  Setup, checks, scaling, measured matrix, plots/report, console
+                acceptance, then the console with dashboards. This is the default.
+                --no-ui finishes without opening the console or port forwards.
   local         Setup and run a fresh local Kafka/PostgreSQL fixture demo.
   check         Start local dependencies and run unit, lint and live integration checks.
   cluster       Setup and deploy/verify a fresh kind cluster execution.
@@ -28,7 +29,11 @@ Usage: ./streamscale.sh [command] [options]
   inspect-local Reinspect the latest local demo made by this launcher.
   ui [--grafana-port PORT] [--prometheus-port PORT]
                 Open dashboard forwards; Ctrl+C closes this command's forwards.
-                all accepts these port options too. Use 0 for an available port.
+                all and console accept these port options too. Use 0 for any port.
+  console [--port PORT]
+                Build/deploy the interactive console and serve it on loopback with
+                Grafana/Prometheus links. Prints a login URL; Ctrl+C closes it.
+  console-check Console unit, web, live-cluster and browser acceptance checks.
   status        Show this project's containers and, when running, Kubernetes resources.
   stop          Stop local services and kind node containers; keep all stored data.
   stop-local    Stop only the local Compose services; keep their data.
@@ -36,8 +41,9 @@ Usage: ./streamscale.sh [command] [options]
   resume        Start retained local services and kind nodes; do not create a new run.
   help          Show this help.
 
-Prerequisites: Bash, uv, make, and a running Docker Engine with Compose.
-Preferred ports: Grafana 13000, Prometheus 19090.
+Prerequisites: Bash, uv, make, Node.js 20.19+ with npm, and a running Docker Engine
+with Compose. Browser checks use the installed Google Chrome.
+Preferred ports: console 18080, Grafana 13000, Prometheus 19090.
 Busy default ports automatically fall back; open the URLs printed by ui.
 Grafana login: artifacts/k8s/credentials.json
 
@@ -177,6 +183,25 @@ ui() {
     exec uv run --frozen python deploy/ui.py "${ui_options[@]}"
 }
 
+console_prerequisites() {
+    require_command node
+    require_command npm
+}
+
+console_serve() {
+    # Replace the launcher so Ctrl+C reaches the console server and closes its forwards.
+    exec uv run --project console --frozen python -m streamscale_console serve --dashboards \
+        "${console_options[@]}" "${ui_options[@]}"
+}
+
+console() {
+    setup
+    console_prerequisites
+    start_cluster_nodes
+    make console-web console-deploy
+    console_serve
+}
+
 resume() {
     setup
     local_start
@@ -195,6 +220,10 @@ resume() {
         kube rollout status deployment/streamscale-exporter --timeout=180s
         kube rollout status deployment/streamscale-prometheus --timeout=180s
         kube rollout status deployment/streamscale-grafana --timeout=180s
+        if kube get deployment streamscale-console-agent >/dev/null 2>&1; then
+            kube rollout status deployment/streamscale-console-agent --timeout=180s
+            kube rollout status deployment/streamscale-console-consumer --timeout=180s
+        fi
     fi
     printf 'Retained services resumed. No new workload was published.\n'
     status
@@ -205,6 +234,7 @@ if [[ $# -gt 0 ]]; then shift; fi
 no_ui=false
 fresh=false
 ui_options=()
+console_options=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-ui)
@@ -223,9 +253,21 @@ while [[ $# -gt 0 ]]; do
             fresh=true
             shift
             ;;
+        --port)
+            if [[ "$command" != console ]]; then
+                printf '%s is only supported with console.\n' "$1" >&2
+                exit 2
+            fi
+            if [[ $# -lt 2 || ! "$2" =~ ^[0-9]{1,5}$ ]] || ((10#$2 > 65535)); then
+                printf '%s requires a port from 0 to 65535 (0 chooses an available port).\n' "$1" >&2
+                exit 2
+            fi
+            console_options+=("$1" "$2")
+            shift 2
+            ;;
         --grafana-port|--prometheus-port)
-            if [[ "$command" != ui && "$command" != all ]]; then
-                printf '%s is only supported with ui or all.\n' "$1" >&2
+            if [[ "$command" != ui && "$command" != all && "$command" != console ]]; then
+                printf '%s is only supported with ui, all or console.\n' "$1" >&2
                 exit 2
             fi
             if [[ $# -lt 2 || ! "$2" =~ ^[0-9]{1,5}$ ]] || ((10#$2 > 65535)); then
@@ -250,6 +292,7 @@ fi
 case "$command" in
     all)
         setup
+        console_prerequisites
         printf '\n[M0–M4] Starting the local pipeline, smoke test and fresh fixture demo.\n'
         local_start
         make smoke
@@ -263,9 +306,11 @@ case "$command" in
         make experiments
         printf '\n[M8] Auditing measurements and generating plots, report and presentation.\n'
         make analysis
+        printf '\n[M9] Verifying the interactive console against the live cluster and browser.\n'
+        make console-check
         status
-        printf '\nM0–M8 passed. Report: docs/results/current/report.md; raw evidence: artifacts/.\n'
-        if [[ "$no_ui" == false ]]; then ui; fi
+        printf '\nM0–M9 passed. Report: docs/results/current/report.md; raw evidence: artifacts/.\n'
+        if [[ "$no_ui" == false ]]; then console_serve; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
     check) setup; local_start; checks ;;
@@ -288,6 +333,8 @@ case "$command" in
         uv run --frozen --env-file .env streamscale inspect --run-dir "$directory"
         ;;
     ui) ui ;;
+    console) console ;;
+    console-check) setup; console_prerequisites; start_cluster_nodes; make console-check ;;
     status) status ;;
     stop|stop-local|stop-cluster)
         docker_ready

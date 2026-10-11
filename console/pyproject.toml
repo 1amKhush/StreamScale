@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "streamscale-console"
+version = "0.1.0"
+description = "Local interactive console for the StreamScale pipeline"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.142.2",
+  "uvicorn==0.53.0",
+  "websockets==17.1",
+  # The worker imports the measured pipeline unchanged; it is not re-locked here.
+  "streamscale",
+]
+
+[tool.uv.sources]
+streamscale = { path = "..", editable = true }
+
+[dependency-groups]
+dev = ["pytest==9.0.2", "httpx==0.28.1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["server/streamscale_console", "worker/streamscale_console_worker"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["server", "worker"]
+addopts = "-ra -m 'not live'"
+markers = ["live: requires the running kind cluster and the deployed console release"]

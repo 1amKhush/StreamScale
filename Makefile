@@ -82,3 +82,32 @@ experiment-audit:
 
 analysis:
 	uv run --project experiments/analysis --frozen python -m experiments.analyze
+
+# Interactive console (M9+): separately locked Python and Node dependencies.
+CONSOLE = uv run --project console --frozen
+CONSOLE_ARGS ?=
+
+.PHONY: console-install console-web console-test console-deploy console-live console-check console-serve
+
+console-install:
+	uv sync --project console --frozen
+	cd console/web && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
+
+console-web: console-install
+	cd console/web && npm run build
+
+console-test: console-install
+	$(CONSOLE) pytest console/tests
+	cd console/web && npm run typecheck && npm test
+
+console-deploy: console-install .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
+	$(CONSOLE) python -m streamscale_console deploy
+
+console-live:
+	$(CONSOLE) pytest console/tests/live -m live
+
+console-check: console-install .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
+	$(CONSOLE) python -m streamscale_console check
+
+console-serve:
+	$(CONSOLE) python -m streamscale_console serve $(CONSOLE_ARGS)

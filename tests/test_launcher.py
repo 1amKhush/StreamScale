@@ -40,7 +40,7 @@ def launcher(tmp_path):
     (checkout / ".env").write_text("PRESERVE_ME=yes\n")
     binaries = tmp_path / "bin"
     binaries.mkdir()
-    for name in ("docker", "make", "uv"):
+    for name in ("docker", "make", "uv", "node", "npm"):
         binary = binaries / name
         binary.write_text(FAKE)
         binary.chmod(0o755)
@@ -128,11 +128,13 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
         "scaling",
         "experiments",
         "analysis",
+        "console-check",
     ]
     directory = (checkout / "artifacts/launcher/last-local-run.path").read_text().strip()
     assert Path(directory).parent.is_dir()
     assert ["make", "demo", f"RUN_DIR={directory}"] in calls
     assert not any("deploy/ui.py" in argument for call in calls for argument in call)
+    assert not any("serve" in call for call in calls if call[0] == "uv")
     # The generated directory itself must not exist before the generator runs.
     assert not Path(directory).exists()
 
@@ -145,8 +147,12 @@ def test_resume_waits_for_api_and_rollouts_without_publishing(launcher):
     assert ["docker", "start", "streamscale-control-plane"] in calls
     assert any("--raw=/readyz" in call for call in calls)
     rollouts = [call for call in calls if "rollout" in call]
-    assert len(rollouts) == 6
+    # Six pipeline rollouts, plus the console release's two when it is installed.
+    assert len(rollouts) == 8
     assert all("kind-streamscale" in call and "streamscale" in call for call in rollouts)
+    assert ["deployment/streamscale-console-agent"] == [
+        argument for argument in rollouts[6] if argument.startswith("deployment/")
+    ]
 
 
 def test_failed_stage_stops_before_cluster_deployment(launcher):
@@ -162,21 +168,47 @@ def test_docker_unavailable_is_actionable_and_never_stops_anything(launcher):
     assert not any("stop" in call for call in calls)
 
 
-@pytest.mark.parametrize("command", ["ui", "all"])
-def test_dashboard_ports_reach_the_ui_entry_point(launcher, command):
+CONSOLE_SERVE = [
+    "uv",
+    "run",
+    "--project",
+    "console",
+    "--frozen",
+    "python",
+    "-m",
+    "streamscale_console",
+    "serve",
+    "--dashboards",
+]
+
+
+@pytest.mark.parametrize(
+    ("command", "entry"),
+    [
+        ("ui", ["uv", "run", "--frozen", "python", "deploy/ui.py"]),
+        ("all", CONSOLE_SERVE),
+        ("console", CONSOLE_SERVE),
+    ],
+)
+def test_dashboard_ports_reach_the_ui_entry_point(launcher, command, entry):
     result, calls, _ = launcher(command, "--grafana-port", "13001", "--prometheus-port", "0")
     assert result.returncode == 0, result.stderr
-    assert calls[-1] == [
-        "uv",
-        "run",
-        "--frozen",
-        "python",
-        "deploy/ui.py",
-        "--grafana-port",
-        "13001",
-        "--prometheus-port",
-        "0",
-    ]
+    assert calls[-1] == [*entry, "--grafana-port", "13001", "--prometheus-port", "0"]
+
+
+def test_console_builds_deploys_and_serves_on_the_requested_port(launcher):
+    result, calls, _ = launcher("console", "--port", "18081")
+    assert result.returncode == 0, result.stderr
+    assert ["make", "console-web", "console-deploy"] in calls
+    assert ["docker", "start", "streamscale-control-plane"] in calls
+    assert calls[-1] == [*CONSOLE_SERVE, "--port", "18081"]
+    assert not any(call[:2] == ["docker", "stop"] for call in calls)
+
+
+def test_console_check_runs_the_console_acceptance_target(launcher):
+    result, calls, _ = launcher("console-check")
+    assert result.returncode == 0, result.stderr
+    assert [call[1] for call in calls if call[0] == "make"] == ["console-check"]
 
 
 @pytest.mark.parametrize(
@@ -188,6 +220,9 @@ def test_dashboard_ports_reach_the_ui_entry_point(launcher, command):
         ("all", "--prometheus-port", "not-a-port"),
         ("all", "--no-ui", "--grafana-port", "0"),
         ("verify", "--grafana-port", "13001"),
+        ("all", "--port", "18081"),
+        ("console", "--port", "70000"),
+        ("console", "--port"),
     ],
 )
 def test_invalid_ui_options_fail_before_services_or_publication(launcher, arguments):

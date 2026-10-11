@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["image", "pipeline", "tokenSecret", "consumer", "agent"],
+  "properties": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag", "pullPolicy"],
+      "properties": {
+        "repository": {"const": "streamscale-console"},
+        "tag": {"type": "string", "pattern": "^[a-z0-9]{1,64}$"},
+        "pullPolicy": {"enum": ["IfNotPresent", "Never"]}
+      }
+    },
+    "pipeline": {
+      "type": "object",
+      "properties": {
+        "release": {"const": "streamscale"},
+        "credentialsSecret": {"const": "streamscale-local-credentials"},
+        "runsClaim": {"const": "streamscale-runs"}
+      }
+    },
+    "tokenSecret": {"const": "streamscale-console-token"}
+  }
+}

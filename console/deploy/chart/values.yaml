@@ -1,0 +1,23 @@
+image:
+  repository: streamscale-console
+  tag: local
+  pullPolicy: IfNotPresent
+
+# Shared resources owned by the main "streamscale" release.
+pipeline:
+  release: streamscale
+  credentialsSecret: streamscale-local-credentials
+  runsClaim: streamscale-runs
+
+tokenSecret: streamscale-console-token
+
+# Identical to the measured consumer so console comparisons stay meaningful.
+consumer:
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 256Mi}
+
+agent:
+  resources:
+    requests: {cpu: 100m, memory: 192Mi}
+    limits: {cpu: "1", memory: 768Mi}

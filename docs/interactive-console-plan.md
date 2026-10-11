@@ -1,7 +1,7 @@
 # StreamScale interactive console execution plan
 
-Status: proposed scope, 2026-10-10. This document plans implementation; none of
-M9–M15 is implemented by this planning change. M0–M8 remain the existing baseline.
+Status: approved scope, 2026-10-10; implementation started 2026-10-12 on the
+`interactive-console` branch. M0–M8 remain the existing baseline.
 
 ## Product goal
 
@@ -14,6 +14,59 @@ Insufficient consumer capacity normally creates backlog and higher latency. It
 does not guarantee a process crash. Backlog, violated latency targets, unavailable
 services, and actual process crashes therefore have distinct visual states. Actual
 crashes are demonstrated through explicit fault actions and observed exit reasons.
+
+## Best-fit analogy: a supermarket checkout during a flash sale
+
+The console explains the real pipeline through one consistent analogy. A
+**Store** lens uses the analogy's words; a **System** lens uses Kafka, Kubernetes
+and SQL names. Both lenses render the same live data, and every analogy label
+keeps its technical name visible as a caption.
+
+A checkout fits better than a kitchen, airport or post office because the
+domain is already a sale, and the lane/cashier relationship has the same hard
+limit as partitions and consumers: one lane is served by one cashier at a time,
+one cashier may cover several lanes, and a fourth cashier at three lanes would
+stand idle. Queue length is a direct picture of lag.
+
+| Store lens | System lens | Where the analogy stops |
+| --- | --- | --- |
+| Shoppers arriving through the doors | Interactive publisher producing order events | One order normally creates two events. |
+| Loyalty-card lane rule | `order_id` key hashed to one partition | Routing is deterministic, not a shopper's choice. |
+| Checkout lanes 0–2 | Partitions 0–2 of `orders.events.v1` | Kafka keeps records after they are read. |
+| Ticket dispensed / "now serving" board | High watermark / committed group offset | |
+| Queue length | Partition lag | |
+| Cashier, lanes covered | Consumer pod, partition assignment | |
+| Lane handover | Group rebalance | Every cashier briefly stops during a handover. |
+| Floor manager's staffing rule | Fixed, manual, CPU-HPA or lag-KEDA control | |
+| "Cashiers look busy" rule | CPU HPA (target utilisation) | Cashiers waiting on the ledger do not look busy. |
+| "Queues are long" rule | KEDA Kafka lag threshold | |
+| Sales ledger / order status board | `order_event` facts / `order_state` latest state | |
+| Problem-items desk | `orders.events.dlq.v1` with a reason | |
+| Write the ledger, then advance the board | DB commit before offset commit | Replay after a crash is expected. |
+| Receipt-number check | `event_id` duplicate detection | |
+| Late slip filed but board unchanged | Late event stored; projection not rolled back | |
+| Wait time | `produced_at` to committed SQL fact | |
+
+## Additive implementation constraints
+
+The retained M7 campaign fingerprint covers `src/`, `tools/workload/`, `schemas/`,
+`db/migrations/`, `pyproject.toml`, `uv.lock`, the experiment runner files and
+`deploy/k8s/`. Changing any of them would make the maintained `all` workflow
+refuse the audited 27-run matrix. The console is therefore strictly additive:
+
+- `console/` has its own locked Python and Node dependencies.
+- A separate `streamscale-console` Helm release adds an in-cluster agent and
+  console consumers, sharing the existing Kafka, PostgreSQL and runs volume.
+- Console consumers run the unchanged `streamscale.consumer.consume` loop from
+  the deployed image. Test-only fault hooks wrap it inside the console process.
+- Console pods do not carry the main chart's Prometheus consumer labels, so
+  `deploy/k8s/verify.py` still sees exactly one measured consumer target. The
+  agent samples console consumers directly.
+- Console runs live under `/runs/console/`, use fresh run/group IDs, and record
+  `"interactive": true`. They never enter the M7 comparison.
+- The in-cluster agent owns publishing and temporary-fault recovery timers, so
+  closing the browser or console server does not leave a fault unrecovered.
+  Its Kubernetes role names the exact resources it may scale, patch or delete.
 
 ## Screen layout
 

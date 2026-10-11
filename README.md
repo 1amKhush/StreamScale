@@ -14,15 +14,21 @@ The complete launcher passed with 161 unit tests, 28 live integration tests and
 all three scaling modes. See [the measured report](docs/results/current/report.md),
 [presentation PDF](docs/results/current/presentation.pdf) and [M8 evidence](docs/m8-evidence.md).
 
-One command runs every integrated stage and opens the dashboards:
+**M9 adds an interactive console** (in progress toward M15): a local browser view of
+the real cluster that explains the pipeline as a supermarket checkout during a
+flash sale, with Kafka/Kubernetes names always available. Start it with
+`./streamscale.sh console`; see [the console guide](docs/console.md) and
+[its plan](docs/interactive-console-plan.md).
+
+One command runs every integrated stage and opens the console and dashboards:
 
 ```sh
 ./streamscale.sh all
 ```
 
 It prepares the environment, checks the local pipeline and fault cases, deploys
-and verifies a fresh cluster run, then keeps dashboard forwards open. Add
-`--no-ui` to finish after verification. See [the complete run guide](docs/run-project.md)
+and verifies a fresh cluster run, runs the console's live and browser acceptance,
+then serves the console with dashboard links. Add `--no-ui` to finish after verification. See [the complete run guide](docs/run-project.md)
 for commands from a fresh checkout, expected results and shutdown/resume.
 Dashboard access chooses another port if a default is busy; open the printed URLs.
 Use `./streamscale.sh ui --grafana-port 13001 --prometheus-port 19091` to choose ports.
@@ -40,7 +46,8 @@ Results are written to `docs/results/current/`; see [reproduction](docs/reproduc
 and [the presentation walkthrough](docs/presentation.md).
 
 Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker Engine with
-Docker Compose, and `make`. Run these commands from the repository root:
+Docker Compose, and `make`. The console also needs Node.js 20.19+ with npm, and its
+browser checks use the installed Google Chrome. Run these commands from the repository root:
 
 ```sh
 test -f .env || cp .env.example .env
@@ -118,6 +125,8 @@ Use `make k8s-status` or `make k8s-logs` to inspect the service.
 | [M2/M3 evidence](docs/m2-m3-evidence.md) | Workload reconciliation, SQL atomicity and real process-crash checks |
 | [M4 fault handling](docs/fault-handling.md) | Outage/backoff, DLQ failures, crash injection and rebalance behavior |
 | [M5 deployment operations](docs/deployment-and-metrics.md) | Cluster commands, metric definitions, artifacts and troubleshooting |
+| `console/` | Interactive console: loopback API, in-cluster agent, console consumers, React UI |
+| [Console guide](docs/console.md) | Starting the console, the checkout analogy, safety scope and checks |
 
 The event contract uses exact decimal **strings**, fresh run IDs and globally
 distinct run-scoped event IDs. PostgreSQL is committed before source offsets in

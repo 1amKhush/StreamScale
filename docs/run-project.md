@@ -1,6 +1,7 @@
-# Run and stop StreamScale through M8
+# Run and stop StreamScale through M9
 
-Start Docker Engine/Desktop first. You need Bash, uv and make installed.
+Start Docker Engine/Desktop first. You need Bash, uv, make, and Node.js 20.19+
+with npm installed. The console's browser checks use the installed Google Chrome.
 The launcher checks prerequisites and creates the ignored `.env` from
 `.env.example` only when it is missing. Existing settings are preserved.
 
@@ -13,14 +14,30 @@ From the repository root, run everything with:
 This performs setup, local smoke and fixture demonstration, unit/lint/integration
 checks (including M4 faults), cluster image build/deployment, SQL/metrics/Grafana
 verification, three scaling-mode exercises, the measured experiment matrix,
-plots/report/presentation generation, and finally dashboard access. The last step stays in the terminal
-until Ctrl+C. First-time image/tool downloads can take several minutes. For a
+plots/report/presentation generation, the interactive console's unit, live-cluster
+and browser acceptance, and finally the console with Grafana/Prometheus links.
+The last step stays in the terminal until Ctrl+C. First-time image/tool downloads can take several minutes. For a
 complete check without starting dashboard forwards:
 
 ```sh
 ./streamscale.sh all --no-ui
-./streamscale.sh ui
+./streamscale.sh console     # or ./streamscale.sh ui for dashboards only
 ```
+
+## Interactive console (M9)
+
+```sh
+./streamscale.sh console            # deploy and serve; prints a login link
+./streamscale.sh console --port 0   # any available port
+./streamscale.sh console-check      # console unit, live-cluster and browser acceptance
+```
+
+Open the printed `http://127.0.0.1:18080/?token=…` link (another port is chosen
+if 18080 is busy). Ctrl+C stops the console server and its forwards only. The
+in-cluster console agent keeps running, so an active sale and its fault-recovery
+timers are never abandoned. The console needs a deployed pipeline (`cluster` or
+`all`). See [the console guide](console.md) for the Store/System lenses, what is
+measured versus illustrated, and the console's safety scope.
 
 Every local and cluster demo gets a fresh directory, run ID and consumer group;
 previous data is kept. Local launcher artifacts live under
@@ -158,6 +175,9 @@ docker stop --timeout 45 streamscale-control-plane
 Deleting the kind cluster removes the data inside its node containers. Normal
 shutdown uses `stop`, which retains those containers. No global Docker prune,
 volume deletion, or cluster deletion is part of this launcher.
+
+`resume` also waits for the console agent and console consumer when the console
+release is installed. `stop` stops them with the kind node and retains their data.
 
 For later milestones, `AGENTS.md` requires the integration to update
 `streamscale.sh`'s full workflow/help, supporting Make targets, this guide and

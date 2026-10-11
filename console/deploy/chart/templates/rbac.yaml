@@ -1,0 +1,63 @@
+# The agent may read its namespace, but it may only change resources named here.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-agent
+rules:
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: [get, list, watch]
+  # Restart a selected console consumer; the agent also verifies the pod's label.
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [delete]
+  # In-place CPU restriction of console consumers or the PostgreSQL pod.
+  - apiGroups: [""]
+    resources: [pods/resize]
+    verbs: [get, patch]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments/scale]
+    resourceNames: [{{ .Release.Name }}-consumer]
+    verbs: [get, patch, update]
+  # Temporary Kafka/PostgreSQL outages for the failure lab, always restored to one.
+  - apiGroups: [apps]
+    resources: [statefulsets/scale]
+    resourceNames: [{{ .Values.pipeline.release }}-kafka, {{ .Values.pipeline.release }}-postgres]
+    verbs: [get, patch, update]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list, watch, create]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    resourceNames: [{{ .Release.Name }}-cpu]
+    verbs: [update, patch, delete]
+  - apiGroups: [keda.sh]
+    resources: [scaledobjects]
+    verbs: [get, list, watch, create]
+  - apiGroups: [keda.sh]
+    resources: [scaledobjects]
+    resourceNames: [{{ .Release.Name }}-consumer]
+    verbs: [update, patch, delete]
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-agent
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Release.Name }}-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-agent

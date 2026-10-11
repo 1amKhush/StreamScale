@@ -12,3 +12,4 @@ artifacts/
 .coverage
 htmlcov/
 .tools/
+node_modules/
