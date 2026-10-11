@@ -49,3 +49,17 @@ export function useOperation(live: Live) {
   };
   return { run, busy, failure, error };
 }
+
+/**
+ * Controls that appear in place of the button just pressed ignore clicks briefly, so
+ * the second click of a double click cannot land on, say, "Hold the doors".
+ */
+export function useArmed(signal: unknown, delayMs = 700) {
+  const [armed, setArmed] = useState(true);
+  useEffect(() => {
+    setArmed(false);
+    const timer = window.setTimeout(() => setArmed(true), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [signal, delayMs]);
+  return armed;
+}

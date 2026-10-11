@@ -78,6 +78,54 @@ state and any DLQ reason.
 Live p95 values are estimates from histogram buckets over 15 seconds. The exact
 p95 comes from SQL timestamps once a sale has drained.
 
+## Planning and controlling a sale (M11)
+
+The **Sale** tab plans a sale before the doors open:
+
+- **Presets** reuse the measured M7 workloads: *Flash sale* (15 s at 52/s, 20 s
+  at 390/s, 25 s at 52/s, seed 202), *Steady*, *Overload and recovery*, plus an
+  *Extended flash sale* with a one-minute rush for live demonstrations.
+- **Schedule and seed**: up to twelve phases of 1–3,600 s at 1–2,000 events/s,
+  at most one hour and 400,000 events. The same seed reproduces the same logical
+  sale; every start gets a fresh run ID and consumer group.
+- **Problem shoppers**: malformed, duplicate and late percentages (0–20%), seeded
+  like the measured correctness profile (defaults 1%, 2%, 5%).
+- **Estimate**: events, orders, expected DLQ items, duplicates and late events, and
+  the queue one, two or three consumers would build at the M7 pilot's measured
+  capacity (about 130 events/s each). It is labelled as an estimate.
+- **Saved presets** live in `artifacts/console/presets.json`; *Run the last sale
+  again* repeats its settings as a fresh run.
+
+While a sale runs, the same tab (and the top bar) controls it:
+
+| Control | What happens |
+| --- | --- |
+| Hold the doors (pause) | No new records are produced. Delivery confirmations keep arriving and consumers keep draining. |
+| Reopen (resume) | The schedule clock continues from where it paused. |
+| Set a rate | A live events/s rate replaces the schedule; *Follow the schedule* returns to it from the current position. |
+| Close the doors and drain (stop) | Production ends, every sent record is flushed and acknowledged, and consumers drain the backlog. |
+| Abort | Unsent records are discarded; records already sent finish and drain. The partial run is kept and reconciled. |
+
+After the backlog reaches zero the console **reconciles the run against its
+Kafka source range**, not against the plan, so stopped, aborted and interrupted
+sales are judged on what was actually published: every acknowledged valid event
+stored exactly once, nothing stored that is not in the log, latest state equal
+to the log's ordering, every invalid source in the DLQ (copies counted
+separately) and zero remaining backlog. It also reports the **exact SQL p50/p95/p99**
+latency of stored facts. The result appears in the Sale tab and in
+`artifacts/console/sessions/<session>/reconciliation.json`.
+
+A session is *comparable* only if it completed unmodified (no pause, rate change,
+scaling change or fault) and reconciled. Interactive sessions never enter the M7
+results.
+
+Recovery is part of the design: closing the browser changes nothing; restarting
+the console server reattaches to the running or draining sale; if the in-cluster
+agent restarts mid-sale, the run is finalized as `interrupted` from its durable
+acknowledgement log and still drains and reconciles. Only one console server may
+run at a time. Buttons that appear in place of the one just pressed ignore clicks
+for 0.7 s, so a double click cannot pause a sale it just started.
+
 ## What is real
 
 - Values come from the cluster. The in-cluster agent samples Kafka offsets and

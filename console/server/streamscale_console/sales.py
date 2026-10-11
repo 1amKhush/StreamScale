@@ -325,6 +325,10 @@ class Component:
                 )
             except AgentRejected as error:
                 raise Rejected(str(error)) from None
+            if name in {"sale.pause", "sale.resume", "sale.rate"} and self.record is not None:
+                # Interactive pacing changes keep this session out of formal comparisons.
+                self.record["controls_changed"] = True
+                self.store.save(self.record)
             return response.get("result") or {}
 
         return handler
@@ -388,6 +392,12 @@ class Component:
     async def reconcile(self, operation):
         record = self.store.load(str(operation.params.get("session", "")))
         client = self.console.hub.client
+        deadline = time.monotonic() + 120
+        while self.console.hub.status["agent"] != "connected":
+            # Queued at startup or during an agent restart: wait rather than fail.
+            if time.monotonic() > deadline:
+                raise RuntimeError("The cluster agent did not become reachable")
+            await asyncio.sleep(1)
         try:
             await client.call("POST", "/v1/command/reconcile", {"run_name": record["run_name"]})
         except AgentRejected as error:
@@ -560,6 +570,14 @@ class Component:
             if not path.exists():
                 continue
             record = json.loads(path.read_text())
+            if record.get("state") == "drained" and not record.get("reconciliation_status"):
+                # Drained, but the server stopped before its reconciliation ran.
+                try:
+                    self.console.coordinator.submit(
+                        "session.reconcile", {"session": record["id"]}, "reconcile-" + record["id"]
+                    )
+                except Rejected:
+                    pass
             if (
                 record.get("state") in {"publishing", "draining"}
                 and record.get("run_name") != current

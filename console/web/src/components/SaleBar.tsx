@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Live } from "../api";
-import { useOperation } from "../operations";
+import { useArmed, useOperation } from "../operations";
 import { count, rate } from "../format";
 import { useLens } from "../lens";
 import type { SalesState } from "../types";
@@ -17,6 +17,7 @@ export function SaleBar({ live, onPlan }: { live: Live; onPlan: () => void }) {
   const sale = point?.sale ?? null;
   const active = !!sale && ACTIVE.has(sale.state);
   const draining = !active && sales?.session?.state === "draining";
+  const armed = useArmed(active);
   const preset = useMemo(() => presets.find((row) => row.id === presetId), [presets, presetId]);
   const problem = operation.error ?? operation.failure("sale.start") ?? operation.failure("sale.stop");
   return (
@@ -59,16 +60,16 @@ export function SaleBar({ live, onPlan }: { live: Live; onPlan: () => void }) {
             {count(sale.acknowledged)} / {count(sale.budget)} · {rate(sale.target_rate)}
           </span>
           {sale.state === "paused" ? (
-            <button disabled={operation.busy("sale.resume")} onClick={() => operation.run("sale.resume")}>
+            <button disabled={!armed || operation.busy("sale.resume")} onClick={() => operation.run("sale.resume")}>
               {lens === "store" ? "Reopen" : "Resume"}
             </button>
           ) : (
-            <button disabled={operation.busy("sale.pause") || sale.state === "stopping"} onClick={() => operation.run("sale.pause")}>
+            <button disabled={!armed || operation.busy("sale.pause") || sale.state === "stopping"} onClick={() => operation.run("sale.pause")}>
               {lens === "store" ? "Hold doors" : "Pause"}
             </button>
           )}
           <button
-            disabled={operation.busy("sale.stop") || sale.state === "stopping"}
+            disabled={!armed || operation.busy("sale.stop") || sale.state === "stopping"}
             onClick={() => operation.run("sale.stop")}
             data-testid="stop-sale"
           >

@@ -10,6 +10,7 @@ import { Charts } from "./components/Charts";
 import { Inspector } from "./components/Inspector";
 import { SaleBar } from "./components/SaleBar";
 import { Signals } from "./components/Signals";
+import { SalePanel } from "./components/SalePanel";
 
 function stored<T extends string>(key: string, fallback: T, allowed: readonly T[]): T {
   try {
@@ -104,7 +105,7 @@ export default function App() {
             {tab === "inspect" && (
               <Inspector selected={selected} floor={floor} sample={live.sample} onClose={() => setSelected(null)} />
             )}
-            {tab === "sale" && <p className="hint">Detailed sale planning and live sale controls arrive with M11. Use the sale bar above to start a preset.</p>}
+            {tab === "sale" && <SalePanel live={live} />}
             {tab === "scaling" && <p className="hint">Scaling controls arrive with M12.</p>}
             {tab === "faults" && <p className="hint">The failure lab arrives with M13.</p>}
           </aside>

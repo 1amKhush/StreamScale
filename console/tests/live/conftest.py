@@ -70,51 +70,80 @@ class ConsoleClient:
         raise AssertionError(f"Timed out waiting for {describe}")
 
 
+class ServerProcess:
+    """A console server subprocess the tests can restart mid-sale."""
+
+    def __init__(self):
+        self.process = None
+        self.log = None
+        self.client = None
+        self.record = None
+
+    def start(self):
+        record_path = ARTIFACTS / "server.json"
+        self.log = (ARTIFACTS / "live-test-server.log").open("a")
+        self.process = subprocess.Popen(
+            [sys.executable, "-m", "streamscale_console", "serve", "--port", "0"],
+            cwd=ROOT,
+            stdout=self.log,
+            stderr=subprocess.STDOUT,
+            env=os.environ | {"PYTHONUNBUFFERED": "1"},
+        )
+        deadline = time.monotonic() + 60
+        record = None
+        while record is None:
+            if self.process.poll() is not None or time.monotonic() > deadline:
+                raise RuntimeError("Console server did not start; see artifacts/console")
+            try:
+                found = json.loads(record_path.read_text())
+                record = found if found.get("pid") == self.process.pid else None
+            except (OSError, json.JSONDecodeError):
+                pass
+            time.sleep(0.2)
+        while True:
+            try:
+                urllib.request.urlopen(record["url"] + "/health", timeout=2).read()
+                break
+            except (urllib.error.URLError, ConnectionError):
+                if self.process.poll() is not None or time.monotonic() > deadline:
+                    raise RuntimeError("Console server did not accept connections") from None
+                time.sleep(0.2)
+        self.record = record
+        self.client = ConsoleClient(record)
+        self.client.wait(
+            lambda state: state["status"]["agent"] == "connected" and state["points"], 90
+        )
+        return self.client
+
+    def stop(self):
+        if self.process is None:
+            return
+        self.process.terminate()
+        try:
+            self.process.wait(20)
+        except subprocess.TimeoutExpired:
+            self.process.kill()
+        self.log.close()
+        self.process = None
+
+    def restart(self):
+        self.stop()
+        return self.start()
+
+
 @pytest.fixture(scope="session")
 def console_server():
-    """Start a console server on an available port for the whole live session."""
-    record_path = ARTIFACTS / "server.json"
-    log = (ARTIFACTS / "live-test-server.log").open("w")
-    process = subprocess.Popen(
-        [sys.executable, "-m", "streamscale_console", "serve", "--port", "0"],
-        cwd=ROOT,
-        stdout=log,
-        stderr=subprocess.STDOUT,
-        env=os.environ | {"PYTHONUNBUFFERED": "1"},
-    )
-    deadline = time.monotonic() + 60
-    record = None
-    while record is None:
-        if process.poll() is not None or time.monotonic() > deadline:
-            raise RuntimeError("Console server did not start; see artifacts/console")
-        try:
-            found = json.loads(record_path.read_text())
-            record = found if found.get("pid") == process.pid else None
-        except (OSError, json.JSONDecodeError):
-            pass
-        time.sleep(0.2)
-    while True:
-        try:
-            urllib.request.urlopen(record["url"] + "/health", timeout=2).read()
-            break
-        except (urllib.error.URLError, ConnectionError):
-            if process.poll() is not None or time.monotonic() > deadline:
-                raise RuntimeError("Console server did not accept connections") from None
-            time.sleep(0.2)
-    client = ConsoleClient(record)
-    client.wait(lambda state: state["status"]["agent"] == "connected" and state["points"], 90)
-    yield client, record
-    process.terminate()
-    try:
-        process.wait(20)
-    except subprocess.TimeoutExpired:
-        process.kill()
-    log.close()
+    """One console server for the live session; tests may restart it."""
+    server = ServerProcess()
+    server.start()
+    yield server.client, server.record, server
+    server.stop()
 
 
 @pytest.fixture
 def console(console_server):
-    return console_server[0]
+    # After a restart the server object holds the current client.
+    return console_server[2].client
 
 
 def kube_json(*arguments):
