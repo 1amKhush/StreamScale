@@ -248,8 +248,12 @@ ignored while typing in a field.
 ```
 
 This runs console Python unit tests, web type checks and unit tests, the web
-build, console deployment, live-cluster acceptance and Chrome browser acceptance.
-It writes `artifacts/console/check.json`. `./streamscale.sh all` includes it.
+build, console deployment, live-cluster acceptance (sales and controls, all four
+scaling modes, every fault, replay and a three-mode comparison, and the launcher's
+console lifecycle) and Chrome acceptance, ending with the full journey: start a
+sale, overload it, rescue it, crash a consumer, close the database, recover and
+reconcile. It writes `artifacts/console/check.json`. `./streamscale.sh all`
+includes it.
 
 | Target | Purpose |
 | --- | --- |

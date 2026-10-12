@@ -12,7 +12,7 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M9
+StreamScale launcher — integrated milestones M0–M15
 
 Usage: ./streamscale.sh [command] [options]
 
@@ -33,7 +33,8 @@ Usage: ./streamscale.sh [command] [options]
   console [--port PORT]
                 Build/deploy the interactive console and serve it on loopback with
                 Grafana/Prometheus links. Prints a login URL; Ctrl+C closes it.
-  console-check Console unit, web, live-cluster and browser acceptance checks.
+  console-check Console unit, web, live-cluster and browser acceptance (M9–M15),
+                including real sales, scaling modes, faults, replay and the full journey.
   status        Show this project's containers and, when running, Kubernetes resources.
   stop          Stop local services and kind node containers; keep all stored data.
   stop-local    Stop only the local Compose services; keep their data.
@@ -306,10 +307,10 @@ case "$command" in
         make experiments
         printf '\n[M8] Auditing measurements and generating plots, report and presentation.\n'
         make analysis
-        printf '\n[M9] Verifying the interactive console against the live cluster and browser.\n'
+        printf '\n[M9–M15] Verifying the interactive console against the live cluster and browser.\n'
         make console-check
         status
-        printf '\nM0–M9 passed. Report: docs/results/current/report.md; raw evidence: artifacts/.\n'
+        printf '\nM0–M15 passed. Report: docs/results/current/report.md; console evidence: artifacts/console/.\n'
         if [[ "$no_ui" == false ]]; then console_serve; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;

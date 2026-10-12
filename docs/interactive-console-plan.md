@@ -1,7 +1,8 @@
 # StreamScale interactive console execution plan
 
-Status: approved scope, 2026-10-10; implementation started 2026-10-12 on the
-`interactive-console` branch. M0–M8 remain the existing baseline.
+Status: implemented on the `interactive-console` branch (M9–M15, 2026-10-12);
+evidence in `docs/m9-evidence.md` … `docs/m15-evidence.md`, operations in
+`docs/console.md`. M0–M8 remain the existing baseline.
 
 ## Product goal
 
@@ -187,7 +188,7 @@ M10 is the first useful visualization. M12 is the first complete sale-and-scalin
 console. M13 adds the user's crash/recovery demonstrations. Implement and validate
 those before expanding history and presentation features.
 
-Proposed future launcher commands (not available yet):
+Launcher commands (available since M9; `all` includes the console acceptance):
 
 ```sh
 ./streamscale.sh console          # Build/serve console and print the loopback URL.

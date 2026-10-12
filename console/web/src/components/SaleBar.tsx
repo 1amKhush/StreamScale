@@ -73,7 +73,7 @@ export function SaleBar({ live, onPlan }: { live: Live; onPlan: () => void }) {
             onClick={() => operation.run("sale.stop")}
             data-testid="stop-sale"
           >
-            {lens === "store" ? "Close the doors and drain" : "End sale and drain"}
+            {lens === "store" ? "Close & drain" : "End & drain"}
           </button>
         </>
       )}

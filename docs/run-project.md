@@ -1,4 +1,4 @@
-# Run and stop StreamScale through M9
+# Run and stop StreamScale through M15
 
 Start Docker Engine/Desktop first. You need Bash, uv, make, and Node.js 20.19+
 with npm installed. The console's browser checks use the installed Google Chrome.
@@ -24,7 +24,7 @@ complete check without starting dashboard forwards:
 ./streamscale.sh console     # or ./streamscale.sh ui for dashboards only
 ```
 
-## Interactive console (M9)
+## Interactive console (M9–M15)
 
 ```sh
 ./streamscale.sh console            # deploy and serve; prints a login link
@@ -33,11 +33,36 @@ complete check without starting dashboard forwards:
 ```
 
 Open the printed `http://127.0.0.1:18080/?token=…` link (another port is chosen
-if 18080 is busy). Ctrl+C stops the console server and its forwards only. The
-in-cluster console agent keeps running, so an active sale and its fault-recovery
-timers are never abandoned. The console needs a deployed pipeline (`cluster` or
-`all`). See [the console guide](console.md) for the Store/System lenses, what is
-measured versus illustrated, and the console's safety scope.
+if 18080 is busy). The console also opens Grafana and Prometheus forwards and
+links them; `--grafana-port`/`--prometheus-port` work as for `ui`. Ctrl+C stops
+the console server and its forwards only. The in-cluster console agent keeps
+running, so an active sale and its fault-recovery timers are never abandoned.
+Only one console server runs at a time. The console needs a deployed pipeline
+(`cluster` or `all`).
+
+A first demonstration, all in the browser:
+
+1. **Staffing** → *One cashier, always* (fixed). **Sale** → *Extended flash sale* →
+   *Open the doors*. Arrivals reach about 390/s while one consumer serves about
+   140/s; every lane's queue grows and the floor flags the backlog.
+2. **Staffing** → *You call cashiers in* → **3**. After a short handover each
+   cashier owns one lane and the queues shrink.
+3. **Failure lab** → *Cashier faints after writing the ledger*. Watch exit 75, the
+   restart, the replay and the verified single SQL fact.
+4. **Sale** → *Close the doors and drain*. After the drain the console reconciles
+   the run against Kafka, SQL and the DLQ and shows the exact SQL p95.
+5. Repeat the sale under *“Cashiers look busy” rule* (CPU-HPA) and *“Queues are
+   long” rule* (lag-KEDA), or use **Sessions → Comparisons** to run all three modes
+   as fresh, frozen, sequential runs. **Guide** walks through five demonstrations.
+
+`console-check` runs every console stage: Python and web unit tests, the web
+build, deployment, live-cluster acceptance (real sales, the four scaling modes,
+every fault, replay and a three-mode comparison, the launcher console lifecycle)
+and Chrome acceptance including the full sale → overload → rescue → crash →
+outage → recovery → reconciliation journey. It takes roughly 30–40 minutes and
+writes `artifacts/console/check.json`. Interactive sessions and their evidence
+live under `artifacts/console/`. See [the console guide](console.md) for the
+Store/System lenses, what is measured versus illustrated, and the safety scope.
 
 Every local and cluster demo gets a fresh directory, run ID and consumer group;
 previous data is kept. Local launcher artifacts live under

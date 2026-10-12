@@ -111,8 +111,11 @@ def serve(args):
             )
         )
         signal.signal(signal.SIGTERM, lambda *_: setattr(server, "should_exit", True))
-        server.run()
-    record.unlink(missing_ok=True)
+        try:
+            server.run()
+        finally:
+            # The login record goes first: it must never outlive the server it names.
+            record.unlink(missing_ok=True)
 
 
 def main():

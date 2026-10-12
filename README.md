@@ -14,12 +14,16 @@ The complete launcher passed with 161 unit tests, 28 live integration tests and
 all three scaling modes. See [the measured report](docs/results/current/report.md),
 [presentation PDF](docs/results/current/presentation.pdf) and [M8 evidence](docs/m8-evidence.md).
 
-**M9–M14 add an interactive console** (in progress toward M15): plan and control real
-sales, switch scaling modes or take over manually, inject bounded failures and watch
-recovery, replay and compare sessions and follow guided demonstrations, with a live checkout-floor map, synchronized charts, inspectors and per-sale reconciliation that explains the pipeline as a supermarket checkout during a
-flash sale, with Kafka/Kubernetes names always available. Start it with
-`./streamscale.sh console`; see [the console guide](docs/console.md) and
-[its plan](docs/interactive-console-plan.md).
+**M9–M15 add an interactive console**: a local browser console for the real kind
+deployment that explains the pipeline as **a supermarket checkout during a flash
+sale** (lanes are partitions, cashiers are consumer pods, the floor manager is the
+scaling controller, the ledger is PostgreSQL), with Kafka/Kubernetes/SQL names
+always available. Plan and control real sales, watch backlog build on a live floor
+map and synchronized charts, switch between fixed, manual, CPU-HPA and lag-KEDA
+or take over manually, inject bounded failures and watch recovery, then replay,
+reconcile and compare sessions. Start it with `./streamscale.sh console`; see
+[the console guide](docs/console.md), [its plan](docs/interactive-console-plan.md)
+and the [M9](docs/m9-evidence.md)–[M15](docs/m15-evidence.md) evidence.
 
 One command runs every integrated stage and opens the console and dashboards:
 

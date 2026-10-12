@@ -1565,3 +1565,15 @@ body.presenting .floor-node {
 body.presenting .chart-grid {
   grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
 }
+
+/* ---- M15 polish ---- */
+
+/* The selected mode is disabled only because it is already active; keep it legible. */
+.preset.active:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.sale-bar button {
+  white-space: nowrap;
+}

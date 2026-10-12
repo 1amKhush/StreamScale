@@ -22,7 +22,7 @@ velocity or fabricated sprint points. Timestamps record observed transitions in 
 | M12 | Large: scaling modes and manual override | Validated M11 | Manual rescue and both autoscalers without competing controllers | Complete locally; started 2026-10-11T22:41Z, validated 2026-10-11T22:53:30Z |
 | M13 | Large: failure lab and recovery | Validated M12 | Crash/replay and outages recover with correct facts and state | Complete locally; started 2026-10-11T22:54Z, validated 2026-10-12T02:29:10Z |
 | M14 | Medium: replay, comparison, exports, guided demos | Validated M10–M13 | Playback matches evidence; unsuitable runs excluded | Complete locally; started 2026-10-12T02:32Z, validated 2026-10-12T03:06:07Z |
-| M15 | Medium: browser-to-pipeline acceptance | Validated M9–M14 | Sale → overload → scale → fault → recover → reconcile | Planned |
+| M15 | Medium: browser-to-pipeline acceptance | Validated M9–M14 | Sale → overload → scale → fault → recover → reconcile | Implemented; full launcher verification recorded in M15 evidence |
 
 Console milestones follow [the console plan](interactive-console-plan.md); evidence is in `docs/m9-evidence.md`, `docs/m10-evidence.md`, `docs/m11-evidence.md`, `docs/m12-evidence.md`, `docs/m13-evidence.md` and `docs/m14-evidence.md`.
 
