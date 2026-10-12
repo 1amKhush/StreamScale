@@ -20,13 +20,15 @@ test("plan, control, abort and reconcile a sale from the sale panel", async ({ p
 
   // Plan: steady preset, then a custom first phase; the estimate follows the edit.
   await page.getByRole("radio", { name: /^Steady/ }).click();
+  await page.locator("summary").filter({ hasText: "Customize this sale" }).click();
   await page.getByLabel("Phase 1 seconds").fill("90");
   await page.getByLabel("Phase 1 rate").fill("120");
   await expect(page.getByTestId("sale-estimate")).toContainText("11,016"); // 10,800 + 2% duplicates
   const name = `e2e ${Date.now()}`;
   await page.getByLabel("Preset name").fill(name);
   await page.getByRole("button", { name: "Save preset" }).click();
-  await expect(page.getByRole("radio", { name: new RegExp(name) })).toBeVisible();
+  await expect(page.getByLabel("Saved presets")).toContainText(name);
+  await page.getByLabel("Saved presets").selectOption({ label: name });
 
   const since = Date.now() / 1000 - 1;
   await page.getByTestId("panel-start-sale").dblclick();
@@ -55,6 +57,7 @@ test("plan, control, abort and reconcile a sale from the sale panel", async ({ p
   await expect(page.getByTestId("sale-result")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByTestId("sale-result")).toContainText("aborted", { timeout: 300_000 });
   await expect(page.getByTestId("sale-result")).toContainText("✓ reconciled", { timeout: 420_000 });
+  await page.locator("summary").filter({ hasText: "Reconciliation details" }).click();
   await expect(page.getByTestId("exact-p95")).not.toHaveText(/^—/);
   await expect(page.getByTestId("sale-result")).toContainText("no (interactive changes");
   await page.screenshot({ path: `${evidence}/sales-result.png`, fullPage: true });

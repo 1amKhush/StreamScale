@@ -27,6 +27,11 @@ and the [M9](docs/m9-evidence.md)–[M15](docs/m15-evidence.md) evidence. The co
 M0–M15 launcher, including the console's live-cluster and browser acceptance,
 passed on 2026-10-12.
 
+The console uses focused pages: **Overview**, **Sale**, **Scaling**, **Failure lab**,
+**Sessions**, and **Guide**. Start on Overview for the live flow and key metrics;
+expand extra charts or diagnostics when needed. Sale drafts survive navigation,
+and phones use a readable component list with the same inspector.
+
 One command runs every integrated stage and opens the console and dashboards:
 
 ```sh

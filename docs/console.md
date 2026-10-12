@@ -14,7 +14,7 @@ for the complete scope, the analogy table and where the analogy stops.
 The command builds the web assets, deploys the console release into the existing
 `kind-streamscale` cluster, and prints a login link such as
 `http://127.0.0.1:18080/?token=…`. Open that exact link. It also opens Grafana and
-Prometheus forwards and links them in the top bar. Ctrl+C closes the console server and its
+Prometheus forwards and links them under **Connection & diagnostics**. Ctrl+C closes the console server and its
 forwards. The cluster, its data and the console's in-cluster agent keep running.
 
 Requirements beyond the main project: Node.js 20.19 or newer with npm. The pipeline
@@ -23,11 +23,37 @@ busy, an available port is chosen and printed. Choose one with
 `./streamscale.sh console --port 18081`; dashboard ports accept the same
 `--grafana-port`/`--prometheus-port` options as `ui`.
 
+## Find your way around
+
+- **Overview**: arrival/processing rate, backlog, p95 and ready consumers, followed
+  by the live pipeline and two primary charts. **More metrics** reveals CPU,
+  latency, replica, DLQ and restart charts. Activity and diagnostics expand below.
+- **Sale**: choose one of four starter workloads and start it. **Customize this
+  sale** reveals schedule, seed, fault percentages and preset saving. Saved
+  presets use a dropdown. Your draft survives switching pages during this visit.
+- **Scaling**: choose a mode, set a manual count or take over from an autoscaler.
+  Advanced controller settings and history expand separately.
+- **Failure lab**: choose one experiment, set its parameters, then inject it.
+  Active faults and recovery stay visible; recent outcomes have a bounded list.
+- **Sessions**: replay and export a recorded session, compare modes or inspect
+  the measured matrix. **Guide** contains step-by-step demonstrations.
+
+The live summary and active fault recovery remain visible across task pages.
+**View options** holds the vocabulary lens, motion and presentation preferences.
+**Connection & diagnostics** shows individual source health, the workflow lock
+and dashboard links; the connection badge is always visible.
+
+The pipeline supports **Map** and **List** views; List is the default on phones.
+Both open the same component inspector, with a component picker and record lookup.
+The drawer traps keyboard focus, Escape closes it and focus returns to its opener.
+**Find a record** opens the order/event lookup directly. Advanced disclosures use
+native keyboard-accessible controls. No external font or icon service is needed.
+
 ## Store and System lenses
 
-The **Store lens** names components with the analogy; the **System lens** uses
+Under **View options**, the **Store lens** names components with the analogy; the **System lens** uses
 Kafka, Kubernetes and SQL names. Both show the same live values, and the other
-lens's name is always visible as a caption. Hover any component name for its
+lens's name is always visible as a caption. Select a component for its
 explanation and the point where the analogy stops being accurate.
 
 | Store lens | System lens |
@@ -65,7 +91,8 @@ removes them and keeps every number. Above the floor, plain-language signals
 name a growing backlog, missing consumers, saturated consumers, a slow database
 or an unavailable broker/database, each with the measurement behind it.
 
-Below the floor, synchronized charts share one clock and crosshair: arrivals vs
+Below the floor, synchronized charts share one clock and crosshair. The first two
+are visible by default; **More metrics** reveals the rest: arrivals vs
 served, queue by lane (lanes keep their map colours), live p95 wait, cashier
 counts, CPU against the HPA target, DB write p95, problem items, and collapses
 and recoveries. Each chart has a *Table* view, and vertical lines mark console
@@ -80,7 +107,7 @@ p95 comes from SQL timestamps once a sale has drained.
 
 ## Planning and controlling a sale (M11)
 
-The **Sale** tab plans a sale before the doors open:
+The **Sale** page plans a sale before the doors open:
 
 - **Presets** reuse the measured M7 workloads: *Flash sale* (15 s at 52/s, 20 s
   at 390/s, 25 s at 52/s, seed 202), *Steady*, *Overload and recovery*, plus an
@@ -96,14 +123,14 @@ The **Sale** tab plans a sale before the doors open:
 - **Saved presets** live in `artifacts/console/presets.json`; *Run the last sale
   again* repeats its settings as a fresh run.
 
-While a sale runs, the same tab (and the top bar) controls it:
+While a sale runs, the same page (and the compact sale bar on other live pages) controls it:
 
 | Control | What happens |
 | --- | --- |
-| Hold the doors (pause) | No new records are produced. Delivery confirmations keep arriving and consumers keep draining. |
-| Reopen (resume) | The schedule clock continues from where it paused. |
+| Pause | No new records are produced. Delivery confirmations keep arriving and consumers keep draining. |
+| Resume | The schedule clock continues from where it paused. |
 | Set a rate | A live events/s rate replaces the schedule; *Follow the schedule* returns to it from the current position. |
-| Close the doors and drain (stop) | Production ends, every sent record is flushed and acknowledged, and consumers drain the backlog. |
+| Stop & drain | Production ends, every sent record is flushed and acknowledged, and consumers drain the backlog. |
 | Abort | Unsent records are discarded; records already sent finish and drain. The partial run is kept and reconciled. |
 
 After the backlog reaches zero the console **reconciles the run against its
@@ -112,7 +139,7 @@ sales are judged on what was actually published: every acknowledged valid event
 stored exactly once, nothing stored that is not in the log, latest state equal
 to the log's ordering, every invalid source in the DLQ (copies counted
 separately) and zero remaining backlog. It also reports the **exact SQL p50/p95/p99**
-latency of stored facts. The result appears in the Sale tab and in
+latency of stored facts. The result appears in **Sale → Reconciliation details** and in
 `artifacts/console/sessions/<session>/reconciliation.json`.
 
 A session is *comparable* only if it completed unmodified (no pause, rate change,
@@ -126,9 +153,9 @@ acknowledgement log and still drains and reconciles. Only one console server may
 run at a time. Buttons that appear in place of the one just pressed ignore clicks
 for 0.7 s, so a double click cannot pause a sale it just started.
 
-## Staffing: scaling modes and manual override (M12)
+## Scaling modes and manual override (M12)
 
-The **Staffing** tab (System lens: *Scaling*) chooses how many console consumers run:
+The **Scaling** page chooses how many console consumers run:
 
 | Mode | Replicas | Who decides |
 | --- | --- | --- |
@@ -139,7 +166,7 @@ The **Staffing** tab (System lens: *Scaling*) chooses how many console consumers
 
 From CPU-HPA or lag-KEDA, **Manual override** removes the autoscaler first and
 then sets replicas directly, so two controllers never compete; *Release* recreates
-it. Every change is a verified transition: the tab shows its steps, then which
+it. Every change is a verified transition: the page shows its steps, then which
 controllers own the console Deployment and whether that matches the mode. A
 failed or interrupted transition is shown with a *Reapply* button. Settings
 (CPU target, lag threshold, scale-down wait, minimum and maximum, never above three)
@@ -148,8 +175,8 @@ always shown separately, because they differ during scale-up and rebalances.
 
 ## Failure lab (M13)
 
-The **Failure lab** tab injects real, bounded faults while a sale runs. Each card
-states its exact scope. The in-cluster agent owns every timer and recovery, and
+The **Failure lab** page injects real, bounded faults while a sale runs. Choose
+an experiment from the dropdown; its card states the exact scope. The in-cluster agent owns every timer and recovery, and
 records them on the runs volume, so a closed browser, a stopped console server or
 even an agent restart never leaves a fault behind.
 
@@ -166,8 +193,7 @@ even an agent restart never leaves a fault behind.
 | Ledger office closed | PostgreSQL StatefulSet scaled to zero, then one (data retained) | 5–120 s | Offsets do not advance; consumers retry |
 | Ticket system down | Kafka StatefulSet scaled to zero, then one (records retained) | 5–120 s | The publisher buffers; consumers retry |
 
-Only one infrastructure outage runs at a time. **Recover pipeline** (top bar and
-tab) ends every active fault now and makes sure Kafka and PostgreSQL are scaled
+Only one infrastructure outage runs at a time. **Recover pipeline** (the active-fault banner and Failure lab) ends every active fault now and makes sure Kafka and PostgreSQL are scaled
 back to one. Every outcome is observed, not assumed: crash faults record the
 consumer's own claim (pod, event, partition, offset, exit code) and are marked
 verified only after the replacement has committed past that offset and SQL holds
@@ -181,7 +207,7 @@ verification run afterwards, as after `resume`.
 
 ## Sessions, replay and comparison (M14)
 
-Switch the top bar from **Live** to **Sessions**:
+Choose **Sessions** in the main navigation:
 
 - **Sessions and replay**: every sale is a session with its configuration,
   action journal and one-second telemetry (including the state needed to redraw
@@ -202,12 +228,12 @@ Switch the top bar from **Live** to **Sessions**:
 
 ## Guided demonstrations and presenting (M14)
 
-The **Guide** tab walks through five demonstrations, one step at a time with a
+The **Guide** page walks through five demonstrations, one step at a time with a
 button for each action and what to watch: *No scaling*, *Manual rescue*, *CPU versus
-lag*, *Database bottleneck* and *Crash and replay*. The glossary maps every Store
+lag*, *Database bottleneck* and *Crash and replay*. The expandable glossary maps every Store
 term to its System term and states where the analogy stops.
 
-*Present* (key `p`) enters full-screen presentation with a larger floor and
+**View options → Present** (key `p`) enters full-screen presentation with a larger floor and
 charts; `Esc` leaves. `l` switches the lens and `m` toggles motion; shortcuts are
 ignored while typing in a field.
 

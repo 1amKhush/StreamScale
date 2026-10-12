@@ -327,7 +327,7 @@ const LedgerNode = memo(function LedgerNode({ data, selected }: NodeProps<Node<D
       {ledger.available === false && <p className="node-warning">⛔ PostgreSQL unavailable</p>}
       <div className="node-figure">
         <strong data-testid="ledger-facts">{count(ledger.facts)}</strong>
-        <span>{lens === "store" ? "sales recorded" : "order_event facts"}</span>
+        <span>{lens === "store" ? "events recorded" : "order_event facts"}</span>
       </div>
       <dl className="node-dl">
         <dt>{lens === "store" ? "Recorded per second" : "Facts/s"}</dt>
@@ -510,7 +510,7 @@ export function FlowMap({
         edgeTypes={edgeTypes}
         fitView
         fitViewOptions={{ padding: 0.04 }}
-        minZoom={0.3}
+        minZoom={0.15}
         maxZoom={1.6}
         nodesConnectable={false}
         nodesDraggable={false}

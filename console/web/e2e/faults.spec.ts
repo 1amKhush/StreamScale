@@ -24,6 +24,7 @@ test("crash, replay and a database outage from the failure lab, then recovery", 
 
   // A cashier collapses after writing the ledger; the replacement replays the record.
   const since = Date.now() / 1000 - 1;
+  await page.getByLabel("Experiment", { exact: true }).selectOption("crash_after_db_commit");
   await page.getByTestId("inject-crash_after_db_commit").click();
   // Follow this injection's own fault, never an older one of the same kind.
   let faultId = "";
@@ -44,7 +45,9 @@ test("crash, replay and a database outage from the failure lab, then recovery", 
   await page.screenshot({ path: `${evidence}/faults-crash-replay.png`, fullPage: true });
 
   // The ledger office closes: the floor shows it, and the top bar offers recovery.
+  await page.getByLabel("Experiment", { exact: true }).selectOption("postgres_outage");
   await page.getByTestId("inject-postgres_outage").click();
+  await page.getByTestId("view-live").click();
   await expect(page.getByTestId("node-ledger")).toContainText("PostgreSQL unavailable", { timeout: 60_000 });
   await expect(page.getByTestId("topbar-recover")).toBeVisible();
   await page.screenshot({ path: `${evidence}/faults-postgres-outage.png`, fullPage: true });

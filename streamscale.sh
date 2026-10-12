@@ -33,6 +33,7 @@ Usage: ./streamscale.sh [command] [options]
   console [--port PORT]
                 Build/deploy the interactive console and serve it on loopback with
                 Grafana/Prometheus links. Prints a login URL; Ctrl+C closes it.
+                Pages: Overview, Sale, Scaling, Failure lab, Sessions and Guide.
   console-check Console unit, web, live-cluster and browser acceptance (M9–M15),
                 including real sales, scaling modes, faults, replay and the full journey.
   status        Show this project's containers and, when running, Kubernetes resources.

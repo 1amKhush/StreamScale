@@ -7,11 +7,15 @@ test("live cluster state, lens toggle and timeline render", async ({ page }) => 
   await login(page);
   await expect(page.getByTestId("freshness")).toContainText("Live");
   await expect(page.getByTestId("node-lane-0")).toContainText("Lane 0");
+  await page.getByText("View options", { exact: true }).click();
   await page.getByRole("radio", { name: "System lens" }).click();
   await expect(page.getByTestId("node-lane-0")).toContainText("Partition 0");
   await page.reload();
+  await page.getByText("View options", { exact: true }).click();
   await expect(page.getByRole("radio", { name: "System lens" })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("radio", { name: "Store lens" }).click();
+  await page.getByText("View options", { exact: true }).click();
+  await page.locator("summary").filter({ hasText: "Activity timeline" }).click();
   await expect(page.getByTestId("timeline")).toContainText("Console server started");
   // Charts export as images.
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("chart-queue-png").click()]);

@@ -274,7 +274,7 @@ export function Inspector({
             <p className="hint">Sampled: the latest twelve acknowledgements, not every event.</p>
           </>
         ) : (
-          <p className="hint">No sale yet. Start one from the sale bar.</p>
+          <p className="hint">No sale yet. Start one from Overview or Sale.</p>
         )}
       </>
     );
@@ -432,7 +432,7 @@ export function Inspector({
       <>
         <Explain id="database" />
         <dl>
-          <dt>{store ? "Sales recorded" : "Facts"}</dt>
+          <dt>{store ? "Events recorded" : "Facts"}</dt>
           <dd>{count(floor.ledger.facts)}</dd>
           <dt>{store ? "Orders on the board" : "State rows"}</dt>
           <dd>{count(floor.ledger.states)}</dd>

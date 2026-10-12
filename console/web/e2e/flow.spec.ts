@@ -29,21 +29,25 @@ test("a real flash sale moves the floor, stays bounded under burst, and drains",
   expect(particles).toBeLessThanOrEqual(edges * 6);
   await page.screenshot({ path: `${evidence}/flow-burst.png`, fullPage: true });
 
+  await page.getByText("View options", { exact: true }).click();
   await page.getByRole("button", { name: /^Motion on/ }).click();
+  await page.getByText("View options", { exact: true }).click();
   await expect(page.locator("circle.particle")).toHaveCount(0);
   const facts = await page.getByTestId("ledger-facts").innerText();
   await expect.poll(() => page.getByTestId("ledger-facts").innerText(), { timeout: 15_000 }).not.toBe(facts);
 
   await page.getByTestId("node-ledger").click();
   await expect(page.locator("table.facts tbody tr").first()).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId("node-desk").click();
+  await page.getByLabel("Inspect component").selectOption("desk");
   await expect(page.getByText(/from partition \d+ offset \d+/).first()).toBeVisible({ timeout: 15_000 });
   await page.screenshot({ path: `${evidence}/flow-inspector-desk.png`, fullPage: true });
 
+  await page.getByRole("button", { name: "Close inspector" }).click();
   expect(await startsSince(page, since)).toBe(1);
   await page.getByTestId("stop-sale").click();
   await expect(page.getByTestId("sale-draining")).toBeVisible({ timeout: 90_000 });
   await expect(page.getByTestId("start-sale")).toBeVisible({ timeout: 420_000 });
+  await page.locator("summary").filter({ hasText: "Activity timeline" }).click();
   await expect(page.getByTestId("timeline")).toContainText("drained; backlog is zero");
   for (const lane of [0, 1, 2]) expect(await lag(page, lane)).toBe(0);
   await page.screenshot({ path: `${evidence}/flow-drained.png`, fullPage: true });

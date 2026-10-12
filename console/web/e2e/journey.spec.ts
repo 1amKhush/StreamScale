@@ -34,6 +34,8 @@ test("start a sale, overload it, rescue it, crash it, recover and reconcile", as
   await expect(page.getByTestId("sale-running")).toBeVisible({ timeout: 60_000 });
   const run = (await state(page)).sales.session.run_name;
 
+  await page.getByTestId("view-live").click();
+
   // 3. Overload: the floor names the backlog and the single cashier at capacity.
   await expect(page.getByTestId("signals")).toContainText("Events arrive faster than consumers commit them", { timeout: 120_000 });
   await expect.poll(async () => (await state(page)).points.at(-1).lag_total ?? 0, { timeout: 120_000 }).toBeGreaterThan(2000);
@@ -44,6 +46,7 @@ test("start a sale, overload it, rescue it, crash it, recover and reconcile", as
   await page.getByTestId("mode-manual").click();
   await expect(page.getByTestId("mode-manual")).toHaveAttribute("aria-checked", "true", { timeout: 180_000 });
   await page.getByTestId("manual-3").click();
+  await page.getByTestId("view-live").click();
   await expect(page.locator("[data-testid^='node-cashier-']")).toHaveCount(3, { timeout: 120_000 });
   await expect
     .poll(async () => (await state(page)).sample.kafka.group.members.map((m: { partitions: number[] }) => m.partitions.join(",")).sort().join("|"), {
@@ -55,6 +58,7 @@ test("start a sale, overload it, rescue it, crash it, recover and reconcile", as
   // 5. Fault: a cashier faints after writing the ledger; the replacement replays it.
   await page.getByTestId("tab-faults").click();
   const since = Date.now() / 1000 - 1;
+  await page.getByLabel("Experiment", { exact: true }).selectOption("crash_after_db_commit");
   await page.getByTestId("inject-crash_after_db_commit").click();
   let faultId = "";
   await expect
@@ -69,7 +73,9 @@ test("start a sale, overload it, rescue it, crash it, recover and reconcile", as
   await expect(outcome).toContainText("✓ verified", { timeout: 180_000 });
 
   // 6. Recover: a short database outage, then recover the pipeline from the top bar.
+  await page.getByLabel("Experiment", { exact: true }).selectOption("postgres_outage");
   await page.getByTestId("inject-postgres_outage").click();
+  await page.getByTestId("view-live").click();
   await expect(page.getByTestId("node-ledger")).toContainText("PostgreSQL unavailable", { timeout: 60_000 });
   await page.screenshot({ path: `${evidence}/journey-3-fault.png`, fullPage: true });
   await page.getByTestId("topbar-recover").click();
@@ -79,7 +85,7 @@ test("start a sale, overload it, rescue it, crash it, recover and reconcile", as
   // 7. Close the doors, drain and reconcile.
   await page.getByTestId("tab-sale").click();
   await page.getByTestId("panel-stop-sale").click();
-  await expect(page.getByTestId("start-sale")).toBeVisible({ timeout: 600_000 });
+  await expect(page.getByTestId("panel-start-sale")).toBeEnabled({ timeout: 600_000 });
   await expect(page.getByTestId("sale-result")).toContainText("✓ reconciled", { timeout: 420_000 });
   const session = (await state(page)).sales.sessions.find((row: { run_name: string }) => row.run_name === run);
   expect(session.reconciliation_status).toBe("passed");

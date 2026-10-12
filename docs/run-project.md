@@ -40,17 +40,32 @@ running, so an active sale and its fault-recovery timers are never abandoned.
 Only one console server runs at a time. The console needs a deployed pipeline
 (`cluster` or `all`).
 
+The overview shows four key metrics, the pipeline map and two charts. **More
+metrics** reveals the other charts; **View options** contains the Store/System
+lens and motion controls. **Connection & diagnostics** contains source health,
+Grafana and Prometheus. The **List** flow view works with a keyboard and is the
+default on phones. Clicking a component opens a drawer; Escape closes it.
+
+For frontend-only edits while the console is already running, rebuild the assets
+and refresh your browser (no cluster redeployment needed):
+
+```sh
+cd /home/khush/code_hub/projects/streamscale/console/web
+npm run build
+```
+
 A first demonstration, all in the browser:
 
-1. **Staffing** → *One cashier, always* (fixed). **Sale** → *Extended flash sale* →
-   *Open the doors*. Arrivals reach about 390/s while one consumer serves about
-   140/s; every lane's queue grows and the floor flags the backlog.
-2. **Staffing** → *You call cashiers in* → **3**. After a short handover each
+1. **Scaling** → *One cashier, always* (fixed). **Sale** → *Extended flash sale* →
+   *Start sale*. Open **Overview** to watch arrivals reach about 390/s while one
+   consumer serves about 140/s; every lane's queue grows and the floor flags the backlog.
+2. **Scaling** → *You call cashiers in* → **3**. After a short handover each
    cashier owns one lane and the queues shrink.
-3. **Failure lab** → *Cashier faints after writing the ledger*. Watch exit 75, the
-   restart, the replay and the verified single SQL fact.
-4. **Sale** → *Close the doors and drain*. After the drain the console reconciles
-   the run against Kafka, SQL and the DLQ and shows the exact SQL p95.
+3. **Failure lab** → choose the crash-after-DB-commit experiment → *Inject*.
+   Watch exit 75, the restart, the replay and the verified single SQL fact.
+4. **Sale** → *Stop & drain*. After the drain the console reconciles
+   the run against Kafka, SQL and the DLQ. Expand **Reconciliation details** for
+   exact SQL p95.
 5. Repeat the sale under *“Cashiers look busy” rule* (CPU-HPA) and *“Queues are
    long” rule* (lag-KEDA), or use **Sessions → Comparisons** to run all three modes
    as fresh, frozen, sequential runs. **Guide** walks through five demonstrations.
