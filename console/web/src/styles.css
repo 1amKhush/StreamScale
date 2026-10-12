@@ -1414,3 +1414,154 @@ button.danger {
   font-size: 12px;
 }
 
+/* ---- M14: views, sessions, replay, comparison, guide, presentation ---- */
+
+.view-switch {
+  display: flex;
+  gap: 2px;
+}
+
+.sessions-view {
+  padding: 16px;
+}
+
+.sessions-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.session-list button {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  background: var(--surface);
+  font-size: 12.5px;
+}
+
+.session-list button.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.session-facts {
+  max-width: 640px;
+}
+
+.exports {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.exports a {
+  color: var(--accent);
+}
+
+.replay-banner {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--gold-soft);
+  border: 1px solid var(--gold);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.replay-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.replay-controls input[type="range"] {
+  flex: 1;
+}
+
+.compare,
+.matrix {
+  margin-top: 12px;
+  max-width: 1100px;
+}
+
+.workload-group {
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+}
+
+.table-scroll {
+  overflow: auto;
+  max-height: 360px;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.figures img {
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.guide-steps {
+  padding-left: 20px;
+  font-size: 13.5px;
+}
+
+.guide-steps li {
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.guide-steps li.current {
+  color: var(--ink);
+}
+
+.guide-steps li.done {
+  text-decoration: line-through;
+}
+
+.glossary {
+  font-size: 12.5px;
+}
+
+body.presenting {
+  font-size: 16px;
+}
+
+body.presenting .sources,
+body.presenting .bottom .timeline,
+body.presenting .stage-note {
+  display: none;
+}
+
+body.presenting .flow-map {
+  height: 78vh;
+}
+
+body.presenting .floor-node {
+  font-size: 14px;
+}
+
+body.presenting .chart-grid {
+  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+}

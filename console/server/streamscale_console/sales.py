@@ -481,7 +481,8 @@ class Component:
                     self.attach(record)
             return
         if self.telemetry is not None:
-            self.telemetry.write(json.dumps({"point": point, "sale": _sale_brief(sale)}) + "\n")
+            frame = {"point": point, "sale": _sale_brief(sale), "sample": replay_sample(sample)}
+            self.telemetry.write(json.dumps(frame, default=str) + "\n")
             self.telemetry.flush()
         recovered = sale.get("recovered") or {}
         if (
@@ -678,3 +679,38 @@ def _sale_brief(sale):
 def ensure(path: Path):
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def replay_sample(sample):
+    """The fields the floor needs to redraw a moment later, without bulky histograms."""
+    kubernetes = sample.get("kubernetes") or {}
+    return {
+        "sampled_at": sample.get("sampled_at"),
+        "sequence": sample.get("sequence"),
+        "sources": sample.get("sources"),
+        "run": sample.get("run"),
+        "kafka": sample.get("kafka"),
+        "sql": sample.get("sql"),
+        "dlq": sample.get("dlq"),
+        "kubernetes": {
+            "consumer": kubernetes.get("consumer"),
+            "pods": kubernetes.get("pods"),
+            "controllers": kubernetes.get("controllers"),
+            "infrastructure": kubernetes.get("infrastructure"),
+            "resources": None,
+        },
+        "consumers": [
+            {
+                "pod": row.get("pod"),
+                "ip": row.get("ip"),
+                "ok": row.get("ok"),
+                "state": row.get("state"),
+            }
+            for row in sample.get("consumers") or []
+        ],
+        "scaling": {
+            key: (sample.get("scaling") or {}).get(key)
+            for key in ("mode", "override", "ownership", "transition")
+        },
+        "faults": {"active": ((sample.get("faults") or {}).get("active") or [])},
+    }

@@ -1,7 +1,8 @@
-import { memo, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
+  applyNodeChanges,
   Handle,
   Position,
   ReactFlow,
@@ -11,6 +12,7 @@ import {
   type Edge,
   type EdgeProps,
   type Node,
+  type NodeChange,
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -434,7 +436,7 @@ export function FlowMap({
   cpuTarget: number | null;
 }) {
   const cashierCount = Math.max(1, floor.cashiers.length);
-  const nodes = useMemo<Node<Data>[]>(() => {
+  const built = useMemo<Node<Data>[]>(() => {
     const list: Node<Data>[] = [
       { id: "doors", type: "doors", position: { x: 0, y: 215 }, data: { doors: floor.doors } },
       {
@@ -464,6 +466,28 @@ export function FlowMap({
     );
     return list.map((node) => ({ ...node, selected: node.id === selected, draggable: false }));
   }, [floor, selected, cashierCount, cpuTarget]);
+  // Controlled nodes: React Flow's measured sizes must survive each second's rebuild,
+  // otherwise a node can stay unmeasured and therefore hidden.
+  const [nodes, setNodes] = useState<Node<Data>[]>(built);
+  useEffect(() => {
+    setNodes((current) => {
+      const previous = new Map(current.map((node) => [node.id, node]));
+      return built.map((node) => {
+        const before = previous.get(node.id);
+        return before?.measured ? { ...node, measured: before.measured } : node;
+      });
+    });
+  }, [built]);
+  const onNodesChange = useCallback(
+    (changes: NodeChange<Node<Data>>[]) =>
+      setNodes((current) =>
+        applyNodeChanges(
+          changes.filter((change) => change.type === "dimensions"),
+          current,
+        ),
+      ),
+    [],
+  );
   const edges = useMemo<Edge<Data>[]>(
     () =>
       floor.edges.map((edge) => ({
@@ -480,6 +504,7 @@ export function FlowMap({
     <div className="flow-map" data-testid="flow-map">
       <ReactFlow
         nodes={nodes}
+        onNodesChange={onNodesChange}
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}

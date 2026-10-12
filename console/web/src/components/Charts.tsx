@@ -30,9 +30,19 @@ export function markersFrom(journal: JournalEntry[]): Marker[] {
     }));
 }
 
-export function Charts({ points, journal, cpuTarget }: { points: Point[]; journal: JournalEntry[]; cpuTarget: number | null }) {
+export function Charts({
+  points,
+  journal,
+  cpuTarget,
+  initialWindow = "5m",
+}: {
+  points: Point[];
+  journal: JournalEntry[];
+  cpuTarget: number | null;
+  initialWindow?: string;
+}) {
   const lens = useLens();
-  const [windowId, setWindowId] = useState("5m");
+  const [windowId, setWindowId] = useState(initialWindow);
   const span = WINDOWS.find((item) => item.id === windowId)?.seconds ?? null;
   const visible = useMemo(() => {
     if (!points.length) return [];

@@ -179,6 +179,38 @@ PostgreSQL. The measured pipeline's idle consumer may log errors or restart whil
 Kafka is down; run `./streamscale.sh cluster` (or `all`) for a fresh, strict
 verification run afterwards, as after `resume`.
 
+## Sessions, replay and comparison (M14)
+
+Switch the top bar from **Live** to **Sessions**:
+
+- **Sessions and replay**: every sale is a session with its configuration,
+  action journal and one-second telemetry (including the state needed to redraw
+  the floor). Replay has a scrubber, play/pause and 1×/4×/10× speeds. It is
+  labelled *not live* and has no pipeline controls; it only reads recorded files.
+  Each session exports `points.csv`, `configuration.json`, `journal.jsonl` and
+  `reconciliation.json`, and states whether it may enter a formal comparison and
+  why not (aborted, faults, scaling or pacing changes, failed or missing
+  reconciliation).
+- **Comparisons**: *Run fixed, CPU-HPA and lag-KEDA* runs the same frozen sale once
+  per mode, one after another, each as a fresh run and consumer group, waits for
+  each drain and reconciliation, and ranks only eligible runs by exact SQL p95,
+  with peak backlog, most consumers and replica-seconds beside it. Sessions are
+  also grouped by identical logical workload. One run per mode on a shared local
+  node is descriptive, not a statistical result.
+- **Measured matrix**: the audited 27-run results and figures from
+  `docs/results/current/`, read-only. The console never writes them.
+
+## Guided demonstrations and presenting (M14)
+
+The **Guide** tab walks through five demonstrations, one step at a time with a
+button for each action and what to watch: *No scaling*, *Manual rescue*, *CPU versus
+lag*, *Database bottleneck* and *Crash and replay*. The glossary maps every Store
+term to its System term and states where the analogy stops.
+
+*Present* (key `p`) enters full-screen presentation with a larger floor and
+charts; `Esc` leaves. `l` switches the lens and `m` toggles motion; shortcuts are
+ignored while typing in a field.
+
 ## What is real
 
 - Values come from the cluster. The in-cluster agent samples Kafka offsets and
