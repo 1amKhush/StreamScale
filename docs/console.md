@@ -14,7 +14,7 @@ for the complete scope, the analogy table and where the analogy stops.
 The command builds the web assets, deploys the console release into the existing
 `kind-streamscale` cluster, and prints a login link such as
 `http://127.0.0.1:18080/?token=…`. Open that exact link. It also opens Grafana and
-Prometheus forwards and links them. Ctrl+C closes the console server and its
+Prometheus forwards and links them in the top bar. Ctrl+C closes the console server and its
 forwards. The cluster, its data and the console's in-cluster agent keep running.
 
 Requirements beyond the main project: Node.js 20.19 or newer with npm. The pipeline
@@ -188,7 +188,7 @@ Switch the top bar from **Live** to **Sessions**:
   the floor). Replay has a scrubber, play/pause and 1×/4×/10× speeds. It is
   labelled *not live* and has no pipeline controls; it only reads recorded files.
   Each session exports `points.csv`, `configuration.json`, `journal.jsonl` and
-  `reconciliation.json`, and states whether it may enter a formal comparison and
+  `reconciliation.json` (every live or replayed chart also has a *PNG* download), and states whether it may enter a formal comparison and
   why not (aborted, faults, scaling or pacing changes, failed or missing
   reconciliation).
 - **Comparisons**: *Run fixed, CPU-HPA and lag-KEDA* runs the same frozen sale once

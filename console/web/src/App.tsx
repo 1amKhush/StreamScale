@@ -117,6 +117,16 @@ export default function App() {
             )}
             <WorkflowChip live={live} />
             <ConnectionBadge live={live} />
+            {live.state?.server.dashboards?.grafana && (
+              <a className="link-button" href={live.state.server.dashboards.grafana} target="_blank" rel="noreferrer">
+                Grafana ↗
+              </a>
+            )}
+            {live.state?.server.dashboards?.prometheus && (
+              <a className="link-button" href={live.state.server.dashboards.prometheus} target="_blank" rel="noreferrer">
+                Prometheus ↗
+              </a>
+            )}
             <button
               className="link-button"
               aria-pressed={motion === "off"}

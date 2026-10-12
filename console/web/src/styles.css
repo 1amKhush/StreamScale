@@ -1577,3 +1577,13 @@ body.presenting .chart-grid {
 .sale-bar button {
   white-space: nowrap;
 }
+
+.chart-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+a.link-button {
+  text-decoration: none;
+  font-size: 13.5px;
+}

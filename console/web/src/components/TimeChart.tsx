@@ -201,9 +201,27 @@ export function TimeChart({
           <strong>{title}</strong>
           {subtitle && <span className="muted"> · {subtitle}</span>}
         </div>
-        <button className="link-button" onClick={() => setTable((value) => !value)} aria-pressed={table}>
-          {table ? "Chart" : "Table"}
-        </button>
+        <span className="chart-actions">
+          <button className="link-button" onClick={() => setTable((value) => !value)} aria-pressed={table}>
+            {table ? "Chart" : "Table"}
+          </button>
+          <button
+            className="link-button"
+            onClick={() => {
+              const canvas = plot.current?.ctx.canvas;
+              if (!canvas) return;
+              const link = document.createElement("a");
+              link.href = canvas.toDataURL("image/png");
+              link.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
+              link.click();
+            }}
+            disabled={table}
+            title="Download this chart as a PNG image"
+            data-testid={testId ? `${testId}-png` : undefined}
+          >
+            PNG
+          </button>
+        </span>
       </figcaption>
       <div ref={container} className="chart-canvas" hidden={table} aria-label={`${title} chart`} role="img" />
       {table && (

@@ -331,9 +331,12 @@ class Component:
                     }
                 )
                 self.publish()
+            # Restore the baseline before reporting completion, never after it.
+            comparison["step"] = "restoring fixed mode"
+            self.publish()
+            await self.operation("scaling.mode", {"mode": "fixed"}, timeout=300)
             comparison["state"] = "completed"
             comparison["step"] = "done"
-            await self.operation("scaling.mode", {"mode": "fixed"}, timeout=300)
         except asyncio.CancelledError:
             comparison["state"] = "cancelled"
             raise

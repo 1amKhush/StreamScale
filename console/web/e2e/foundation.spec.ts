@@ -13,6 +13,9 @@ test("live cluster state, lens toggle and timeline render", async ({ page }) => 
   await expect(page.getByRole("radio", { name: "System lens" })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("radio", { name: "Store lens" }).click();
   await expect(page.getByTestId("timeline")).toContainText("Console server started");
+  // Charts export as images.
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("chart-queue-png").click()]);
+  expect(download.suggestedFilename()).toBe("queue-length-by-lane.png");
   await page.screenshot({ path: `${evidence}/foundation-live.png`, fullPage: true });
   expect(errors).toEqual([]);
 });
