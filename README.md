@@ -23,7 +23,9 @@ map and synchronized charts, switch between fixed, manual, CPU-HPA and lag-KEDA
 or take over manually, inject bounded failures and watch recovery, then replay,
 reconcile and compare sessions. Start it with `./streamscale.sh console`; see
 [the console guide](docs/console.md), [its plan](docs/interactive-console-plan.md)
-and the [M9](docs/m9-evidence.md)–[M15](docs/m15-evidence.md) evidence.
+and the [M9](docs/m9-evidence.md)–[M15](docs/m15-evidence.md) evidence. The complete
+M0–M15 launcher, including the console's live-cluster and browser acceptance,
+passed on 2026-10-12.
 
 One command runs every integrated stage and opens the console and dashboards:
 

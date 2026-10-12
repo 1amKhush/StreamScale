@@ -247,3 +247,13 @@ verified alternate URLs, Grafana/Prometheus health, and scoped Ctrl+C/SIGTERM
 cleanup; evidence is in `artifacts/ui-port-conflict-check.json`. The acceptance
 left fixed demo `run-20261010035945-18f5271f`, UUID
 `fbd2fe2b-bf4d-46bb-8b6f-342a0d5d32ff`, with 396 facts, 200 states and zero lag.
+
+The complete M0–M15 launcher, including the interactive console's live-cluster
+and Chrome acceptance, passed on 2026-10-12 (07:02:21Z–07:32:18Z): 167 unit tests,
+28 live integration tests, fresh M5 cluster verification, all three M6 modes, the
+retained 27-run audit, M8 regeneration, and 138 + 19 console unit tests, 41 console
+live-cluster tests and 9 Chrome tests including the full sale → overload → rescue
+→ crash → outage → recovery → reconciliation journey. Log:
+`artifacts/m15-full-check.log`; details in [M15 evidence](m15-evidence.md).
+Running services were not stopped by these checks; the console's own agent and the
+shared Kafka/PostgreSQL were scaled only by the failure lab's bounded, restored faults.
