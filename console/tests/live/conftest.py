@@ -131,11 +131,24 @@ class ServerProcess:
         return self.start()
 
 
+def baseline(client):
+    """Start from a known floor: no active faults, fixed scaling, nothing selling."""
+    wait_idle(client)
+    state = client.state()
+    if (state["sample"].get("faults") or {}).get("active"):
+        client.run("fault.recover_all", timeout=240)
+    scaling = state["sample"].get("scaling") or {}
+    if scaling.get("mode") != "fixed" or scaling.get("override"):
+        result = client.run("scaling.mode", {"mode": "fixed"}, timeout=240)
+        assert result["state"] == "succeeded", result
+
+
 @pytest.fixture(scope="session")
 def console_server():
     """One console server for the live session; tests may restart it."""
     server = ServerProcess()
     server.start()
+    baseline(server.client)
     yield server.client, server.record, server
     server.stop()
 

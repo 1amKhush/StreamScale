@@ -1374,3 +1374,43 @@ button.danger {
   font-size: 13px;
 }
 
+/* ---- M13: failure lab ---- */
+
+.fault-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  background: var(--surface);
+}
+
+.fault-card p {
+  margin: 4px 0;
+}
+
+.fault-card.active {
+  border-color: var(--crit);
+  background: var(--crit-soft);
+}
+
+.fault-card.done {
+  background: var(--surface-2);
+}
+
+.fault-params {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+
+.fault-params input,
+.fault-params select {
+  width: 120px;
+}
+
+.small {
+  font-size: 12px;
+}
+

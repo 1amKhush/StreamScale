@@ -12,6 +12,8 @@ import { SaleBar } from "./components/SaleBar";
 import { Signals } from "./components/Signals";
 import { SalePanel } from "./components/SalePanel";
 import { ScalingPanel } from "./components/ScalingPanel";
+import { FailureLab, type FaultsState } from "./components/FailureLab";
+import { useOperation } from "./operations";
 
 function stored<T extends string>(key: string, fallback: T, allowed: readonly T[]): T {
   try {
@@ -51,6 +53,8 @@ export default function App() {
   const floor = useMemo(() => buildFloor(live.points, live.sample, live.now), [live.points, live.sample, live.now]);
   const hpa = floor.manager.controllers.find((row) => row.kind === "HorizontalPodAutoscaler" && !row.owned_by_keda);
   const cpuTarget = hpa?.cpu_target ?? null;
+  const recovery = useOperation(live);
+  const activeFaults = ((live.sample?.faults as FaultsState | undefined)?.active ?? []).length;
 
   return (
     <LensContext.Provider value={lens}>
@@ -65,6 +69,17 @@ export default function App() {
           </div>
           <SaleBar live={live} onPlan={() => setTab("sale")} />
           <div className="topbar-status">
+            {activeFaults > 0 && (
+              <button
+                className="danger"
+                disabled={recovery.busy("fault.recover_all")}
+                onClick={() => recovery.run("fault.recover_all")}
+                title="Recover every active fault now"
+                data-testid="topbar-recover"
+              >
+                {lens === "store" ? "Restore normal service" : "Recover pipeline"} ({activeFaults})
+              </button>
+            )}
             <WorkflowChip live={live} />
             <ConnectionBadge live={live} />
             <button
@@ -108,7 +123,7 @@ export default function App() {
             )}
             {tab === "sale" && <SalePanel live={live} />}
             {tab === "scaling" && <ScalingPanel live={live} />}
-            {tab === "faults" && <p className="hint">The failure lab arrives with M13.</p>}
+            {tab === "faults" && <FailureLab live={live} />}
           </aside>
         </main>
         <section className="bottom">

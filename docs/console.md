@@ -146,6 +146,39 @@ failed or interrupted transition is shown with a *Reapply* button. Settings
 apply to the autoscaled modes. Desired replicas, ready pods and group members are
 always shown separately, because they differ during scale-up and rebalances.
 
+## Failure lab (M13)
+
+The **Failure lab** tab injects real, bounded faults while a sale runs. Each card
+states its exact scope. The in-cluster agent owns every timer and recovery, and
+records them on the runs volume, so a closed browser, a stopped console server or
+even an agent restart never leaves a fault behind.
+
+| Store lens | What actually happens | Bound | What to watch |
+| --- | --- | --- | --- |
+| Send one cashier home | Deletes one console consumer pod | One pod | Rebalance; a replacement takes the lanes |
+| Cashier faints after writing the ledger | A consumer exits 75 after its PostgreSQL commit, before its offset commit | One-shot, 2 min window | Replay of that record; the event is stored once (verified in SQL) |
+| Cashier faints after the problem desk confirms | A consumer exits 76 after the DLQ acknowledgement, before its offset commit | One-shot | A possible second DLQ copy, counted by unique source |
+| Cashier overwhelmed | One consumer allocates memory until its 256Mi limit kills it | One pod, at most 2 GiB or 2 min | OOMKilled (exit 137) and restart |
+| Everyone on a break | Console consumers set to zero (manual or override), then restored | 5–300 s | Lag grows; no group members; no crash |
+| Slow card terminals | Consumers wait before each database write | 5–2,000 ms per record, 5–300 s | Lower drain rate |
+| Tired cashiers | Consumer CPU limit lowered **in place** (no restart) | 20–400m, 5–300 s | Saturation at the new limit |
+| Slow back office | PostgreSQL CPU limit lowered in place | 20–400m, 5–300 s | DB p95 rises; more consumers do not help |
+| Ledger office closed | PostgreSQL StatefulSet scaled to zero, then one (data retained) | 5–120 s | Offsets do not advance; consumers retry |
+| Ticket system down | Kafka StatefulSet scaled to zero, then one (records retained) | 5–120 s | The publisher buffers; consumers retry |
+
+Only one infrastructure outage runs at a time. **Recover pipeline** (top bar and
+tab) ends every active fault now and makes sure Kafka and PostgreSQL are scaled
+back to one. Every outcome is observed, not assumed: crash faults record the
+consumer's own claim (pod, event, partition, offset, exit code) and are marked
+verified only after the replacement has committed past that offset and SQL holds
+the event exactly once; the OOM fault is verified from the pod's termination
+reason. Sessions with faults reconcile like any other but never enter comparisons.
+
+The broker and database outages affect every client of the shared Kafka and
+PostgreSQL. The measured pipeline's idle consumer may log errors or restart while
+Kafka is down; run `./streamscale.sh cluster` (or `all`) for a fresh, strict
+verification run afterwards, as after `resume`.
+
 ## What is real
 
 - Values come from the cluster. The in-cluster agent samples Kafka offsets and

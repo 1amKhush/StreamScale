@@ -138,6 +138,21 @@ def create_app(console: Console, background=True):
         finally:
             for task in tasks:
                 task.cancel()
+            # Never drop an accepted request silently: record what did not finish.
+            for operation in console.coordinator.operations.values():
+                if operation.state in {"queued", "running"}:
+                    console.journal.write(
+                        {
+                            "type": "operation",
+                            "kind": operation.kind,
+                            "op_id": operation.id,
+                            "state": "abandoned",
+                            "params": operation.params,
+                            "error": "The console server stopped before this finished",
+                        },
+                        operation.session,
+                    )
+            console.journal.write({"type": "system", "text": "Console server stopped"})
             console.hub.forward.stop()
             console.lock.release()
 
