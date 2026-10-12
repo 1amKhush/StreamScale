@@ -26,6 +26,8 @@ velocity or fabricated sprint points. Timestamps record observed transitions in 
 
 Console milestones follow [the console plan](interactive-console-plan.md); evidence is in `docs/m9-evidence.md`, `docs/m10-evidence.md`, `docs/m11-evidence.md`, `docs/m12-evidence.md`, `docs/m13-evidence.md`, `docs/m14-evidence.md` and `docs/m15-evidence.md`.
 
+The [console usability refinement](ui-refinement-evidence.md) was validated on 2026-10-12: focused task pages, progressive controls, mobile inspection, and 12 passing browser checks against the real pipeline.
+
 Evidence, defects, review and actual completion timestamps are recorded in
 `docs/m0-m1-evidence.md`, `docs/m2-m3-evidence.md`, `docs/m4-evidence.md` and
 `docs/m5-evidence.md`, `docs/m6-evidence.md`, `docs/m7-evidence.md` and
