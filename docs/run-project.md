@@ -284,4 +284,5 @@ or `./streamscale.sh engine compare --baseline FILE --candidate FILE --output DI
 The `engine` subcommand does not start local dependencies or load `.env`; supply
 connection variables through the invoking environment. See [engine.md](engine.md)
 for complete setup, the adapter/query contract, matched-run rules and limitations.
-M16 remains a preview until its Docker-backed acceptance actually passes.
+M16 remains a preview. Its [independent Docker-backed acceptance passed in CI](https://github.com/1amKhush/StreamScale/actions/runs/40547707151);
+the complete legacy cluster/console workflow has not been rerun.

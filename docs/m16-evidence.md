@@ -30,7 +30,8 @@ Base repository revision: `6b7dcad` (master at checkout).
 | `./streamscale.sh engine --help` | Displays run/compare command parser |
 | Real launcher invocation using the memory adapter | Baseline exit 0/pass; lossy candidate exit 1/fail; two-repetition comparison exit 1/fail |
 | `git diff --check` | Passed |
-| `./streamscale.sh engine-check` | Blocked before services/publication: `Missing command: docker` |
+| `./streamscale.sh engine-check` locally | Blocked before services/publication: `Missing command: docker` |
+| GitHub Actions independent Kafka/SQL acceptance | Passed on the Docker-equipped CI runner; evidence uploaded |
 
 Six chart tests were skipped because pinned Helm is not installed. The 29
 integration cases were deselected by the repository's default pytest marker.
@@ -48,17 +49,19 @@ semantics at the adapter boundary, parameterized read-only SQL and order wire
 compatibility. The CLI smoke uses the memory adapter only; it is not performance
 evidence for Kafka or cloud infrastructure.
 
-## Pending acceptance
+## Live acceptance on GitHub Actions
 
-No Docker executable/daemon is available in this execution environment. The live
-independent-worker test and the complete M0–M16 `all` workflow were not executed.
-Run `./streamscale.sh engine-check` on a Docker-equipped machine or inspect the
-new GitHub workflow's live result. Live acceptance retains its artifacts under
-`artifacts/engine/acceptance-*/` and requires normal-worker pass plus lossy-worker
-failure against identical logical manifests.
+The implementation environment has no Docker executable/daemon, so local live
+acceptance was blocked. The same code subsequently passed the Docker-backed
+[Engine acceptance workflow](https://github.com/1amKhush/StreamScale/actions/runs/40547707151) on GitHub Actions (run 40547707151).
+Both unit/lint checks and the independent Kafka/PostgreSQL acceptance succeeded;
+the workflow uploaded the retained engine evidence. The live test asserts that
+the independent telemetry worker passes, the deliberately lossy worker fails,
+their logical manifest hashes match, and the lossy run is excluded from rankings.
 
-M16 remains a preview pending live acceptance. The original order bridge covers
-immutable facts; the original inspector remains responsible for its projection,
-DLQ and replay checks. The general checker currently covers one-to-one outputs;
-custom aggregate/fan-out/filtered semantics and large-scale streaming evidence
-collection are follow-on work, not claimed complete here.
+The complete legacy M0–M16 `all` workflow has not been rerun. Launcher ordering
+and argument routing passed scoped tests. This remains an engine preview: the
+original order bridge covers immutable facts; the original inspector remains
+responsible for projection, DLQ and replay checks. The general checker currently
+covers one-to-one outputs; custom aggregate/fan-out/filtered semantics and
+large-scale streaming evidence collection are follow-on work.

@@ -85,8 +85,8 @@ The telemetry example uses its own schema and worker without StreamScale imports
 
 See [the engine guide](docs/engine.md) for adapter contracts, scenarios, evidence,
 exit codes and current limitations. The original demo and console remain available.
-M16 is a preview pending Docker-backed acceptance; unit tests do not establish
-cloud capacity or production readiness.
+M16 remains a preview; [independent Kafka/SQL acceptance passed in CI](https://github.com/1amKhush/StreamScale/actions/runs/40547707151).
+These checks do not establish cloud capacity or production readiness.
 
 ---
 

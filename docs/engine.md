@@ -25,8 +25,8 @@ The acceptance harness stops only the worker subprocesses it created.
 `./streamscale.sh all --no-ui` includes this acceptance after local checks and
 preserves all the previous cluster, scaling, analysis and console stages. The
 GitHub `Engine acceptance` workflow runs unit/lint checks and this live acceptance
-on a Docker-equipped runner; its result must be inspected before declaring M16
-fully verified. `make engine-test` runs the engine tests without Docker.
+on a Docker-equipped runner. The [first live acceptance run](https://github.com/1amKhush/StreamScale/actions/runs/40547707151) passed;
+the full legacy cluster/console workflow has not been rerun. `make engine-test` runs the engine tests without Docker.
 
 For an already running application:
 
@@ -198,7 +198,7 @@ Existing application code, migrations, console and M0–M15 commands retain thei
 contracts. This adapter is a compatibility bridge, not a claim that the legacy
 experiment campaign has already been rewritten onto the new engine.
 
-## Explicit limits and next acceptance
+## Explicit limits and next steps
 
 The memory adapter is for engine tests only. It is never cloud capacity evidence.
 This preview stores plans, acknowledgements and output snapshots in memory/disk
@@ -207,7 +207,6 @@ streaming reconciliation and bounded evidence collection before capacity claims.
 There is no automatic bottleneck diagnosis, distributed generator, cloud cost
 model, topology discovery or production guarantee.
 
-M16 remains pending live acceptance until the Docker-backed independent example
-passes. Further work should first exercise two independently maintained real
+The Docker-backed independent example [passed in CI](https://github.com/1amKhush/StreamScale/actions/runs/40547707151). Further work should first exercise two independently maintained real
 applications and improve their connection/checker ergonomics, then add telemetry
 and bounded streaming evidence, rather than expanding cloud-provider coverage.

@@ -40,9 +40,9 @@ available locally. No claims are made about reviewing or updating those artifact
 Owner: coding agent. Estimate: large (interfaces, runner, independent application,
 comparison and evidence). Dependencies: existing M0–M15 contracts; Docker-backed
 Kafka/PostgreSQL for live acceptance. Started 2026-10-27 (implementation session).
-State: implemented preview; engine/unit/launcher verification recorded in
-[m16-evidence.md](m16-evidence.md). Live acceptance and full `all` verification
-remain pending in this environment because Docker is unavailable. No measured
+State: engine preview implemented; independent Kafka/SQL live acceptance
+[passed in GitHub Actions](https://github.com/1amKhush/StreamScale/actions/runs/40547707151). Engine/unit/launcher evidence is in
+[m16-evidence.md](m16-evidence.md). Full legacy `all` verification remains pending. No measured
 performance or cloud readiness claim is made.
 
 Acceptance: run a worker with an independent payload/schema without importing the
