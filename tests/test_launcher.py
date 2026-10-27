@@ -123,6 +123,7 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
         "test",
         "check",
         "integration",
+        "engine-check",
         "k8s-up",
         "k8s-verify",
         "scaling",
@@ -229,3 +230,28 @@ def test_invalid_ui_options_fail_before_services_or_publication(launcher, argume
     result, calls, _ = launcher(*arguments)
     assert result.returncode == 2
     assert calls == []
+
+
+def test_engine_forwards_its_arguments_without_starting_services(launcher):
+    result, calls, _ = launcher("engine", "run", "scenario with spaces.json", "--output", "runs/a")
+    assert result.returncode == 0, result.stderr
+    assert calls == [
+        [
+            "uv",
+            "run",
+            "--frozen",
+            "python",
+            "-m",
+            "streamscale.engine",
+            "run",
+            "scenario with spaces.json",
+            "--output",
+            "runs/a",
+        ]
+    ]
+
+
+def test_engine_check_uses_project_local_services(launcher):
+    result, calls, _ = launcher("engine-check")
+    assert result.returncode == 0, result.stderr
+    assert [call[1] for call in calls if call[0] == "make"] == ["up", "bootstrap", "engine-check"]

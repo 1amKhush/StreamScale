@@ -12,13 +12,17 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M15
+StreamScale launcher — M0–M15 plus M16 engine preview
 
 Usage: ./streamscale.sh [command] [options]
 
   all [--no-ui]  Setup, checks, scaling, measured matrix, plots/report, console
                 acceptance, then the console with dashboards. This is the default.
                 --no-ui finishes without opening the console or port forwards.
+  engine run SCENARIO --output DIRECTORY
+  engine compare --baseline FILE --candidate FILE --output DIRECTORY [--repetitions N]
+                Run trusted adapter scenarios against an already running target.
+  engine-check  Run independent Kafka/SQL baseline and lossy-worker acceptance.
   local         Setup and run a fresh local Kafka/PostgreSQL fixture demo.
   check         Start local dependencies and run unit, lint and live integration checks.
   cluster       Setup and deploy/verify a fresh kind cluster execution.
@@ -233,6 +237,11 @@ resume() {
 
 command="${1:-all}"
 if [[ $# -gt 0 ]]; then shift; fi
+# Engine arguments belong to its own parser; no Docker setup for remote targets.
+if [[ "$command" == engine ]]; then
+    require_command uv
+    exec uv run --frozen python -m streamscale.engine "$@"
+fi
 no_ui=false
 fresh=false
 ui_options=()
@@ -300,6 +309,7 @@ case "$command" in
         make smoke
         local_demo
         checks
+        make engine-check
         printf '\n[M5] Deploying a fresh cluster execution and checking SQL/metrics/Grafana.\n'
         cluster_demo
         printf '\n[M6] Exercising the three isolated scaling modes and replica bounds.\n'
@@ -311,11 +321,12 @@ case "$command" in
         printf '\n[M9–M15] Verifying the interactive console against the live cluster and browser.\n'
         make console-check
         status
-        printf '\nM0–M15 passed. Report: docs/results/current/report.md; console evidence: artifacts/console/.\n'
+        printf '\nM0–M15 and M16 live engine acceptance passed. Report: docs/results/current/report.md; console evidence: artifacts/console/.\n'
         if [[ "$no_ui" == false ]]; then console_serve; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
     check) setup; local_start; checks ;;
+    engine-check) setup; local_start; make engine-check ;;
     cluster) setup; cluster_demo ;;
     scaling) setup; start_cluster_nodes; make scaling ;;
     experiments)

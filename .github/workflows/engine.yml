@@ -1,0 +1,27 @@
+name: Engine acceptance
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+permissions:
+  contents: read
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: make test check
+      - name: Independent Kafka worker and PostgreSQL acceptance
+        run: ./streamscale.sh engine-check
+      - name: Preserve engine evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-evidence
+          path: artifacts/engine/
+          if-no-files-found: ignore

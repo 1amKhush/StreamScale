@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "seed": 42,
+  "adapter": "streamscale.engine.adapters:Orders",
+  "options": {},
+  "target": {"application": "existing-order-demo", "revision": "set-to-tested-commit", "environment": "local-compose"},
+  "payloads": [{"event_type": "ORDER_CREATED", "order_amount": "12.00"}],
+  "phases": [{"seconds": 2, "rate": 5}],
+  "drain_seconds": 5
+}

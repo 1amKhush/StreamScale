@@ -111,3 +111,11 @@ console-check: console-install .tools/bin/kind .tools/bin/kubectl .tools/bin/hel
 
 console-serve:
 	$(CONSOLE) python -m streamscale_console serve $(CONSOLE_ARGS)
+
+# Generalized engine (M16 preview); retains independent application evidence.
+.PHONY: engine-test engine-check
+engine-test:
+	uv run --frozen pytest tests/engine
+
+engine-check:
+	$(RUN) pytest -m integration tests/integration/test_engine.py
