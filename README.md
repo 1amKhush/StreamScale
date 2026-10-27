@@ -71,6 +71,25 @@ covers each stage, expected outputs, manual `make` targets and shutdown/resume.
 
 ---
 
+## Generalized testing engine — preview
+
+StreamScale now includes an adapter-based experiment runner for independent
+Kafka → worker → PostgreSQL applications, with seeded load, bounded fault hooks,
+output reconciliation, CI verdicts and matched baseline/candidate campaigns.
+The telemetry example uses its own schema and worker without StreamScale imports.
+
+```sh
+./streamscale.sh engine-check  # normal independent worker passes; lossy version fails
+./streamscale.sh engine --help # run / compare an already running application
+```
+
+See [the engine guide](docs/engine.md) for adapter contracts, scenarios, evidence,
+exit codes and current limitations. The original demo and console remain available.
+M16 is a preview pending Docker-backed acceptance; unit tests do not establish
+cloud capacity or production readiness.
+
+---
+
 ## Results
 
 Three scenarios: a **steady** 52 events/s, a **flash-sale** surge to 390 events/s,

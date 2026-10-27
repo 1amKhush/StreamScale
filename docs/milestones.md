@@ -33,3 +33,19 @@ Evidence, defects, review and actual completion timestamps are recorded in
 `docs/m5-evidence.md`, `docs/m6-evidence.md`, `docs/m7-evidence.md` and
 `docs/m8-evidence.md`. Referenced TeX documents and external tracker were not
 available locally. No claims are made about reviewing or updating those artifacts.
+
+
+## M16 — generalized engine preview
+
+Owner: coding agent. Estimate: large (interfaces, runner, independent application,
+comparison and evidence). Dependencies: existing M0–M15 contracts; Docker-backed
+Kafka/PostgreSQL for live acceptance. Started 2026-10-27 (implementation session).
+State: implemented preview; engine/unit/launcher verification recorded in
+[m16-evidence.md](m16-evidence.md). Live acceptance and full `all` verification
+remain pending in this environment because Docker is unavailable. No measured
+performance or cloud readiness claim is made.
+
+Acceptance: run a worker with an independent payload/schema without importing the
+order application; reconcile outputs and reject a deliberately lossy candidate;
+preserve matched inputs, fresh IDs, provenance and evidence; CI exits distinguish
+failure/error/inconclusive; legacy launcher stages remain integrated.

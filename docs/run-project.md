@@ -272,3 +272,16 @@ live-cluster tests and 9 Chrome tests including the full sale → overload → r
 `artifacts/m15-full-check.log`; details in [M15 evidence](m15-evidence.md).
 Running services were not stopped by these checks; the console's own agent and the
 shared Kafka/PostgreSQL were scaled only by the failure lab's bounded, restored faults.
+
+
+## M16 generalized engine preview
+
+`./streamscale.sh engine-check` runs the independent telemetry worker and its
+intentional data-loss regression on the local dependencies. `all` includes this
+acceptance after the local checks. Evidence is retained in `artifacts/engine/`.
+For an already deployed target use `./streamscale.sh engine run SCENARIO --output DIR`,
+or `./streamscale.sh engine compare --baseline FILE --candidate FILE --output DIR`.
+The `engine` subcommand does not start local dependencies or load `.env`; supply
+connection variables through the invoking environment. See [engine.md](engine.md)
+for complete setup, the adapter/query contract, matched-run rules and limitations.
+M16 remains a preview until its Docker-backed acceptance actually passes.

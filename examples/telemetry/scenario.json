@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "seed": 42,
+  "adapter": "streamscale.engine.adapters:KafkaSQL",
+  "options": {
+    "topic": "streamscale.telemetry",
+    "query": "SELECT sample_id AS id, reading AS value, completed_at FROM telemetry_reading WHERE experiment = %(run_id)s"
+  },
+  "target": {"application": "telemetry", "revision": "set-to-tested-commit", "environment": "local-compose"},
+  "payloads": [{"celsius_milli": 0}, {"celsius_milli": 21000}, {"celsius_milli": -5000}],
+  "expected": "examples.telemetry.oracle:expected",
+  "phases": [{"seconds": 2, "rate": 10}, {"seconds": 2, "rate": 30}],
+  "drain_seconds": 5,
+  "max_lateness_seconds": 0.5,
+  "min_achieved_fraction": 0.95
+}
