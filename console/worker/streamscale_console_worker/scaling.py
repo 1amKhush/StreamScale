@@ -26,9 +26,10 @@ from streamscale_console_worker.kube import (
     KubeError,
 )
 
-MODES = ("fixed", "manual", "cpu-hpa", "lag-keda")
-AUTOSCALED = ("cpu-hpa", "lag-keda")
+MODES = ("fixed", "manual", "cpu-hpa", "lag-keda", "ml-predictive")
+AUTOSCALED = ("cpu-hpa", "lag-keda", "ml-predictive")
 DEFAULT_SETTINGS = {
+    "latency_target": 2,
     "min": 1,
     "max": 3,
     "cpu_target": 60,
@@ -47,6 +48,7 @@ class ScalingError(ValueError):
 def validate_settings(current, changes):
     settings = dict(current)
     limits = {
+        "latency_target": (1, 30),
         "min": (1, MAX_CONSOLE_REPLICAS),
         "max": (1, MAX_CONSOLE_REPLICAS),
         "cpu_target": (10, 400),
@@ -156,7 +158,7 @@ def scaled_object_body(settings, group):
 
 
 def expected_controllers(mode, override):
-    if override or mode not in AUTOSCALED:
+    if override or mode not in AUTOSCALED or mode == "ml-predictive":
         return set()
     return {"hpa"} if mode == "cpu-hpa" else {"keda"}
 
@@ -206,8 +208,16 @@ class Scaling:
             "scaling.reapply": lambda body: self.start({}, "Reapply the recorded mode"),
         }
         self.sections = {"scaling": self.section}
-        self.runners = [self.startup]
-        self.busy = [lambda: self.state["transition"]["state"] == "running"]
+        from streamscale_console_worker.predictive import Predictive
+
+        self.predictive = Predictive(self)
+        self.runners = [self.startup, self.predictive.run]
+        self.busy = [
+            lambda: (
+                self.state["transition"]["state"] == "running"
+                or self.state["mode"] == "ml-predictive"
+            )
+        ]
         self.group = IDLE_GROUP
         sale = agent.components.get("sale")
         if sale is not None:
@@ -218,6 +228,7 @@ class Scaling:
     def load(self):
         document = control.read_json(self.path)
         if document:
+            document["settings"] = dict(DEFAULT_SETTINGS) | document.get("settings", {})
             if document.get("transition", {}).get("state") == "running":
                 document["transition"] = {
                     "state": "interrupted",
@@ -271,7 +282,7 @@ class Scaling:
     def set_mode(self, body):
         mode = body.get("mode")
         if mode not in MODES:
-            raise ScalingError("Mode must be fixed, manual, cpu-hpa or lag-keda")
+            raise ScalingError("Mode must be fixed, manual, cpu-hpa, lag-keda or ml-predictive")
         changes = {"mode": mode, "override": None}
         if mode == "manual":
             replicas = body.get("replicas", self.state.get("manual_replicas", 1))
@@ -340,6 +351,7 @@ class Scaling:
 
     def _run(self, target, label):
         try:
+            self.predictive.reset()
             self.apply(target)
             with self.lock:
                 previous = (self.state["mode"], bool(self.state["override"]))
@@ -461,6 +473,7 @@ class Scaling:
             }
         except Exception as error:  # noqa: BLE001
             state["ownership"] = {"error": type(error).__name__}
+        state["predictive"] = json.loads(json.dumps(self.predictive.state))
         state["override"] = bool(state["override"]) and state["override"]
         return state
 
