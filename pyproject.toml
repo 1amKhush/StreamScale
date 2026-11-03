@@ -13,6 +13,7 @@ dependencies = [
   "jsonschema==4.26.0",
   "psycopg[binary]==3.3.3",
   "prometheus-client==0.26.0",
+  "scikit-learn==1.7.2",
 ]
 
 [project.scripts]
