@@ -11,7 +11,7 @@ def observation(sample):
     at = sample["sampled_at"]
     for name in ("kafka", "kubernetes", "sql"):
         source = sources.get(name) or {}
-        if not source.get("ok") or not 0 <= at - source.get("at", 0) <= 5:
+        if not source.get("ok") or abs(at - source.get("at", 0)) > 5:
             raise ValueError(f"Missing or stale {name}")
     partitions = sorted(sample["kafka"]["partitions"], key=lambda p: p["partition"])
     if [p["partition"] for p in partitions] != [0, 1, 2]:

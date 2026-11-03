@@ -21,6 +21,10 @@ def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
+def code_identity():
+    return digest({p.name: p.read_text() for p in sorted(Path(__file__).parent.glob("*.py"))})
+
+
 def versions():
     return {name: importlib.metadata.version(name) for name in ("scikit-learn", "numpy", "scipy")}
 
@@ -80,6 +84,7 @@ def publish(folder, models, metadata):
     folder.mkdir(parents=True, exist_ok=True)
     payload = pickle.dumps(models, protocol=5)
     document = metadata | {
+        "runtime_code": code_identity(),
         "feature_version": FEATURE_VERSION,
         "versions": versions(),
         "model_sha256": hashlib.sha256(payload).hexdigest(),
@@ -111,7 +116,11 @@ def load(folder, expected=None):
         or hashlib.sha256(payload).hexdigest() != document["model_sha256"]
     ):
         raise ValueError("Predictive artifact checksum mismatch")
-    if document["feature_version"] != FEATURE_VERSION or document["versions"] != versions():
+    if (
+        document["feature_version"] != FEATURE_VERSION
+        or document["versions"] != versions()
+        or document.get("runtime_code") != code_identity()
+    ):
         raise ValueError("Incompatible predictive artifact")
     if expected is not None and document["fingerprint"] != expected:
         raise ValueError("Predictive artifact requires preparation for this environment")

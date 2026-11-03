@@ -20,6 +20,8 @@ class Predictive:
         self.state = {"status": "warming up", "reason": "Waiting for observations"}
 
     def reset(self):
+        self.artifact = None
+        self.last_decision = 0
         self.history = History()
         self.low_since = None
         self.pending = None

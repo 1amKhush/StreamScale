@@ -26,6 +26,6 @@ packages = ["server/streamscale_console", "worker/streamscale_console_worker"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["server", "worker"]
+pythonpath = ["..", "server", "worker"]
 addopts = "-ra -m 'not live'"
 markers = ["live: requires the running kind cluster and the deployed console release"]
