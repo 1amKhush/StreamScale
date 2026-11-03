@@ -47,7 +47,7 @@ MAX_EVENTS = 400_000
 MAX_SECONDS = 3600
 LATE_DELAY_US = 10_000_000
 SCENARIOS = ("steady", "flash-sale", "overload-recovery")
-MODES = ("fixed", "manual", "cpu-hpa", "lag-keda")
+MODES = ("fixed", "manual", "cpu-hpa", "lag-keda", "ml-predictive")
 FAULT_KEYS = ("malformed_pct", "duplicate_pct", "late_pct")
 ACTIVE = {"preparing", "publishing", "paused", "stopping"}
 
@@ -97,7 +97,7 @@ def validate_config(config):
         mix[key] = round(float(value), 2)
     mode = config.get("mode", "fixed")
     if mode not in MODES:
-        raise SaleError("Mode must be fixed, manual, cpu-hpa or lag-keda")
+        raise SaleError("Mode must be fixed, manual, cpu-hpa, lag-keda or ml-predictive")
     preset = str(config.get("preset", "custom"))[:40]
     session = str(config.get("session", ""))[:80]
     return {
@@ -156,8 +156,8 @@ def run_name_for(now=None):
 
 
 def mode_label(mode):
-    """experiment_run.mode only admits measured modes; manual sales are recorded as fixed."""
-    return "fixed" if mode == "manual" else mode
+    """Use the legacy fixed SQL category; JSON retains the actual policy."""
+    return "fixed" if mode in {"manual", "ml-predictive"} else mode
 
 
 class Pacer:
@@ -301,7 +301,9 @@ class Sale:
             "orders": self.config["orders"],
             "scenario": self.config["scenario"],
             "profile": "console",
-            "mode": mode_label(self.config["mode"]),
+            "mode": self.config["mode"]
+            if self.config["mode"] == "ml-predictive"
+            else mode_label(self.config["mode"]),
             "publishing_schedule": self.config["schedule"],
             "experiment_configuration": {"interactive": True} | self.config,
             "created_at": utc_now(),
@@ -360,7 +362,7 @@ class Sale:
                    VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                 (
                     UUID(run["run_id"]),
-                    run["mode"],
+                    mode_label(run["mode"]),
                     run["scenario"],
                     run["seed"],
                     timestamp(run["publish_started_at"]),

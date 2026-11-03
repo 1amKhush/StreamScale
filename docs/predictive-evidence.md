@@ -29,3 +29,18 @@ Ax recommendations are checkpointed. Training, validation, tuning and evaluation
 use disjoint seeds/runs. Environment fingerprints include source, runtime versions,
 consumer resources and node information. The accepted artifact is published only
 after tuning; infeasible tuning retains the conservative default explicitly.
+
+## M19 — console
+
+One additional ML Predictive mode, inline decision/status, latency target, model
+identity and a dashed forecast on the existing flow chart are implemented.
+Forecasts are horizon means plotted at interval end and compared against actual
+observations over that same interval; future observations remain unknown. CSV
+and replay preserve the model, status, forecast and decision reason. Manual
+control and the existing comparison view are reused.
+
+No SQL migration: `experiment_run.mode` retains its legacy three-value constraint.
+Predictive sessions use its `fixed` storage category, as manual sessions already
+do. Run JSON, `configuration.experiment_configuration.mode`, console start mode,
+metrics and session configuration retain the actual `ml-predictive` identity;
+predictive comparisons use session/configuration identity, never the SQL category.

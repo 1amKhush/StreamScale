@@ -279,6 +279,12 @@ class Component:
             "faults": params.get("faults", base["faults"]),
             "mode": params.get("mode") or self.current_mode(),
         }
+        if config["mode"] == "ml-predictive":
+            state = (self.console.hub.latest or {}).get("scaling") or {}
+            config["predictive"] = {
+                "settings": state.get("settings"),
+                "artifact": state.get("predictive"),
+            }
         return config
 
     def current_mode(self):

@@ -252,6 +252,7 @@ class Deriver:
                     "buffer_full",
                 )
             },
+            "predictive": (sample.get("scaling") or {}).get("predictive"),
             "mode": (sample.get("scaling") or {}).get("mode"),
             "override": (sample.get("scaling") or {}).get("override"),
         }

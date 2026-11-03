@@ -53,7 +53,7 @@ describe("analogy", () => {
       expect(term.system.length).toBeGreaterThan(2);
       expect(term.explain.length).toBeGreaterThan(20);
     }
-    expect(Object.keys(MODE_LABELS).sort()).toEqual(["cpu-hpa", "fixed", "lag-keda", "manual"]);
+    expect(Object.keys(MODE_LABELS).sort()).toEqual(["cpu-hpa", "fixed", "lag-keda", "manual", "ml-predictive"]);
   });
 });
 

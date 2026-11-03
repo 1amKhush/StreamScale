@@ -48,6 +48,11 @@ POINT_COLUMNS = (
     ("dlq_copies", lambda p: p["dlq_copies"]),
     ("restarts", lambda p: p["restarts"]),
     ("mode", lambda p: p.get("mode")),
+    ("predictive_status", lambda p: (p.get("predictive") or {}).get("status")),
+    ("model_id", lambda p: (p.get("predictive") or {}).get("model_id")),
+    ("forecast_rate", lambda p: (p.get("predictive") or {}).get("forecast_rate")),
+    ("forecast_until", lambda p: (p.get("predictive") or {}).get("forecast_until")),
+    ("decision_reason", lambda p: (p.get("predictive") or {}).get("reason")),
 )
 
 
@@ -230,19 +235,22 @@ class Component:
     def check_compare(self, params):
         if self.task is not None and not self.task.done():
             raise Rejected("A comparison is already running")
-        modes = params.get("modes") or ["fixed", "cpu-hpa", "lag-keda"]
+        modes = params.get("modes") or ["fixed", "cpu-hpa", "lag-keda", "ml-predictive"]
         if (
             not isinstance(modes, list)
             or not modes
-            or any(mode not in {"fixed", "manual", "cpu-hpa", "lag-keda"} for mode in modes)
+            or any(
+                mode not in {"fixed", "manual", "cpu-hpa", "lag-keda", "ml-predictive"}
+                for mode in modes
+            )
         ):
-            raise Rejected("Choose modes from fixed, cpu-hpa and lag-keda")
+            raise Rejected("Choose modes from fixed, cpu-hpa, lag-keda and ml-predictive")
 
     async def start_comparison(self, operation):
         identifier = (
             "comparison-" + datetime.now(UTC).strftime("%Y%m%d%H%M%S") + "-" + os.urandom(3).hex()
         )
-        modes = operation.params.get("modes") or ["fixed", "cpu-hpa", "lag-keda"]
+        modes = operation.params.get("modes") or ["fixed", "cpu-hpa", "lag-keda", "ml-predictive"]
         preset = operation.params.get("preset", "flash-sale")
         self.comparison = {
             "id": identifier,

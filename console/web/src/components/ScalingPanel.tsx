@@ -6,6 +6,7 @@ import { useLens } from "../lens";
 import { useOperation } from "../operations";
 
 type Settings = {
+  latency_target: number;
   min: number;
   max: number;
   cpu_target: number;
@@ -15,8 +16,9 @@ type Settings = {
 };
 
 export type ScalingState = {
-  mode: "fixed" | "manual" | "cpu-hpa" | "lag-keda" | null;
+  mode: "fixed" | "manual" | "cpu-hpa" | "lag-keda" | "ml-predictive" | null;
   override: false | { replicas: number; since: number; base: string };
+  predictive?: import("../types").PredictiveState;
   manual_replicas: number;
   settings: Settings;
   segments: {
@@ -41,7 +43,7 @@ export type ScalingState = {
   };
 };
 
-const MODES = ["fixed", "manual", "cpu-hpa", "lag-keda"] as const;
+const MODES = ["fixed", "manual", "cpu-hpa", "lag-keda", "ml-predictive"] as const;
 
 function ReplicaButtons({
   value,
@@ -97,7 +99,7 @@ export function ScalingPanel({ live }: { live: Live }) {
       "scaling.settings",
       "scaling.reapply",
     ].some(operation.busy);
-  const autoscaled = scaling.mode === "cpu-hpa" || scaling.mode === "lag-keda";
+  const autoscaled = scaling.mode === "cpu-hpa" || scaling.mode === "lag-keda" || scaling.mode === "ml-predictive";
   const override = scaling.override || null;
   const controllers = live.sample?.kubernetes.controllers ?? [];
   const error =
@@ -131,6 +133,18 @@ export function ScalingPanel({ live }: { live: Live }) {
         ))}
       </div>
 
+      {scaling.mode === "ml-predictive" && (
+        <div className="predictive-summary" data-testid="predictive-summary" role="status">
+          <p><strong>ML Predictive</strong> · {override ? "manual override" : scaling.predictive?.status ?? "warming up"}</p>
+          <p>{scaling.predictive?.reason ?? "Preparing observations from the pipeline."}</p>
+          <dl>
+            <dt>Observed → forecast</dt>
+            <dd>{count(scaling.predictive?.observed_rate)} → {count(scaling.predictive?.forecast_rate)} events/s</dd>
+            <dt>Look ahead</dt><dd>{count(scaling.predictive?.horizon)} seconds</dd>
+          </dl>
+          <p className="hint">Uses observed history only. The p95 target is an objective; sudden spikes and capacity limits can exceed it.</p>
+        </div>
+      )}
       <dl>
         <dt>
           {store
@@ -202,8 +216,8 @@ export function ScalingPanel({ live }: { live: Live }) {
                 Override active since{" "}
                 {new Date(override.since * 1000).toLocaleTimeString("en-GB")}:
                 the{" "}
-                {scaling.mode === "cpu-hpa" ? "CPU HPA" : "KEDA ScaledObject"}{" "}
-                is removed while you hold {override.replicas}{" "}
+                {scaling.mode === "ml-predictive" ? "predictive loop" : scaling.mode === "cpu-hpa" ? "CPU HPA" : "KEDA ScaledObject"}{" "}
+                is suspended while you hold {override.replicas}{" "}
                 {store ? "cashiers" : "replicas"}.
               </p>
               <ReplicaButtons
@@ -240,13 +254,27 @@ export function ScalingPanel({ live }: { live: Live }) {
               />
             </>
           )}
+          {scaling.mode === "ml-predictive" && (
+            <label className="number-field">
+              <span>p95 latency target (seconds)</span>
+              <input type="number" min={1} max={30} value={settings.latency_target}
+                onChange={(event) => setDraft({ ...settings, latency_target: Math.trunc(event.target.valueAsNumber) })} />
+            </label>
+          )}
+          {scaling.mode === "ml-predictive" && draft && (
+            <button disabled={busy} onClick={async () => {
+              await operation.run("scaling.settings", { settings: draft }); setDraft(null);
+            }}>Apply latency target</button>
+          )}
           <details className="disclosure">
             <summary>
               Autoscaler settings{" "}
               <span>Targets, limits & scale-down delay</span>
             </summary>
             <div className="form-grid">
-              {scaling.mode === "cpu-hpa" ? (
+              {scaling.mode === "ml-predictive" ? (
+                <p className="hint">Model {scaling.predictive?.model_id?.slice(0, 12) ?? "not prepared"}. Policy is prepared offline and frozen during a run.</p>
+              ) : scaling.mode === "cpu-hpa" ? (
                 <label className="number-field">
                   <span>CPU target (% of request)</span>
                   <input
@@ -279,6 +307,7 @@ export function ScalingPanel({ live }: { live: Live }) {
                   />
                 </label>
               )}
+              {scaling.mode !== "ml-predictive" && (
               <label className="number-field">
                 <span>Scale-down wait (s)</span>
                 <input
@@ -296,6 +325,7 @@ export function ScalingPanel({ live }: { live: Live }) {
                   }
                 />
               </label>
+              )}
               <label className="number-field">
                 <span>Minimum</span>
                 <input

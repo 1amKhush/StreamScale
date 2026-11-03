@@ -1,3 +1,17 @@
+export type PredictiveState = {
+  status: string;
+  reason?: string;
+  observed_rate?: number | null;
+  forecast_rate?: number | null;
+  forecast_median_rate?: number | null;
+  forecast_from?: number;
+  forecast_until?: number;
+  horizon?: number;
+  model_id?: string;
+  target_seconds?: number;
+  applied?: boolean;
+};
+
 // Shapes produced by console/server/streamscale_console (derive.py, app.py) and the agent.
 
 export type SourceStatus = {
@@ -39,6 +53,7 @@ export type Signal = {
 };
 
 export type Point = {
+  predictive?: PredictiveState | null;
   t: number;
   received_at: number;
   sequence: number;

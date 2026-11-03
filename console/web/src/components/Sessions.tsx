@@ -190,7 +190,7 @@ function CompareView({ live }: { live: Live }) {
           <option value="steady">Steady (measured)</option>
         </select>
         <button className="primary" disabled={running?.state === "running" || operation.busy("compare.start")} onClick={() => operation.run("compare.start", { preset })} data-testid="start-comparison">
-          Run fixed, CPU-HPA and lag-KEDA
+          Run fixed, CPU-HPA, lag-KEDA and ML Predictive
         </button>
         {running?.state === "running" && <button onClick={() => operation.run("compare.cancel")}>Cancel</button>}
       </div>

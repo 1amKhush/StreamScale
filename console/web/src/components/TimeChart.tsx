@@ -8,6 +8,7 @@ export type SeriesSpec = {
   color: string; // CSS custom property name, e.g. "--series-b1"
   value: (index: number) => number | null;
   stepped?: boolean;
+  dashed?: boolean;
 };
 
 export type Marker = { t: number; label: string; tone: "action" | "fault" | "observation" };
@@ -66,7 +67,7 @@ export function TimeChart({
   referenceRef.current = reference;
   const dark = useTheme();
   const [table, setTable] = useState(false);
-  const signature = series.map((item) => `${item.label}:${item.color}:${item.stepped}`).join("|");
+  const signature = series.map((item) => `${item.label}:${item.color}:${item.stepped}:${item.dashed}`).join("|");
 
   const data = useMemo<uPlot.AlignedData>(() => {
     const columns: (number | null)[][] = series.map((item) => times.map((_, index) => item.value(index)));
@@ -116,6 +117,7 @@ export function TimeChart({
           label: item.label,
           stroke: cssColor(item.color),
           width: 2,
+          dash: item.dashed ? [5, 4] : undefined,
           points: { show: false },
           spanGaps: false,
           value: (_u: uPlot, value: number | null) => format(value),

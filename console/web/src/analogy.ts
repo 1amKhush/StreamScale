@@ -122,6 +122,11 @@ export const TERMS = {
 export type TermId = keyof typeof TERMS;
 
 export const MODE_LABELS: Record<string, Term> = {
+  "ml-predictive": {
+    store: "ML Predictive",
+    system: "ML Predictive · 1–3 replicas",
+    explain: "Forecasts traffic from recent history and prepares capacity for a latency target.",
+  },
   fixed: {
     store: "One cashier, always",
     system: "Fixed · 1 replica",

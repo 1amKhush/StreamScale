@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { predictiveFlow } from "../predictive";
 import type { JournalEntry, Point } from "../types";
 import { count, percent, seconds } from "../format";
 import { useLens } from "../lens";
@@ -86,6 +87,12 @@ export function Charts({
       value: (i) => visible[i].rates.drain,
     },
   ];
+  const predictive = useMemo(() => predictiveFlow(visible), [visible]);
+  const flowSeries: SeriesSpec[] = predictive ? [
+    { label: "Observed horizon mean", color: "--series-b2", value: (i) => predictive.observed[i] },
+    { label: "ML upper forecast (interval end)", color: "--series-b1", value: (i) => predictive.forecast[i], dashed: true },
+    { label: "Committed", color: "--series-b3", value: (i) => predictive.served[i] },
+  ] : flow;
   const lanes: SeriesSpec[] = [0, 1, 2].map((lane) => ({
     label: store ? `Lane ${lane}` : `P${lane} lag`,
     color: `--lane-${lane}`,
@@ -206,10 +213,10 @@ export function Charts({
           title={
             store ? "Shoppers arriving vs served" : "Produce vs commit rate"
           }
-          subtitle="events/s"
-          times={times}
-          series={flow}
-          range={range}
+          subtitle={predictive ? `events/s · ${Math.round(predictive.horizon)}s forecast window, aligned to its end` : "events/s"}
+          times={predictive?.times ?? times}
+          series={flowSeries}
+          range={predictive ? [predictive.times[0], predictive.times.at(-1)!] : range}
           markers={markers}
           format={shortRate}
         />
