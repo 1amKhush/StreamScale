@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useConsole } from "./api";
-import type { Lens } from "./analogy";
+import { MODE_LABELS, type Lens } from "./analogy";
 import { buildFloor } from "./graph";
 import { count, rate, seconds } from "./format";
 import { LensContext, LensToggle } from "./lens";
@@ -18,7 +18,7 @@ import { Signals } from "./components/Signals";
 import { SalePanel } from "./components/SalePanel";
 import { ScalingPanel } from "./components/ScalingPanel";
 import { FailureLab, type FaultsState } from "./components/FailureLab";
-import { Guide } from "./components/Guide";
+import { Docs } from "./components/Docs";
 import { SessionsView } from "./components/Sessions";
 import { useOperation } from "./operations";
 
@@ -45,42 +45,54 @@ const PAGES = {
   overview: {
     title: "Pipeline overview",
     description: "Follow a sale from arrival to a recorded order.",
-    icon: "◈",
     label: "Overview",
   },
   sale: {
     title: "Run a sale",
     description: "Choose the traffic. Watch how your system handles it.",
-    icon: "▷",
     label: "Sale",
   },
   scaling: {
     title: "Manage capacity",
-    description: "Add consumers yourself, or let the autoscaler respond.",
-    icon: "▥",
+    description: "Choose how capacity responds as traffic changes.",
     label: "Scaling",
   },
   faults: {
     title: "Failure lab",
     description: "Introduce a fault, observe the impact, then recover.",
-    icon: "⚡",
     label: "Failure lab",
   },
   sessions: {
     title: "Sessions & results",
     description:
       "Replay a run, check its records, and compare scaling strategies.",
-    icon: "◷",
     label: "Sessions",
   },
   guide: {
-    title: "Learn the system",
-    description: "Walk through a sale and understand what each component does.",
-    icon: "?",
-    label: "Guide",
+    title: "Docs & guides",
+    description: "Get started, understand the system, and find the commands you need.",
+    label: "Docs",
   },
 } as const;
 type Page = keyof typeof PAGES;
+
+function pageFromHash(): Page {
+  const value = window.location.hash.slice(1);
+  if (value === "docs" || value.startsWith("docs/")) return "guide";
+  return Object.hasOwn(PAGES, value) ? value as Page : "overview";
+}
+
+function NavIcon({ page }: { page: Page }) {
+  const paths: Record<Page, ReactNode> = {
+    overview: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
+    sale: <path d="m8 4 12 8-12 8Z" />,
+    scaling: <><path d="M5 20v-5M12 20V9M19 20V3" /><path d="M3 20h18" /></>,
+    faults: <path d="m13 2-9 12h7l-1 8 10-13h-7Z" />,
+    sessions: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    guide: <><path d="M12 5C9 3 6 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1Z" /><path d="M12 5v15" /></>,
+  };
+  return <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[page]}</svg>;
+}
 
 export default function App() {
   const live = useConsole();
@@ -94,7 +106,7 @@ export default function App() {
       ["on", "off"] as const,
     ),
   );
-  const [page, setPage] = useState<Page>("overview");
+  const [page, setPage] = useState<Page>(pageFromHash);
   const [presenting, setPresenting] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState(false);
@@ -102,6 +114,8 @@ export default function App() {
   const heading = useRef<HTMLHeadingElement>(null);
   const navigate = (next: Page) => {
     setPage(next);
+    const hash = next === "guide" ? "docs" : next;
+    if (window.location.hash !== `#${hash}`) window.history.pushState(null, "", `#${hash}`);
     window.scrollTo({ top: 0 });
   };
   const select = (id: string | null) => {
@@ -109,6 +123,12 @@ export default function App() {
     if (id) setInspecting(true);
   };
 
+  useEffect(() => {
+    const changed = () => setPage(pageFromHash());
+    window.addEventListener("hashchange", changed);
+    window.addEventListener("popstate", changed);
+    return () => { window.removeEventListener("hashchange", changed); window.removeEventListener("popstate", changed); };
+  }, []);
   useEffect(() => remember("streamscale.lens", lens), [lens]);
   useEffect(() => remember("streamscale.motion", motion), [motion]);
   useEffect(() => {
@@ -171,22 +191,22 @@ export default function App() {
     (live.sample?.faults as FaultsState | undefined)?.active ?? []
   ).length;
   const point = live.points.at(-1);
-  const mode =
-    (
-      {
-        fixed: "Fixed · 1 consumer",
-        manual: "Manual scaling",
-        "cpu-hpa": "CPU autoscaling",
-        "lag-keda": "Lag autoscaling",
-      } as Record<string, string>
-    )[floor.manager.mode] ?? "Waiting for scaling state";
+  const mode = MODE_LABELS[floor.manager.mode]?.[lens] ?? "Waiting for scaling state";
+  const isDocs = page === "guide";
+  const isOverview = page === "overview";
+
 
   return (
     <LensContext.Provider value={lens}>
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href="#main" onClick={(event) => {
+        event.preventDefault();
+        const main = document.getElementById("main");
+        main?.focus({ preventScroll: true });
+        main?.scrollIntoView({ block: "start" });
+      }}>
         Skip to main content
       </a>
-      <div className="console-shell">
+      <div className={`console-shell ${isDocs ? "reading-docs" : ""}`}>
         <aside className="navigation">
           <a
             className="console-brand"
@@ -216,9 +236,7 @@ export default function App() {
                         : `tab-${id}`
                   }
                 >
-                  <span className="nav-icon" aria-hidden="true">
-                    {item.icon}
-                  </span>
+                  <span className="nav-icon"><NavIcon page={id} /></span>
                   {item.label}
                   {id === "faults" && activeFaults > 0 && (
                     <span className="nav-count">{activeFaults}</span>
@@ -228,18 +246,15 @@ export default function App() {
             )}
           </nav>
           <div className="nav-foot">
-            <span className="eyebrow">A live experiment</span>
-            <p>Traffic → queue → consumers → database</p>
-            <button className="link-button" onClick={() => navigate("guide")}>
-              How it works ↗
-            </button>
+            <span className="workspace-indicator"><span aria-hidden="true" /> Local workspace</span>
+            <p>Kafka → consumers → PostgreSQL</p>
           </div>
         </aside>
         <main className="console-main" id="main" tabIndex={-1}>
           <header className="page-header">
             <div>
               <span className="eyebrow">
-                STREAMSCALE / {PAGES[page].label.toUpperCase()}
+                PIPELINE LAB <span aria-hidden="true">/</span> {PAGES[page].label.toUpperCase()}
               </span>
               <h1 ref={heading} tabIndex={-1}>
                 {PAGES[page].title}
@@ -299,7 +314,7 @@ export default function App() {
               {recoveryError}
             </p>
           )}
-          {page !== "sessions" && (
+          {isOverview && (
             <>
               <section
                 className="live-summary"
@@ -342,7 +357,15 @@ export default function App() {
               <Signals point={point} />
             </>
           )}
-          {page !== "sessions" && page !== "sale" && (
+          {!isOverview && !isDocs && page !== "sessions" && (
+            <div className="context-strip" aria-label="Current pipeline state">
+              <span><span className="context-dot" aria-hidden="true" />{mode}</span>
+              <span><strong>{count(point?.lag_total)}</strong> waiting</span>
+              <span><strong>{count(point?.ready)}</strong> consumers ready</span>
+              <button className="link-button" onClick={() => navigate("overview")}>Watch the flow <span aria-hidden="true">↗</span></button>
+            </div>
+          )}
+          {!isDocs && page !== "sessions" && page !== "sale" && (
             <SaleBar
               live={live}
               onPlan={() => navigate("sale")}
@@ -351,6 +374,10 @@ export default function App() {
           )}
           {page === "overview" && (
             <>
+              <div className="overview-path" aria-label="How to explore">
+                <p><strong>Make a change. See what happens.</strong> Start a sale, adjust capacity, or try a controlled failure.</p>
+                <button className="link-button" onClick={() => navigate("guide")}>First time here? <span aria-hidden="true">↗</span></button>
+              </div>
               <Pipeline
                 floor={floor}
                 selected={selected}
@@ -381,16 +408,16 @@ export default function App() {
             <SalePanel live={live} />
           </section>
           <section hidden={page !== "scaling"} className="task-page">
-            <ScalingPanel live={live} />
+            <ScalingPanel live={live} onDocs={() => { window.location.hash = "docs/scaling"; }} />
           </section>
           <section hidden={page !== "faults"} className="task-page">
             <FailureLab live={live} />
           </section>
-          <section hidden={page !== "guide"} className="task-page">
-            <Guide live={live} />
+          <section hidden={page !== "guide"} className="docs-page">
+            <Docs live={live} onNavigate={navigate} />
           </section>
           {page === "sessions" && <SessionsView live={live} />}
-          <details className="disclosure diagnostics">
+          <details className="disclosure diagnostics" hidden={isDocs}>
             <summary>
               Connection & diagnostics{" "}
               <span>Sources, workflow & dashboards</span>

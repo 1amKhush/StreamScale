@@ -40,6 +40,7 @@ test("replay a recorded session faithfully, compare runs and read the measured m
 
   await page.getByTestId("view-live").click();
   await page.getByTestId("tab-guide").click();
+  await page.getByTestId("docs-topic-guided").click();
   await page.getByRole("radio", { name: /Crash and replay/ }).click();
   await expect(page.getByTestId("guide")).toContainText("faint after the next ledger entry");
   await page.keyboard.press("p");

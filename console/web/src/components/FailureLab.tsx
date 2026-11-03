@@ -324,9 +324,9 @@ export function FailureLab({ live }: { live: Live }) {
           );
         })}
       {faults.history.length > 0 && (
-        <details className="disclosure" open>
+        <details className="disclosure">
           <summary>
-            Recent outcomes <span>Recovery & verification</span>
+            Recent outcomes <span>{faults.history.length} experiments · recovery & verification</span>
           </summary>
           <div className="fault-history">
             {faults.history

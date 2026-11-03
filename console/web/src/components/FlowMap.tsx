@@ -23,7 +23,7 @@ import { useLens } from "../lens";
 
 type Data = Record<string, unknown>;
 
-const LANE_Y = [0, 200, 400];
+const LANE_Y = [140, 280, 420];
 const ALERT_TEXT: Record<string, [string, string]> = {
   lane: ["Queue building", "Lag growing"],
   cashier: ["At capacity", "Saturated"],
@@ -45,6 +45,7 @@ function NodeFrame({
   icon,
   children,
   testId,
+  tooltip,
 }: {
   kind: string;
   title: string;
@@ -54,12 +55,14 @@ function NodeFrame({
   icon: React.ReactNode;
   children: React.ReactNode;
   testId?: string;
+  tooltip?: string;
 }) {
   const lens = useLens();
   return (
     <div
       className={`floor-node floor-${kind} ${alert ? `alert-${alert}` : ""} ${selected ? "is-selected" : ""}`}
       data-testid={testId}
+      title={tooltip}
     >
       <header>
         <span className="node-icon" aria-hidden>
@@ -208,12 +211,8 @@ const LaneNode = memo(function LaneNode({ data, selected }: NodeProps<Node<Data>
         </span>
       </div>
       <dl className="node-dl">
-        <dt>{lens === "store" ? "Tickets issued" : "High watermark"}</dt>
-        <dd>{count(lane.high)}</dd>
-        <dt>{lens === "store" ? "Now serving" : "Committed"}</dt>
-        <dd>{count(lane.committed)}</dd>
         <dt>{lens === "store" ? "Cashier" : "Owner"}</dt>
-        <dd>{lane.owner ? (lane.ownerKnown ? shortPod(lane.owner) : lane.owner) : <span className="bad">none</span>}</dd>
+        <dd title={lane.owner ?? undefined}>{lane.owner ? (lane.ownerKnown ? shortPod(lane.owner) : lane.owner) : <span className="bad">none</span>}</dd>
       </dl>
       <Handle type="source" position={Position.Right} />
     </NodeFrame>
@@ -240,18 +239,18 @@ const CashierNode = memo(function CashierNode({ data, selected }: NodeProps<Node
   return (
     <NodeFrame
       kind={`cashier status-${cashier.status}`}
-      title={lens === "store" ? `Cashier ${shortPod(cashier.name)}` : shortPod(cashier.name)}
-      caption={lens === "store" ? cashier.name : `cashier ${shortPod(cashier.name)}`}
+      title={`${lens === "store" ? "Cashier" : "Consumer"} ${shortPod(cashier.name)}`}
+      caption={lens === "store" ? "Kafka consumer" : "Cashier"}
       alert={cashier.alert}
       selected={selected}
       icon={<PersonIcon />}
       testId={`node-cashier-${shortPod(cashier.name)}`}
+      tooltip={cashier.name}
     >
       <Handle type="target" position={Position.Left} />
       <Handle type="target" position={Position.Top} id="control" />
       <p className={`node-state status-text-${cashier.status}`} title={cashier.detail}>
         {STATUS_TEXT[cashier.status][lens === "store" ? 0 : 1]}
-        <span className="muted"> · {cashier.detail}</span>
       </p>
       <div className="lane-chips">
         {cashier.lanes.length ? (
@@ -268,12 +267,11 @@ const CashierNode = memo(function CashierNode({ data, selected }: NodeProps<Node
         <span className="cpu-fill" style={{ width: `${meter * 100}%` }} />
         {target !== null && <span className="cpu-target" style={{ left: `${Math.min(1, target / 200) * 100}%` }} />}
       </div>
-      <p className="node-small">
-        {lens === "store" ? "Busy" : "CPU"} {percent(busy)} of request · {percent(cashier.cpuLimitPct)} of limit ·{" "}
-        {bytes(cashier.rssBytes)}
+      <p className="node-small" title={`CPU ${percent(busy)} of request · ${percent(cashier.cpuLimitPct)} of limit · ${bytes(cashier.rssBytes)} memory`}>
+        CPU {percent(busy)} of request
         {cashier.restarts ? ` · ${cashier.restarts} restart${cashier.restarts > 1 ? "s" : ""}` : ""}
       </p>
-      {cashier.faults.length > 0 && <p className="node-warning">Fault armed: {cashier.faults.join(", ")}</p>}
+      {cashier.faults.length > 0 && <p className="node-warning" title={cashier.faults.join(", ")}>{cashier.faults.length} {cashier.faults.length === 1 ? "fault" : "faults"} armed</p>}
       <Handle type="source" position={Position.Right} />
     </NodeFrame>
   );
@@ -286,7 +284,8 @@ const ManagerNode = memo(function ManagerNode({ data, selected }: NodeProps<Node
   const hpa = manager.controllers.find((row) => row.kind === "HorizontalPodAutoscaler");
   const keda = manager.controllers.find((row) => row.kind === "ScaledObject");
   return (
-    <NodeFrame kind="manager" title={word("controller", lens)} caption={word("controller", lens === "store" ? "system" : "store")} alert={null} selected={selected} icon={<ClipboardIcon />} testId="node-manager">
+    <NodeFrame kind="manager" title={word("controller", lens)} caption={word("controller", lens === "store" ? "system" : "store")} alert={null} selected={selected} icon={<ClipboardIcon />} testId="node-manager"
+      tooltip={hpa && !hpa.owned_by_keda ? `CPU ${percent(hpa.cpu_utilization)} / ${percent(hpa.cpu_target)} target` : keda ? `Lag threshold per consumer: ${keda.lag_threshold ?? "—"}` : label.explain}>
       <p className="node-state" title={label.explain}>
         {label[lens]}
         {manager.override && <strong className="override"> · manual override</strong>}
@@ -296,20 +295,6 @@ const ManagerNode = memo(function ManagerNode({ data, selected }: NodeProps<Node
         <dd data-testid="replica-counts">
           {count(manager.desired)} · {count(manager.ready)} · {count(manager.members)}
         </dd>
-        {hpa && !hpa.owned_by_keda && (
-          <>
-            <dt>CPU now / target</dt>
-            <dd>
-              {percent(hpa.cpu_utilization)} / {percent(hpa.cpu_target)}
-            </dd>
-          </>
-        )}
-        {keda && (
-          <>
-            <dt>Lag threshold per cashier</dt>
-            <dd>{keda.lag_threshold ?? "—"}</dd>
-          </>
-        )}
       </dl>
       <Handle type="source" position={Position.Bottom} />
     </NodeFrame>
@@ -438,15 +423,15 @@ export function FlowMap({
   const cashierCount = Math.max(1, floor.cashiers.length);
   const built = useMemo<Node<Data>[]>(() => {
     const list: Node<Data>[] = [
-      { id: "doors", type: "doors", position: { x: 0, y: 215 }, data: { doors: floor.doors } },
+      { id: "doors", type: "doors", position: { x: 0, y: 270 }, data: { doors: floor.doors } },
       {
         id: "manager",
         type: "manager",
-        position: { x: 660, y: 215 - (cashierCount * 190) / 2 - 175 },
+        position: { x: 660, y: 0 },
         data: { manager: floor.manager },
       },
-      { id: "ledger", type: "ledger", position: { x: 1030, y: 70 }, data: { ledger: floor.ledger } },
-      { id: "desk", type: "desk", position: { x: 1030, y: 380 }, data: { desk: floor.desk } },
+      { id: "ledger", type: "ledger", position: { x: 1030, y: 180 }, data: { ledger: floor.ledger } },
+      { id: "desk", type: "desk", position: { x: 1030, y: 430 }, data: { desk: floor.desk } },
     ];
     floor.lanes.forEach((lane) =>
       list.push({
@@ -460,7 +445,7 @@ export function FlowMap({
       list.push({
         id: `cashier:${cashier.name}`,
         type: "cashier",
-        position: { x: 660, y: 215 + (index - (cashierCount - 1) / 2) * 190 },
+        position: { x: 660, y: 140 + Math.max(0, 3 - cashierCount) * 70 + index * 140 },
         data: { cashier, cpuTarget },
       }),
     );

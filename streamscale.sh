@@ -33,7 +33,7 @@ Usage: ./streamscale.sh [command] [options]
   console [--port PORT]
                 Build/deploy the interactive console and serve it on loopback with
                 Grafana/Prometheus links. Prints a login URL; Ctrl+C closes it.
-                Pages: Overview, Sale, Scaling, Failure lab, Sessions and Guide.
+                Pages: Overview, Sale, Scaling, Failure lab, Sessions and Docs.
   predictive-prepare  Prepare/reuse the history-only model and Bayesian policy
   predictive-check    Verify predictive control, overrides and recovery
   predictive-demo     Run a reconciled ML Predictive pilot

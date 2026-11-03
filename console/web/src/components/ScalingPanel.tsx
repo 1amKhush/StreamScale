@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import type { Live } from "../api";
 import { MODE_LABELS, TERMS } from "../analogy";
 import { count, percent } from "../format";
@@ -44,6 +44,31 @@ export type ScalingState = {
 };
 
 const MODES = ["fixed", "manual", "cpu-hpa", "lag-keda", "ml-predictive"] as const;
+const MODE_NAMES: Record<(typeof MODES)[number], string> = {
+  fixed: "Fixed",
+  manual: "Manual",
+  "cpu-hpa": "CPU autoscaling",
+  "lag-keda": "Queue autoscaling",
+  "ml-predictive": "ML Predictive",
+};
+const MODE_HINTS: Record<(typeof MODES)[number], string> = {
+  fixed: "Always 1 consumer",
+  manual: "You choose 0–3",
+  "cpu-hpa": "Respond to CPU use",
+  "lag-keda": "Respond to backlog",
+  "ml-predictive": "Anticipate traffic",
+};
+
+function moveRadio(event: KeyboardEvent<HTMLDivElement>) {
+  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+  const choices = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button[role="radio"]:not(:disabled)')];
+  if (!choices.length) return;
+  const current = choices.indexOf(document.activeElement as HTMLButtonElement);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? choices.length - 1 : (current + (event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1) + choices.length) % choices.length;
+  event.preventDefault();
+  choices[next].focus();
+  choices[next].click();
+}
 
 function ReplicaButtons({
   value,
@@ -57,25 +82,27 @@ function ReplicaButtons({
   testPrefix: string;
 }) {
   return (
-    <div className="replica-buttons" role="radiogroup" aria-label="Replicas">
+    <div className="replica-buttons" role="radiogroup" aria-label="Replicas" onKeyDown={moveRadio}>
       {[0, 1, 2, 3].map((replicas) => (
         <button
           key={replicas}
           role="radio"
           aria-checked={value === replicas}
+          tabIndex={value === replicas || (value === null && replicas === 0) ? 0 : -1}
           className={value === replicas ? "active" : ""}
           disabled={disabled}
           onClick={() => onPick(replicas)}
           data-testid={`${testPrefix}-${replicas}`}
         >
           {replicas}
+          {replicas === 0 && <span className="control-replica-caption">Pause</span>}
         </button>
       ))}
     </div>
   );
 }
 
-export function ScalingPanel({ live }: { live: Live }) {
+export function ScalingPanel({ live, onDocs }: { live: Live; onDocs?: () => void }) {
   const lens = useLens();
   const store = lens === "store";
   const operation = useOperation(live);
@@ -101,6 +128,18 @@ export function ScalingPanel({ live }: { live: Live }) {
     ].some(operation.busy);
   const autoscaled = scaling.mode === "cpu-hpa" || scaling.mode === "lag-keda" || scaling.mode === "ml-predictive";
   const override = scaling.override || null;
+  const predictive = scaling.predictive;
+  const modelUnavailable =
+    scaling.mode === "ml-predictive" &&
+    predictive?.status === "fallback" &&
+    predictive.reason?.startsWith("Prepare model:");
+  const settingsValid =
+    Number.isInteger(settings.min) && settings.min >= 1 && settings.min <= 3 &&
+    Number.isInteger(settings.max) && settings.max >= settings.min && settings.max <= 3 &&
+    Number.isInteger(settings.latency_target) && settings.latency_target >= 1 && settings.latency_target <= 30 &&
+    Number.isInteger(settings.cpu_target) && settings.cpu_target >= 10 && settings.cpu_target <= 400 &&
+    Number.isInteger(settings.lag_threshold) && settings.lag_threshold >= 5 && settings.lag_threshold <= 10000 &&
+    Number.isInteger(settings.scale_down_seconds) && settings.scale_down_seconds >= 0 && settings.scale_down_seconds <= 600;
   const controllers = live.sample?.kubernetes.controllers ?? [];
   const error =
     operation.error ??
@@ -115,63 +154,67 @@ export function ScalingPanel({ live }: { live: Live }) {
       .find(Boolean);
   return (
     <div className="scaling-panel" data-testid="scaling-panel">
-      <h3>{store ? "Floor manager's staffing rule" : "Scaling mode"}</h3>
-      <div className="mode-list" role="radiogroup" aria-label="Scaling mode">
+      <h3>{store ? "How should capacity adjust?" : "Choose a scaling mode"}</h3>
+      <p className="control-help">Choose one rule. You can change it during a sale or take over manually.</p>
+      <div className="mode-list" role="radiogroup" aria-label="Scaling mode" onKeyDown={moveRadio}>
         {MODES.map((mode) => (
           <button
             key={mode}
             role="radio"
             aria-checked={scaling.mode === mode}
+            tabIndex={scaling.mode === mode ? 0 : -1}
             className={`preset ${scaling.mode === mode ? "active" : ""}`}
-            disabled={busy || scaling.mode === mode}
-            onClick={() => operation.run("scaling.mode", { mode })}
+            disabled={busy}
+            onClick={() => {
+              if (scaling.mode === mode) return;
+              setDraft(null);
+              operation.run("scaling.mode", { mode });
+            }}
             data-testid={`mode-${mode}`}
           >
-            <strong>{MODE_LABELS[mode][lens]}</strong>
-            <span>{MODE_LABELS[mode].explain}</span>
+            <strong>{MODE_NAMES[mode]}</strong>
+            <span>{MODE_HINTS[mode]}</span>
           </button>
         ))}
+      </div>
+      <p className="control-selection-description">{MODE_LABELS[scaling.mode].explain}</p>
+
+      <div className="control-metrics" data-testid="scaling-counts" aria-label="Consumer capacity">
+        <div className="control-metric"><span>Requested</span><strong>{count(point?.desired)}</strong></div>
+        <div className="control-metric"><span>Ready to process</span><strong>{count(point?.ready)}</strong></div>
+        <div className="control-metric"><span>Joined the group</span><strong>{count(point?.members)}</strong></div>
+      </div>
+      <div className="control-status">
+        <span data-testid="ownership">External controllers: {scaling.ownership?.found?.length ? scaling.ownership.found.join(", ") : "none"}{" "}{scaling.ownership && !scaling.ownership.error && (scaling.ownership.consistent ? "✓ as expected" : "✕ unexpected")}{scaling.ownership?.error && ` · ${scaling.ownership.error}`}</span>
+        <span>Mode change: <span data-testid="transition">{scaling.transition.state}{scaling.transition.state === "running" && scaling.transition.step ? `: ${scaling.transition.step}` : ""}</span></span>
       </div>
 
       {scaling.mode === "ml-predictive" && (
         <div className="predictive-summary" data-testid="predictive-summary" role="status">
-          <p><strong>ML Predictive</strong> · {override ? "manual override" : scaling.predictive?.status ?? "warming up"}</p>
-          <p>{scaling.predictive?.reason ?? "Preparing observations from the pipeline."}</p>
-          <dl>
-            <dt>Observed → forecast</dt>
-            <dd>{count(scaling.predictive?.observed_rate)} → {count(scaling.predictive?.forecast_rate)} events/s</dd>
-            <dt>Look ahead</dt><dd>{count(scaling.predictive?.horizon)} seconds</dd>
-          </dl>
-          <p className="hint">Uses observed history only. The p95 target is an objective; sudden spikes and capacity limits can exceed it.</p>
+          <p><strong>ML Predictive</strong><span className="control-status-label">{override ? "Manual override" : modelUnavailable ? "Preparation needed" : predictive?.status ?? "Warming up"}</span></p>
+          {override ? (
+            <p>You are choosing capacity. Release the override to resume prediction.</p>
+          ) : modelUnavailable ? (
+            <div className="control-warning" data-testid="predictive-prepare-help">
+              <p>The trained model is not ready. Current replicas are held; predictive scaling has not started.</p>
+              <p>From the project folder, run <code>./streamscale.sh predictive-prepare</code>. Preparation collects training runs and tunes a reusable policy.</p>
+              {onDocs && <button className="link-button" onClick={onDocs}>Read the ML Predictive guide</button>}
+            </div>
+          ) : (
+            <p>{predictive?.reason ?? "Collecting the first 60 seconds of current traffic history."}</p>
+          )}
+          {!modelUnavailable && (
+            <dl>
+              <dt>Traffic now</dt><dd>{count(predictive?.observed_rate)} events/s</dd>
+              <dt>Traffic forecast</dt><dd>{count(predictive?.forecast_rate)} events/s · next {count(predictive?.horizon)} seconds</dd>
+            </dl>
+          )}
+          <p className="hint">Learns from observed history. The latency target is an objective; sudden spikes or full capacity can exceed it.</p>
         </div>
       )}
-      <dl>
-        <dt>
-          {store
-            ? "Wanted · present · at lanes"
-            : "Desired · ready · group members"}
-        </dt>
-        <dd data-testid="scaling-counts">
-          {count(point?.desired)} · {count(point?.ready)} ·{" "}
-          {count(point?.members)}
-        </dd>
-        <dt>Controllers on the Deployment</dt>
-        <dd data-testid="ownership">
-          {scaling.ownership?.found?.length
-            ? scaling.ownership.found.join(", ")
-            : "none"}{" "}
-          {scaling.ownership &&
-            !scaling.ownership.error &&
-            (scaling.ownership.consistent ? "✓ as expected" : "✕ unexpected")}
-        </dd>
-        <dt>Transition</dt>
-        <dd data-testid="transition">
-          {scaling.transition.state}
-          {scaling.transition.state === "running" && scaling.transition.step
-            ? `: ${scaling.transition.step}`
-            : ""}
-        </dd>
-      </dl>
+      {scaling.ownership && !scaling.ownership.error && !scaling.ownership.consistent && (
+        <p className="error-text" role="alert">Unexpected scaling controller detected. Inspect controller details before continuing.</p>
+      )}
       {(scaling.transition.state === "failed" ||
         scaling.transition.state === "interrupted") && (
         <div className="confirm">
@@ -183,14 +226,14 @@ export function ScalingPanel({ live }: { live: Live }) {
             disabled={busy}
             onClick={() => operation.run("scaling.reapply")}
           >
-            Reapply {scaling.mode}
+            Retry {MODE_NAMES[scaling.mode]}
           </button>
         </div>
       )}
 
       {scaling.mode === "manual" && (
         <>
-          <h4>{store ? "Cashiers on duty" : "Replicas"}</h4>
+          <h4>{store ? "How many cashiers?" : "How many consumer replicas?"}</h4>
           <ReplicaButtons
             value={scaling.manual_replicas}
             disabled={busy}
@@ -209,7 +252,25 @@ export function ScalingPanel({ live }: { live: Live }) {
 
       {autoscaled && (
         <>
-          <h4>{store ? "Take over from the manager" : "Manual override"}</h4>
+          {scaling.mode === "ml-predictive" && (
+            <div className="scaling-target">
+              <label className="number-field">
+                <span>p95 latency target (seconds)</span>
+                <input type="number" min={1} max={30} value={Number.isFinite(settings.latency_target) ? settings.latency_target : ""}
+                  disabled={busy}
+                  onChange={(event) => setDraft({ ...settings, latency_target: Math.trunc(event.target.valueAsNumber) })} />
+              </label>
+              <p className="hint">Aim to commit 95% of events within this time.</p>
+              {draft && draft.latency_target !== scaling.settings.latency_target && (
+                <button disabled={busy || !settingsValid} onClick={async () => {
+                  const submitted = await operation.run("scaling.settings", { settings: draft });
+                  if (submitted) setDraft(null);
+                }}>Apply latency target</button>
+              )}
+              {draft && (!Number.isInteger(settings.latency_target) || settings.latency_target < 1 || settings.latency_target > 30) && <p className="error-text" role="alert">Choose a whole number from 1 to 30 seconds.</p>}
+            </div>
+          )}
+          <h4>Manual override</h4>
           {override ? (
             <div className="override-box" data-testid="override-active">
               <p>
@@ -234,15 +295,13 @@ export function ScalingPanel({ live }: { live: Live }) {
                 onClick={() => operation.run("scaling.release")}
                 data-testid="release-override"
               >
-                Release override and restore{" "}
-                {MODE_LABELS[scaling.mode as string][lens]}
+                Resume {MODE_NAMES[scaling.mode]}
               </button>
             </div>
           ) : (
             <>
               <p className="hint">
-                Suspends the autoscaler first, then sets replicas directly, so
-                two controllers never compete.
+                Choose a replica count to pause automatic scaling and take control. Zero pauses processing while the queue grows.
               </p>
               <ReplicaButtons
                 value={null}
@@ -254,22 +313,10 @@ export function ScalingPanel({ live }: { live: Live }) {
               />
             </>
           )}
-          {scaling.mode === "ml-predictive" && (
-            <label className="number-field">
-              <span>p95 latency target (seconds)</span>
-              <input type="number" min={1} max={30} value={settings.latency_target}
-                onChange={(event) => setDraft({ ...settings, latency_target: Math.trunc(event.target.valueAsNumber) })} />
-            </label>
-          )}
-          {scaling.mode === "ml-predictive" && draft && (
-            <button disabled={busy} onClick={async () => {
-              await operation.run("scaling.settings", { settings: draft }); setDraft(null);
-            }}>Apply latency target</button>
-          )}
           <details className="disclosure">
             <summary>
-              Autoscaler settings{" "}
-              <span>Targets, limits & scale-down delay</span>
+              Advanced scaling settings{" "}
+              <span>Replica limits, targets & policy details</span>
             </summary>
             <div className="form-grid">
               {scaling.mode === "ml-predictive" ? (
@@ -327,7 +374,7 @@ export function ScalingPanel({ live }: { live: Live }) {
               </label>
               )}
               <label className="number-field">
-                <span>Minimum</span>
+                <span>Minimum replicas</span>
                 <input
                   type="number"
                   min={1}
@@ -342,7 +389,7 @@ export function ScalingPanel({ live }: { live: Live }) {
                 />
               </label>
               <label className="number-field">
-                <span>Maximum (3 lanes)</span>
+                <span>Maximum replicas (3 partitions)</span>
                 <input
                   type="number"
                   min={1}
@@ -359,23 +406,25 @@ export function ScalingPanel({ live }: { live: Live }) {
             </div>
             <div className="button-row">
               <button
-                disabled={busy || !draft}
+                disabled={busy || !draft || !settingsValid}
                 onClick={async () => {
                   if (!draft) return;
-                  await operation.run("scaling.settings", { settings: draft });
-                  setDraft(null);
+                  const submitted = await operation.run("scaling.settings", { settings: draft });
+                  if (submitted) setDraft(null);
                 }}
               >
                 Apply settings
               </button>
               {draft && <button onClick={() => setDraft(null)}>Discard</button>}
             </div>
+            {draft && !settingsValid && <p className="error-text" role="alert">Use values within the displayed limits. Minimum replicas cannot exceed maximum replicas.</p>}
           </details>
         </>
       )}
 
       <details className="disclosure">
         <summary>Controller details & history</summary>
+        {scaling.mode === "ml-predictive" && modelUnavailable && <p>{predictive?.reason}</p>}
         {controllers.map((controller) => (
           <div key={controller.name} className="controller">
             <h4>
@@ -426,7 +475,7 @@ export function ScalingPanel({ live }: { live: Live }) {
             ))}
         </ul>
       </details>
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text" role="alert">{error}</p>}
     </div>
   );
 }

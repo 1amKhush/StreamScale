@@ -88,3 +88,46 @@ npm run e2e
 
 The browser suite controls real sales and injects bounded faults. The complete
 console acceptance remains `./streamscale.sh console-check` from the repo root.
+
+## Docs and simplified workspace follow-up (2026-11-03)
+
+The workspace keeps six destinations, with searchable **Docs** replacing the
+former Guide destination. All five guided demonstrations and the glossary remain
+under Docs → Guided demos. Seven topics explain first use, every UI workflow,
+architecture/correctness, ML Predictive, lifecycle commands and troubleshooting.
+Commands copy to the clipboard with success/failure feedback; article routes
+support refresh and browser history.
+
+Overview retains the full live summary. Operational task pages use compact
+context; documentation has no repeating telemetry/control panels. Presets/modes
+use compact choices and one selected explanation. Low-level controller/model
+information and full fault history remain expandable. The map prioritizes lag,
+assignment and capacity, with offsets and resources still in the inspector.
+Sessions default to the latest session, present readable names and guard against
+stale detail responses. Keyboard radio navigation, focus management, reduced
+motion, presentation, both vocabulary lenses and inspector lookup remain.
+
+Validation includes the production build, 24 web unit checks and real-browser
+checks of the running console. Live trained-ML forecasting remains subject to the
+separate preparation limits recorded in predictive-evidence.md; this UI work does
+not claim new trained-model or comparative performance results.
+
+Final checks passed:
+
+- TypeScript checking and the Vite production build.
+- 24 web unit tests, including documentation search and maintained commands.
+- 13 Chrome acceptance tests covering Docs, navigation, mobile/dark layouts,
+  sale pause/resume/rate/abort/drain, manual scaling, chart/export and replay.
+- The three Docs tests reran after the final skip-link correction, including
+  actual clipboard reads, direct article links, refresh and browser history.
+- 25 scoped launcher tests; Ruff check/format and `git diff --check`.
+
+The trained-ML browser journey was excluded because no validated artifact was
+prepared. The complete multi-hour `all` campaign was not rerun for this frontend
+change; launcher behavior is unchanged apart from its page listing.
+
+Screenshots from the real console are retained locally in
+`artifacts/ui-refinement/docs-scaling.png`, `docs-architecture.png` and
+`docs-mobile-dark.png`, plus the refreshed functional screenshots under
+`artifacts/console/e2e/`. No user Compose or kind services were stopped to test
+shutdown documentation.

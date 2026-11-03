@@ -19,6 +19,7 @@ export function SaleBar({
   const lens = useLens();
   const sales = live.extras.sales as SalesState | undefined;
   const presets = sales?.presets.presets ?? [];
+  const saved = sales?.saved ?? [];
   const [presetId, setPresetId] = useState("flash-sale-extended");
   const operation = useOperation(live);
   const point = live.points.at(-1);
@@ -27,8 +28,8 @@ export function SaleBar({
   const draining = !active && sales?.session?.state === "draining";
   const armed = useArmed(active);
   const preset = useMemo(
-    () => presets.find((row) => row.id === presetId),
-    [presets, presetId],
+    () => [...presets, ...saved].find((row) => row.id === presetId),
+    [presets, saved, presetId],
   );
   const problem =
     operation.error ??
@@ -50,31 +51,34 @@ export function SaleBar({
       ) : !active ? (
         <>
           <label className="field">
-            <span>{lens === "store" ? "Sale" : "Workload preset"}</span>
+            <span>{lens === "store" ? "Sale preset" : "Workload preset"}</span>
             <select
               value={presetId}
               onChange={(event) => setPresetId(event.target.value)}
               aria-label="Sale preset"
             >
-              {presets.map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.label} · {count(row.events)} events · {row.seconds} s
-                </option>
-              ))}
+              <optgroup label="Built-in presets">
+                {presets.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.label} · {row.seconds} s
+                  </option>
+                ))}
+              </optgroup>
+              {saved.length > 0 && <optgroup label="Your saved presets">{saved.map((row) => <option key={row.id} value={row.id}>{row.label} · {row.seconds} s</option>)}</optgroup>}
             </select>
           </label>
           <button
             className="primary"
             disabled={
-              operation.busy("sale.start") || live.status?.agent !== "connected"
+              !preset || operation.busy("sale.start") || live.status?.agent !== "connected"
             }
             onClick={() => operation.run("sale.start", { preset: presetId })}
             data-testid="start-sale"
           >
-            {operation.busy("sale.start") ? "Opening…" : "Start sale"}
+            {operation.busy("sale.start") ? "Starting…" : "Start sale"}
           </button>
           <button className="link-button" onClick={onPlan}>
-            Customize sale
+            Plan & customize
           </button>
           {preset && (
             <span className="muted sale-hint">{preset.description}</span>
@@ -87,10 +91,10 @@ export function SaleBar({
               {sale.state === "paused"
                 ? "Paused"
                 : sale.state === "stopping"
-                  ? "Closing"
+                  ? "Finishing sale"
                   : "Sale open"}
             </strong>{" "}
-            {count(sale.acknowledged)} / {count(sale.budget)} ·{" "}
+            {count(sale.acknowledged)} / {count(sale.budget)} events ·{" "}
             {rate(sale.target_rate)}
           </span>
           {sale.state === "paused" ? (

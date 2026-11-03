@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getJson, type Live } from "../api";
+import { MODE_LABELS } from "../analogy";
 import { buildFloor } from "../graph";
 import { clock, count, seconds } from "../format";
 import { useLens } from "../lens";
@@ -20,6 +21,22 @@ type Detail = {
 };
 
 const SPEEDS = [1, 4, 10];
+
+function presetName(value: unknown) {
+  const id = typeof value === "string" ? value : "";
+  return ({
+    steady: "Steady traffic",
+    "flash-sale": "Flash sale",
+    "flash-sale-extended": "Extended flash sale",
+    "overload-recovery": "Overload and recovery",
+    "predictive-pilot": "ML Predictive pilot",
+  } as Record<string, string>)[id] ?? (id.replaceAll("-", " ") || "Custom sale");
+}
+
+function modeName(value: unknown) {
+  const id = typeof value === "string" ? value : "";
+  return MODE_LABELS[id]?.system ?? (id || "Mode not recorded");
+}
 
 export function Replay({ detail }: { detail: Detail }) {
   const lens = useLens();
@@ -101,8 +118,13 @@ function SessionDetail({ id }: { id: string }) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    let cancelled = false;
     setDetail(null);
-    getJson<Detail>(`/api/sessions/${id}`).then(setDetail).catch((reason: Error) => setError(reason.message));
+    setError(null);
+    getJson<Detail>(`/api/sessions/${id}`)
+      .then((value) => { if (!cancelled) setDetail(value); })
+      .catch((reason: Error) => { if (!cancelled) setError(reason.message); });
+    return () => { cancelled = true; };
   }, [id]);
   if (error) return <p className="error-text">{error}</p>;
   if (!detail) return <p className="hint">Loading session…</p>;
@@ -119,7 +141,7 @@ function SessionDetail({ id }: { id: string }) {
       <dl className="session-facts">
         <dt>Preset · mode at start</dt>
         <dd>
-          {String((record.config as Record<string, unknown>)?.preset)} · {String((record.config as Record<string, unknown>)?.mode)}
+          {presetName(record.config?.preset)} · {modeName(record.config?.mode)}
         </dd>
         <dt>Outcome · state</dt>
         <dd>
@@ -218,7 +240,7 @@ function CompareView({ live }: { live: Live }) {
                 .sort((a, b) => Number(b.eligible) - Number(a.eligible) || (a.exact_p95_s ?? 1e9) - (b.exact_p95_s ?? 1e9))
                 .map((run) => (
                   <tr key={run.session}>
-                    <td>{run.mode}</td>
+                    <td>{modeName(run.mode)}</td>
                     <td>{seconds(run.exact_p95_s)}</td>
                     <td>{count(run.peak_lag)}</td>
                     <td>{count(run.max_members)}</td>
@@ -240,7 +262,7 @@ function CompareView({ live }: { live: Live }) {
           <ul className="plain">
             {group.sessions.slice(0, 8).map((session) => (
               <li key={session.id} className={session.eligible ? "" : "muted"}>
-                {session.created_at} · {session.mode} · {session.outcome ?? "—"} · p95{" "}
+                {session.created_at} · {modeName(session.mode)} · {session.outcome ?? "—"} · p95{" "}
                 {seconds(session.reconciliation?.latency_s?.p95 ?? null)}{" "}
                 {session.eligible ? "✓ comparable" : `✕ ${session.reasons.join("; ")}`}
               </li>
@@ -314,9 +336,16 @@ export function SessionsView({ live }: { live: Live }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<"sessions" | "compare" | "matrix">("sessions");
   useEffect(() => {
+    let cancelled = false;
     getJson<{ sessions: SessionRecord[] }>("/api/sessions")
-      .then((value) => setSessions(value.sessions))
+      .then((value) => {
+        if (cancelled) return;
+        const latestFirst = value.sessions.slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
+        setSessions(latestFirst);
+        setSelected((current) => current ?? latestFirst[0]?.id ?? null);
+      })
       .catch(() => undefined);
+    return () => { cancelled = true; };
   }, [live.journal.length]);
   return (
     <div className="sessions-view" data-testid="sessions-view">
@@ -338,15 +367,16 @@ export function SessionsView({ live }: { live: Live }) {
           <ul className="session-list">
             {sessions.map((session) => (
               <li key={session.id}>
-                <button className={selected === session.id ? "active" : ""} onClick={() => setSelected(session.id)} data-testid={`session-${session.id}`}>
-                  <strong>{session.created_at.replace("T", " ").replace("Z", "")}</strong>
+                <button className={selected === session.id ? "active" : ""} aria-current={selected === session.id ? "true" : undefined} onClick={() => setSelected(session.id)} data-testid={`session-${session.id}`}>
+                  <strong>{presetName(session.config?.preset)}</strong>
                   <span>
-                    {String((session.config as Record<string, unknown>)?.preset ?? "")} · {session.outcome ?? session.state}
+                    {modeName(session.config?.mode)} · {session.outcome ?? session.state}
                   </span>
                   <span className="muted">
                     {session.reconciliation_status ?? "not reconciled"}
                     {session.comparable ? " · comparable" : ""}
                   </span>
+                  <small className="muted">{session.created_at.replace("T", " ").replace("Z", " UTC")}</small>
                 </button>
               </li>
             ))}

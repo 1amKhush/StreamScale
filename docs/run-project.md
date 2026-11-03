@@ -56,23 +56,24 @@ npm run build
 
 A first demonstration, all in the browser:
 
-1. **Scaling** → *One cashier, always* (fixed). **Sale** → *Extended flash sale* →
+1. **Scaling** → **Fixed**. **Sale** → *Extended flash sale* →
    *Start sale*. Open **Overview** to watch arrivals reach about 390/s while one
    consumer serves about 140/s; every lane's queue grows and the floor flags the backlog.
-2. **Scaling** → *You call cashiers in* → **3**. After a short handover each
+2. **Scaling** → **Manual** → **3**. After a short handover each
    cashier owns one lane and the queues shrink.
 3. **Failure lab** → choose the crash-after-DB-commit experiment → *Inject*.
    Watch exit 75, the restart, the replay and the verified single SQL fact.
 4. **Sale** → *Stop & drain*. After the drain the console reconciles
    the run against Kafka, SQL and the DLQ. Expand **Reconciliation details** for
    exact SQL p95.
-5. Repeat the sale under *“Cashiers look busy” rule* (CPU-HPA) and *“Queues are
-   long” rule* (lag-KEDA), or use **Sessions → Comparisons** to run all three modes
-   as fresh, frozen, sequential runs. **Guide** walks through five demonstrations.
+5. Repeat the sale under **CPU autoscaling** (CPU-HPA) and **Queue autoscaling**
+   (lag-KEDA). After model preparation, try **ML Predictive** too. **Sessions →
+   Comparisons** runs the four comparison strategies as fresh, frozen, sequential
+   runs. **Docs → Guided demos** walks through five demonstrations.
 
 `console-check` runs every console stage: Python and web unit tests, the web
-build, deployment, live-cluster acceptance (real sales, the four scaling modes,
-every fault, replay and a three-mode comparison, the launcher console lifecycle)
+build, deployment, live-cluster acceptance (sales, scaling, faults, replay,
+comparisons and the launcher console lifecycle)
 and Chrome acceptance including the full sale → overload → rescue → crash →
 outage → recovery → reconciliation journey. It takes roughly 30–40 minutes and
 writes `artifacts/console/check.json`. Interactive sessions and their evidence
@@ -308,3 +309,23 @@ the default policy is retained and the tuning report says `infeasible`.
 comparison. Its first execution can take several hours. Performance improvements
 must come from the held-out report; correctness and meeting the latency target
 are separate outcomes. Existing stop/resume commands above retain every artifact.
+
+## Using the refined console
+
+Open the printed login URL from `./streamscale.sh console`. Use Overview to watch
+the flow, Sale to plan/control traffic, Scaling to choose capacity, Failure lab
+for bounded fault experiments and Sessions for replay/results. Existing controls
+and artifacts remain available; detailed settings and histories expand on demand.
+
+**Docs** contains searchable first-run instructions, UI usage, architecture and
+correctness details, ML Predictive preparation, exact project commands and
+troubleshooting. Command blocks have a Copy button. All five guided demonstrations
+and the Store/System glossary live under **Docs → Guided demos**. Documentation
+has no repeating metrics or sale-control bar; active fault recovery remains
+available globally. After login, `#docs` opens the guide; `#docs/scaling` and
+`#docs/commands` support direct links and browser back/forward navigation.
+
+On phones all six destinations remain visible. The diagram's List view and the
+component inspector provide readable details; Map remains available. View options
+retains vocabulary, reduced motion and presentation. Selecting a component or
+looking up a record opens the same keyboard-accessible inspector.

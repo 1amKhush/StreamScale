@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import type { Live } from "../api";
 import { count, rate, seconds } from "../format";
 import { useLens } from "../lens";
@@ -13,6 +13,17 @@ import {
 import type { Preset, SaleStatus, SalesState, SessionRecord } from "../types";
 
 const ACTIVE = new Set(["preparing", "publishing", "paused", "stopping"]);
+
+function movePreset(event: KeyboardEvent<HTMLDivElement>) {
+  if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+  const choices = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button[role="radio"]')];
+  if (!choices.length) return;
+  const current = choices.indexOf(document.activeElement as HTMLButtonElement);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? choices.length - 1 : (current + (event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1) + choices.length) % choices.length;
+  event.preventDefault();
+  choices[next].focus();
+  choices[next].click();
+}
 
 function draftFrom(preset: Preset): SaleDraft {
   return {
@@ -99,6 +110,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
       ),
     });
   const last = sales.sessions?.[0];
+  const selectedPreset = presets.find((preset) => preset.id === draft.preset);
   const start = () =>
     operation.run("sale.start", {
       preset: draft.preset,
@@ -109,24 +121,28 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
     });
   return (
     <div className="sale-setup" data-testid="sale-setup">
-      <h3>{store ? "Plan the sale" : "Workload"}</h3>
-      <div className="preset-list" role="radiogroup" aria-label="Presets">
-        {sales.presets.presets.map((preset) => (
+      <h3>{store ? "Choose a sale" : "Choose a workload"}</h3>
+      <p className="control-help">Start with a preset. Adjust its schedule or problem events only when you need to.</p>
+      <div className="preset-list" role="radiogroup" aria-label="Presets" onKeyDown={movePreset}>
+        {sales.presets.presets.map((preset, index) => (
           <button
             key={preset.id}
             role="radio"
             aria-checked={draft.preset === preset.id}
+            tabIndex={draft.preset === preset.id || (!sales.presets.presets.some((row) => row.id === draft.preset) && index === 0) ? 0 : -1}
             className={`preset ${draft.preset === preset.id ? "active" : ""}`}
             onClick={() => setDraft(draftFrom(preset))}
           >
             <strong>{preset.label}</strong>
-            <span>{preset.description}</span>
             <span className="muted">
               {count(preset.events)} events · {preset.seconds} s
             </span>
           </button>
         ))}
       </div>
+      <p className="control-selection-description">
+        {selectedPreset?.description ?? "Custom sale · using your schedule and event settings below."}
+      </p>
       {(sales.saved?.length ?? 0) > 0 && (
         <label className="saved-preset-field">
           Saved presets
@@ -154,16 +170,15 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
         </label>
       )}
       <div className="estimate" data-testid="sale-estimate">
-        <p>
-          <strong>{count(plan.attempts)}</strong>{" "}
-          {store ? "shoppers" : "events"} over {seconds(plan.seconds)} (
-          {count(plan.orders)} orders), peak {rate(plan.peakRate)}. About{" "}
-          {count(plan.malformed)} to the problem desk, {count(plan.duplicates)}{" "}
-          repeats and {count(plan.late)} late.
-        </p>
+        <div className="control-metrics">
+          <div className="control-metric"><span>Total events</span><strong>{count(plan.attempts)}</strong></div>
+          <div className="control-metric"><span>Sale duration</span><strong>{seconds(plan.seconds)}</strong></div>
+          <div className="control-metric"><span>Peak arrival rate</span><strong>{rate(plan.peakRate)}</strong></div>
+        </div>
+        <p className="hint">{count(plan.orders)} orders · {count(plan.malformed)} invalid events · {count(plan.duplicates)} duplicates · {count(plan.late)} late events</p>
         {capacity && (
           <details className="capacity-estimate">
-            <summary>Estimate backlog at 1, 2 or 3 consumers</summary>
+            <summary>What capacity might this need?</summary>
             <table className="mini">
               <thead>
                 <tr>
@@ -186,13 +201,9 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
                 ))}
               </tbody>
             </table>
+            <p className="hint">Rough estimate from the earlier pilot's {Math.round(capacity)} events/s per consumer. Actual capacity is measured during the live run.</p>
           </details>
         )}
-        <p className="hint">
-          Estimate from the M7 pilot's measured capacity of about{" "}
-          {capacity ? Math.round(capacity) : "—"} events/s per consumer; the
-          live run measures its own.
-        </p>
       </div>
       {problems.length > 0 && (
         <ul className="problems" role="alert">
@@ -201,7 +212,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
           ))}
         </ul>
       )}
-      <div className="button-row">
+      <div className="button-row control-action-row">
         <button
           className="primary"
           disabled={
@@ -212,7 +223,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
           onClick={start}
           data-testid="panel-start-sale"
         >
-          {operation.busy("sale.start") ? "Opening…" : "Start sale"}
+          {operation.busy("sale.start") ? "Starting sale…" : "Start sale"}
         </button>
         {last?.config && (
           <button
@@ -236,10 +247,11 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
           </button>
         )}
       </div>
+      {live.status?.agent !== "connected" && <p className="hint" role="status">Connect the cluster agent before starting a sale.</p>}
       <details className="disclosure sale-advanced">
         <summary>
           Customize this sale{" "}
-          <span>Schedule, seed, problem events & saved presets</span>
+          <span>Schedule, problem events & reproducibility</span>
         </summary>
         <div className="form-grid">
           <label className="number-field">
@@ -269,7 +281,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
               <th>#</th>
               <th>Seconds</th>
               <th>Events/s</th>
-              <th />
+              <th aria-label="Actions" />
             </tr>
           </thead>
           <tbody>
@@ -309,6 +321,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
                 <td>
                   <button
                     className="link-button"
+                    aria-label={`Remove phase ${index + 1}`}
                     disabled={draft.schedule.length === 1}
                     onClick={() =>
                       update({
@@ -330,7 +343,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
           disabled={draft.schedule.length >= LIMITS.maxPhases}
           onClick={() => update({ schedule: [...draft.schedule, [20, 52]] })}
         >
-          + Add phase
+          Add phase
         </button>
         <h4>
           {store
@@ -397,7 +410,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
         </div>
       </details>
       {(operation.error || operation.failure("sale.start")) && (
-        <p className="error-text">
+        <p className="error-text" role="alert">
           {operation.error ?? operation.failure("sale.start")}
         </p>
       )}
@@ -422,38 +435,19 @@ function Running({ live, sale }: { live: Live; sale: SaleStatus }) {
       .find(Boolean);
   return (
     <div className="sale-running" data-testid="sale-running">
-      <h3>
-        {store ? "Sale in progress" : "Publishing"}{" "}
-        <span className="mono muted">{sale.run_name}</span>
-      </h3>
-      <div className="meter large" aria-label="Acknowledged events">
-        <span style={{ width: `${progress * 100}%` }} />
+      <div className="control-heading">
+        <h3>{paused ? "Sale paused" : stopping ? "Finishing this sale" : "Sale in progress"}</h3>
+        <span className="pill" data-testid="publisher-state">{sale.state}</span>
       </div>
-      <dl>
-        <dt>State</dt>
-        <dd data-testid="publisher-state">{sale.state}</dd>
-        <dt>{store ? "Shoppers in (acknowledged)" : "Acknowledged"}</dt>
-        <dd>
-          {count(sale.acknowledged)} / {count(sale.budget)}
-        </dd>
-        <dt>Sent, awaiting acknowledgement</dt>
-        <dd>
-          {count(
-            sale.attempted - sale.acknowledged - sale.failed - sale.purged,
-          )}
-        </dd>
-        <dt>Delivery failures</dt>
-        <dd>{count(sale.failed)}</dd>
-        <dt>Pacing</dt>
-        <dd>
-          {sale.rate_mode === "manual"
-            ? `manual ${rate(sale.target_rate)}`
-            : `schedule, now ${rate(sale.target_rate)}`}
-          {sale.schedule_seconds !== null && sale.rate_mode !== "manual"
-            ? ` · at ${Math.round(sale.schedule_seconds)} s`
-            : ""}
-        </dd>
-      </dl>
+      <p className="control-help">{count(sale.acknowledged)} of {count(sale.budget)} events confirmed by Kafka</p>
+      <div className="meter large" role="progressbar" aria-label="Acknowledged events" aria-valuemin={0} aria-valuemax={sale.budget || 1} aria-valuenow={Math.min(sale.budget || 1, sale.acknowledged)}>
+        <span style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }} />
+      </div>
+      <div className="control-metrics">
+        <div className="control-metric"><span>Arrival rate</span><strong>{rate(sale.target_rate)}</strong></div>
+        <div className="control-metric"><span>Awaiting confirmation</span><strong>{count(sale.attempted - sale.acknowledged - sale.failed - sale.purged)}</strong></div>
+        <div className="control-metric"><span>Delivery failures</span><strong>{count(sale.failed)}</strong></div>
+      </div>
       {sale.buffer_full && (
         <p className="node-warning">
           The broker is not accepting records; the publisher is waiting.
@@ -471,6 +465,7 @@ function Running({ live, sale }: { live: Live; sale: SaleStatus }) {
           </button>
         ) : (
           <button
+            className="primary"
             disabled={operation.busy("sale.pause") || stopping}
             onClick={() => operation.run("sale.pause")}
             data-testid="pause-sale"
@@ -483,15 +478,16 @@ function Running({ live, sale }: { live: Live; sale: SaleStatus }) {
           onClick={() => operation.run("sale.stop")}
           data-testid="panel-stop-sale"
         >
-          {"Stop & drain"}
+            {"Stop & drain"}
         </button>
       </div>
       <p className="hint">
         {store
-          ? "Holding the doors stops new shoppers; cashiers keep serving the queue and confirmations keep arriving."
-          : "Pause stops new production; delivery callbacks and consumers continue."}
+          ? "Pause stops new arrivals. Stop & drain ends the sale and lets cashiers clear the queue."
+          : "Pause stops new production. Stop & drain ends publishing, processes the remaining backlog, then reconciles the result."}
       </p>
-      <h4>{store ? "Arrival rate" : "Publishing rate"}</h4>
+      <h4>Adjust arrival rate</h4>
+      <p className="hint">{sale.rate_mode === "manual" ? "You are controlling the rate." : `Following the preset schedule${sale.schedule_seconds !== null ? ` · ${Math.round(sale.schedule_seconds)} seconds in` : ""}.`} Changing it makes this run exploratory.</p>
       <div className="rate-row">
         <input
           type="range"
@@ -535,10 +531,14 @@ function Running({ live, sale }: { live: Live; sale: SaleStatus }) {
           }
           onClick={() => operation.run("sale.rate", { rate: null })}
         >
-          Follow the schedule
+          Resume preset schedule
         </button>
       </div>
-      <h4>Abort</h4>
+      <details className="disclosure">
+        <summary>Publisher details <span>Run ID & delivery state</span></summary>
+        <dl><dt>Run</dt><dd className="mono">{sale.run_name}</dd><dt>Pacing</dt><dd>{sale.rate_mode === "manual" ? "Manual rate" : "Preset schedule"}</dd><dt>State</dt><dd>{sale.state}</dd></dl>
+      </details>
+      <h4>End the sale early</h4>
       {confirmAbort ? (
         <div className="confirm">
           <p>
@@ -568,7 +568,7 @@ function Running({ live, sale }: { live: Live; sale: SaleStatus }) {
           Abort…
         </button>
       )}
-      {error && <p className="error-text">{error}</p>}
+      {error && <p className="error-text" role="alert">{error}</p>}
     </div>
   );
 }
@@ -613,6 +613,7 @@ function Result({
           </span>
         )}
       </h3>
+      {result && <p className="control-help">{count(result.stored_facts)} stored facts · exact p95 latency {seconds(result.latency_s.p95)}. {session.comparable ? "Eligible for comparison." : "Exploratory run; excluded from formal comparisons."}</p>}
       {result ? (
         <details className="disclosure">
           <summary>

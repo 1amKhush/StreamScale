@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TERMS } from "../analogy";
+import { MODE_LABELS, TERMS } from "../analogy";
 import { count, rate, shortPod } from "../format";
 import { useLens } from "../lens";
 import { FlowMap } from "./FlowMap";
@@ -107,7 +107,8 @@ export function Pipeline({
               <strong>{TERMS.controller[lens]}</strong>
               <span>
                 {count(floor.manager.ready)} ready /{" "}
-                {count(floor.manager.desired)} desired · {floor.manager.mode}
+                {count(floor.manager.desired)} desired ·{" "}
+                {MODE_LABELS[floor.manager.mode]?.[lens] ?? floor.manager.mode}
               </span>
             </button>
             {floor.cashiers.map((cashier) => (

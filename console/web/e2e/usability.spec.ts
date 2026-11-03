@@ -62,7 +62,7 @@ test("sale drafts survive navigation and the lab shows one experiment at a time"
     page
       .getByRole("radiogroup", { name: "Presets", exact: true })
       .getByRole("radio"),
-  ).toHaveCount(4);
+  ).toHaveCount(5);
   await expect(page.getByLabel("Phase 1 seconds")).toBeHidden();
   await page
     .locator("summary")

@@ -4,7 +4,7 @@ import { MODE_LABELS, TERMS, type TermId } from "../analogy";
 import { bytes, count, percent, rate, seconds, shortPod, UNKNOWN } from "../format";
 import type { FloorModel } from "../graph";
 import { useLens } from "../lens";
-import type { Sample, SaleStatus } from "../types";
+import type { PredictiveState, Sample, SaleStatus } from "../types";
 import { CODE_TEXT } from "./FlowMap";
 
 function Explain({ id }: { id: TermId }) {
@@ -364,10 +364,22 @@ export function Inspector({
     );
   } else if (selected === "manager") {
     const label = MODE_LABELS[floor.manager.mode];
+    const predictive = sample?.scaling?.predictive as (PredictiveState & {
+      recommended?: number;
+      policy?: { horizon?: number; quantile?: number; headroom?: number; downscale?: number };
+    }) | undefined;
+    const modelUnavailable = predictive?.status === "fallback" && predictive.reason?.startsWith("Prepare model:");
+    const predictiveStatus = floor.manager.override ? "Manual override" : modelUnavailable ? "Preparation needed" : ({
+      "warming up": "Warming up",
+      predicting: "Predicting traffic",
+      fallback: "Fallback",
+      "capacity limited": "Capacity limited",
+      "manual override": "Manual override",
+      inactive: "Inactive",
+    } as Record<string, string>)[predictive?.status ?? ""] ?? "Waiting for observations";
     heading = TERMS.controller[lens];
     body = (
       <>
-        <Explain id="controller" />
         <dl>
           <dt>Policy</dt>
           <dd>{label ? label[lens] : floor.manager.mode}</dd>
@@ -377,7 +389,40 @@ export function Inspector({
           </dd>
         </dl>
         {label && <p>{label.explain}</p>}
-        {floor.manager.controllers.map((controller) => (
+        {floor.manager.mode === "ml-predictive" && (
+          <section data-testid="inspector-predictive" aria-label="ML Predictive decision">
+            <h3>{predictiveStatus}</h3>
+            <p>{floor.manager.override
+              ? "Automatic decisions are paused while you control the replica count. Release the override from Scaling to resume."
+              : modelUnavailable
+                ? "The trained model is not ready. Current replicas are held until model preparation completes."
+                : predictive?.reason ?? "Collecting the first 60 seconds of recent traffic before forecasting."}</p>
+            {modelUnavailable && <p className="hint">Run <code>./streamscale.sh predictive-prepare</code> from the project folder.</p>}
+            <dl>
+              <dt>Traffic now</dt><dd>{rate(predictive?.observed_rate)}</dd>
+              <dt>Forecast</dt><dd>{rate(predictive?.forecast_rate)} · next {count(predictive?.horizon)} s</dd>
+              <dt>p95 latency objective</dt><dd>{seconds(predictive?.target_seconds)}</dd>
+              {predictive?.recommended != null && <><dt>Recommended consumers</dt><dd>{count(predictive.recommended)}</dd></>}
+            </dl>
+            <p className="hint">Predictions use observed history. The latency objective is not a guarantee; sudden spikes or shared bottlenecks can exceed it.</p>
+            <details className="disclosure">
+              <summary>Model & policy <span>Prepared offline, reused for pilots</span></summary>
+              <dl>
+                <dt>Model</dt><dd className="mono">{predictive?.model_id ?? "Not prepared"}</dd>
+                <dt>Forecast horizon</dt><dd>{count(predictive?.policy?.horizon ?? predictive?.horizon)} s</dd>
+                <dt>Upper quantile</dt><dd>{percent(predictive?.policy?.quantile == null ? null : predictive.policy.quantile * 100)}</dd>
+                <dt>Capacity headroom</dt><dd>{percent(predictive?.policy?.headroom == null ? null : predictive.policy.headroom * 100)}</dd>
+                <dt>Scale-down stabilization</dt><dd>{seconds(predictive?.policy?.downscale)}</dd>
+              </dl>
+              {modelUnavailable && <p className="hint">{predictive.reason}</p>}
+            </details>
+          </section>
+        )}
+        {floor.manager.mode === "cpu-hpa" && <Explain id="cpuHpa" />}
+        {floor.manager.mode === "lag-keda" && <Explain id="lagKeda" />}
+        {floor.manager.controllers.length > 0 && <details className="disclosure">
+          <summary>Controller details <span>Resources, targets & conditions</span></summary>
+          {floor.manager.controllers.map((controller) => (
           <div key={controller.name} className="controller">
             <h3>
               {controller.kind} <span className="mono">{controller.name}</span>
@@ -421,9 +466,8 @@ export function Inspector({
               </p>
             ))}
           </div>
-        ))}
-        <Explain id="cpuHpa" />
-        <Explain id="lagKeda" />
+          ))}
+        </details>}
       </>
     );
   } else if (selected === "ledger") {

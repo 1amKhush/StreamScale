@@ -47,10 +47,12 @@ for a Kafka → PostgreSQL order pipeline, with an interactive console to watch 
 ```
 
 `all` prepares the environment, runs local and fault checks, deploys a fresh kind
-cluster, exercises all three scaling modes, runs or reuses the measured experiment,
-regenerates the report and runs console acceptance. It then serves the console with
-Grafana and Prometheus links. The first run downloads images and tools; a fresh
-measured campaign can take over an hour.
+cluster, exercises the historical scaling modes, runs or reuses the measured
+experiment and regenerates its report. It also prepares ML Predictive, runs its
+acceptance and held-out campaign, and checks the console. It then serves the
+console with Grafana and Prometheus links. The first run downloads images and
+tools; full preparation and measurement can take several hours. For a quick UI
+pilot, use `./streamscale.sh cluster` followed by `./streamscale.sh console`.
 
 ### Everyday commands
 
@@ -127,7 +129,7 @@ checkout, with the real Kafka and Kubernetes names always visible:
 | **Scaling** | Switch policy or take over manually |
 | **Failure lab** | Inject bounded faults (crashes, outages) and watch recovery |
 | **Sessions** | Replay, reconcile and compare past runs |
-| **Guide** | Five guided demonstrations |
+| **Docs** | Searchable setup, UI instructions, architecture, ML, commands and guided demos |
 
 See the [console guide](docs/console.md) for a walkthrough and its safety scope.
 
@@ -254,3 +256,10 @@ preparation and the 36-run comparison are long live campaigns. The maintained
 and [implementation evidence](docs/predictive-evidence.md) for validation status,
 cache/resume behavior and the history-only forecasting limitation. Earlier M7
 results remain unchanged; no predictive performance improvement is presumed.
+
+The in-app **Docs** section explains the UI and the system together: a first-sale
+walkthrough, all scaling strategies, Kafka/SQL correctness, ML preparation,
+copyable start/stop commands and troubleshooting. Guided demos remain under
+**Docs → Guided demos**. Task pages keep live context compact; detailed settings,
+controller internals and fault history expand when needed. After login, `#docs`
+opens the guide and `#docs/scaling` links directly to predictive scaling help.

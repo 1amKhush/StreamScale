@@ -28,7 +28,7 @@ busy, an available port is chosen and printed. Choose one with
 - **Overview**: arrival/processing rate, backlog, p95 and ready consumers, followed
   by the live pipeline and two primary charts. **More metrics** reveals CPU,
   latency, replica, DLQ and restart charts. Activity and diagnostics expand below.
-- **Sale**: choose one of four starter workloads and start it. **Customize this
+- **Sale**: choose one of five starter workloads and start it. **Customize this
   sale** reveals schedule, seed, fault percentages and preset saving. Saved
   presets use a dropdown. Your draft survives switching pages during this visit.
 - **Scaling**: choose a mode, set a manual count or take over from an autoscaler.
@@ -36,9 +36,9 @@ busy, an available port is chosen and printed. Choose one with
 - **Failure lab**: choose one experiment, set its parameters, then inject it.
   Active faults and recovery stay visible; recent outcomes have a bounded list.
 - **Sessions**: replay and export a recorded session, compare modes or inspect
-  the measured matrix. **Guide** contains step-by-step demonstrations.
+  the measured matrix. **Docs** contains searchable instructions, technical reference, commands and guided demonstrations.
 
-The live summary and active fault recovery remain visible across task pages.
+The full live summary stays on Overview; task pages show a compact capacity/backlog strip. Active fault recovery remains visible globally. Docs is a quiet reference page without repeating live metrics or sale controls.
 **View options** holds the vocabulary lens, motion and presentation preferences.
 **Connection & diagnostics** shows individual source health, the workflow lock
 and dashboard links; the connection badge is always visible.
@@ -62,7 +62,7 @@ explanation and the point where the analogy stops being accurate.
 | Checkout lanes 0–2 | Partitions 0–2 of `orders.events.v1` |
 | Tickets issued / now serving / queue length | High watermark / committed offset / lag |
 | Cashiers and the lanes they cover | Console consumer pods and their partition assignment |
-| Floor manager | Scaling controller (fixed, manual, CPU-HPA, lag-KEDA) |
+| Floor manager | Scaling controller (fixed, manual, CPU-HPA, lag-KEDA, ML Predictive) |
 | Sales ledger | PostgreSQL `order_event` and `order_state` |
 | Problem-items desk | Dead-letter topic `orders.events.dlq.v1` |
 
@@ -163,12 +163,13 @@ The **Scaling** page chooses how many console consumers run:
 | Manual | 0–3 | You. Zero stops processing; it is not a crash. |
 | CPU-HPA | 1–3 | Kubernetes, from CPU use relative to the pod's request (target 60%). |
 | Lag-KEDA | 1–3 | KEDA, from consumer-group lag per replica (threshold 100). |
+| ML Predictive | 1–3 | History-only quantile forecasts and predictive control, targeting p95 ≤ 2 seconds. Prepare the reusable model/policy first. |
 
-From CPU-HPA or lag-KEDA, **Manual override** removes the autoscaler first and
-then sets replicas directly, so two controllers never compete; *Release* recreates
+From CPU-HPA, lag-KEDA or ML Predictive, **Manual override** suspends the autoscaler first and
+then sets replicas directly, so two controllers never compete; *Resume* restores
 it. Every change is a verified transition: the page shows its steps, then which
 controllers own the console Deployment and whether that matches the mode. A
-failed or interrupted transition is shown with a *Reapply* button. Settings
+failed or interrupted transition is shown with a *Retry* button. Settings
 (CPU target, lag threshold, scale-down wait, minimum and maximum, never above three)
 apply to the autoscaled modes. Desired replicas, ready pods and group members are
 always shown separately, because they differ during scale-up and rebalances.
@@ -217,7 +218,7 @@ Choose **Sessions** in the main navigation:
   `reconciliation.json` (every live or replayed chart also has a *PNG* download), and states whether it may enter a formal comparison and
   why not (aborted, faults, scaling or pacing changes, failed or missing
   reconciliation).
-- **Comparisons**: *Run fixed, CPU-HPA and lag-KEDA* runs the same frozen sale once
+- **Comparisons**: *Run fixed, CPU-HPA, lag-KEDA and ML Predictive* runs the same frozen sale once
   per mode, one after another, each as a fresh run and consumer group, waits for
   each drain and reconciliation, and ranks only eligible runs by exact SQL p95,
   with peak backlog, most consumers and replica-seconds beside it. Sessions are
@@ -228,7 +229,7 @@ Choose **Sessions** in the main navigation:
 
 ## Guided demonstrations and presenting (M14)
 
-The **Guide** page walks through five demonstrations, one step at a time with a
+**Docs → Guided demos** walks through five demonstrations, one step at a time with a
 button for each action and what to watch: *No scaling*, *Manual rescue*, *CPU versus
 lag*, *Database bottleneck* and *Crash and replay*. The expandable glossary maps every Store
 term to its System term and states where the analogy stops.
@@ -274,8 +275,8 @@ ignored while typing in a field.
 ```
 
 This runs console Python unit tests, web type checks and unit tests, the web
-build, console deployment, live-cluster acceptance (sales and controls, all four
-scaling modes, every fault, replay and a three-mode comparison, and the launcher's
+build, console deployment, live-cluster acceptance (sales and controls, all
+scaling choices, every fault, replay and a four-strategy comparison, and the launcher's
 console lifecycle) and Chrome acceptance, ending with the full journey: start a
 sale, overload it, rescue it, crash a consumer, close the database, recover and
 reconcile. It writes `artifacts/console/check.json`. `./streamscale.sh all`
@@ -286,7 +287,7 @@ includes it.
 | `make console-install` | Sync `console/.venv` and `npm ci` in `console/web` |
 | `make console-web` | Type-check and build the browser assets |
 | `make console-test` | Python and web unit tests |
-| `make console-deploy` | Build the worker image on the deployed pipeline image and install the release |
+| `make console-deploy` | Build the worker image on current pipeline source and install the release |
 | `make console-live` | Live-cluster acceptance only |
 | `make console-serve CONSOLE_ARGS="--port 0"` | Serve the console without rebuilding |
 
@@ -296,7 +297,7 @@ includes it.
 | --- | --- |
 | `console/server/streamscale_console/` | Loopback FastAPI server, telemetry derivation, operations and journal |
 | `console/worker/streamscale_console_worker/` | In-cluster agent, read-only observer, scoped Kubernetes client, console consumer wrapper |
-| `console/deploy/` | Worker image (built on the deployed pipeline image) and the `streamscale-console` chart |
+| `console/deploy/` | Worker image (built on current pipeline source) and the `streamscale-console` chart |
 | `console/web/` | React/TypeScript browser console and Playwright browser checks |
 | `console/tests/` | Unit tests and `live` cluster acceptance tests |
 | `artifacts/console/` | Deployment record, journal, server login record (0600), check results |
@@ -310,3 +311,17 @@ includes it.
   `./streamscale.sh cluster` first.
 - **Login page instead of the console**: open the full link printed by the
   command; it is also in `artifacts/console/server.json` while the server runs.
+
+## Searchable in-app documentation
+
+Choose **Docs** for Start here, Using the console, Scaling & ML, How it works,
+Commands & lifecycle, Troubleshooting and Guided demos. Search covers article
+text, command examples and technical terms. Command blocks copy exact maintained
+launcher commands and report whether copying succeeded. Article links such as
+`#docs/architecture` survive refresh and browser history after login.
+
+All existing demonstrations and glossary entries remain under Guided demos;
+changing topics preserves the selected demonstration/step. Documentation never
+silently starts a run. Its navigation buttons take you to the appropriate task
+page; the guided actions keep their explicit operation buttons. ML documentation
+distinguishes implemented code from prepared model artifacts and measured results.
