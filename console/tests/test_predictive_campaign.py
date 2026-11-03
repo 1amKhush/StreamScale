@@ -34,3 +34,19 @@ def test_seeded_workloads_and_elapsed_time_cost():
         },
     }
     assert summary(run)["replica_seconds"] == 4
+
+
+def test_preparation_refuses_insufficient_space_before_live_captures(tmp_path, monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+
+    import pytest
+
+    from experiments.predictive.campaign import prepare
+
+    monkeypatch.setattr(
+        "experiments.predictive.campaign.shutil.disk_usage", lambda path: SimpleNamespace(free=100)
+    )
+    with pytest.raises(RuntimeError, match="5 GiB"):
+        asyncio.run(prepare(None, tmp_path, "identity"))
+    assert not list(tmp_path.iterdir())

@@ -78,6 +78,9 @@ def eligibility(record):
         reasons.append("faults injected")
     if record.get("controls_changed"):
         reasons.append("pause or rate changed")
+    if record.get("config", {}).get("mode") == "ml-predictive":
+        if not (record.get("predictive_evidence") or {}).get("forecast_samples"):
+            reasons.append("no ML forecasts recorded; only warm-up or fallback")
     return reasons
 
 

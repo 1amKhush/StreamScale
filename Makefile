@@ -111,3 +111,22 @@ console-check: console-install .tools/bin/kind .tools/bin/kubectl .tools/bin/hel
 
 console-serve:
 	$(CONSOLE) python -m streamscale_console serve $(CONSOLE_ARGS)
+
+# M16–M20: CPU-only preparation is isolated from the runtime worker environment.
+PREDICTIVE = OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 uv run --project experiments/predictive --frozen
+
+.PHONY: predictive-install predictive-prepare predictive-check predictive-demo predictive-evaluate
+predictive-install:
+	uv sync --project experiments/predictive --frozen
+
+predictive-prepare: console-deploy predictive-install
+	$(PREDICTIVE) python -m experiments.predictive.campaign prepare
+
+predictive-check: console-install
+	$(CONSOLE) pytest console/tests/live/test_predictive.py -m live -q
+
+predictive-demo: predictive-install
+	$(PREDICTIVE) python -m experiments.predictive.campaign demo
+
+predictive-evaluate: predictive-install
+	$(PREDICTIVE) python -m experiments.predictive.campaign evaluate

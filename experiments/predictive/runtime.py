@@ -70,6 +70,7 @@ async def operation(console, kind, params=None):
 
 
 async def capture(console, config, mode, replicas=None):
+    actuation_started_at = time.time()
     settings = {"mode": mode}
     if replicas is not None:
         settings["replicas"] = replicas
@@ -104,6 +105,7 @@ async def capture(console, config, mode, replicas=None):
             if record["reconciliation_status"] != "passed":
                 raise RuntimeError(f"Correctness failed for {identifier}")
             return {
+                "actuation_started_at": actuation_started_at,
                 "id": identifier,
                 "family": config.get("family", config["scenario"]),
                 "observations": observations,

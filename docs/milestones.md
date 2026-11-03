@@ -33,3 +33,13 @@ Evidence, defects, review and actual completion timestamps are recorded in
 `docs/m5-evidence.md`, `docs/m6-evidence.md`, `docs/m7-evidence.md` and
 `docs/m8-evidence.md`. Referenced TeX documents and external tracker were not
 available locally. No claims are made about reviewing or updating those artifacts.
+
+| M16 | Medium: observed-history features, quantile HGBT models and artifacts | M0–M15 | Leakage/split/integrity tests; live trace preparation | Implemented 2026-11-03; automated checks passed; live preparation pending |
+| M17 | Large: agent predictive controller and exclusive ownership | M16, M12 | Replica bounds, skew, stale data, override/release | Implemented 2026-11-03; automated checks and live missing-model fallback passed; trained acceptance pending |
+| M18 | Large: CPU-only Bayesian preparation, checkpoints and reuse | M16–M17 | Twelve live candidate policies; resumable accepted artifacts | Implemented 2026-11-03; Ax API smoke passed; live campaign pending |
+| M19 | Medium: single ML Predictive choice, chart, exports and replay | M17–M18 | Web tests/build and browser pilot | Implemented 2026-11-03; automated checks passed; live browser pilot pending |
+| M20 | Large: held-out campaign and complete launcher | M16–M19 | 36 held-out runs, reconciliation, full launcher and reuse | Implemented 2026-11-03; full launcher reached M5 then blocked by expired retained Kafka source; trained campaign pending |
+
+Predictive evidence and limitations: [ML Predictive](predictive.md) and
+[implementation acceptance](predictive-evidence.md). These states distinguish
+implemented code from unexecuted live training and performance campaigns.

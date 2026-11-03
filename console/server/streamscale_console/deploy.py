@@ -1,6 +1,7 @@
 """Build the console worker image on the deployed StreamScale image and install it."""
 
 import hashlib
+import importlib.util
 import json
 from datetime import UTC, datetime
 
@@ -35,7 +36,7 @@ def console_digest():
 
 
 def pipeline_image():
-    """The image the main release's consumer currently runs; the console reuses it."""
+    """Build the current pipeline base without replacing the retained measured run."""
     result = kubectl(
         "get",
         "deployment",
@@ -52,7 +53,15 @@ def pipeline_image():
         raise ClusterError(
             f"Deployed image {image} is not available locally; rerun ./streamscale.sh cluster"
         )
-    return image, inspected.stdout.strip()
+    # Build the current consumer source without redeploying or replacing a retained
+    # measured run. All console modes use this same base image and resource limits.
+    spec = importlib.util.spec_from_file_location(
+        "streamscale_image_builder", ROOT / "deploy/k8s/manage.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    metadata = module.build()
+    return metadata["image"], metadata["image_id"]
 
 
 def loaded(image):

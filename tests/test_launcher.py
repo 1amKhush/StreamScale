@@ -128,7 +128,11 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
         "scaling",
         "experiments",
         "analysis",
+        "console-deploy",
+        "predictive-prepare",
         "console-check",
+        "predictive-check",
+        "predictive-evaluate",
     ]
     directory = (checkout / "artifacts/launcher/last-local-run.path").read_text().strip()
     assert Path(directory).parent.is_dir()
@@ -229,3 +233,12 @@ def test_invalid_ui_options_fail_before_services_or_publication(launcher, argume
     result, calls, _ = launcher(*arguments)
     assert result.returncode == 2
     assert calls == []
+
+
+@pytest.mark.parametrize(
+    "command", ["predictive-prepare", "predictive-check", "predictive-demo", "predictive-evaluate"]
+)
+def test_predictive_commands_use_the_maintained_make_entrypoint(launcher, command):
+    result, calls, _ = launcher(command)
+    assert result.returncode == 0, result.stderr
+    assert [call[1] for call in calls if call[0] == "make"] == [command]

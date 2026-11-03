@@ -68,7 +68,12 @@ async def tune(console, directory, models, metadata, base):
                 config(family, seed, base),
                 "ml-predictive",
             )
-            scores.append(summary(run))
+            score = summary(run)
+            if not score["performance_eligible"]:
+                raise RuntimeError(
+                    "Tuning candidate produced no ML forecasts; inspect retained telemetry"
+                )
+            scores.append(score)
         row = {
             "index": index,
             "policy": policy,

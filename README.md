@@ -232,3 +232,25 @@ The complete M0–M15 launcher, including live-cluster and browser acceptance, p
 - Every run gets a fresh run ID and consumer group, and earlier runs, SQL rows and artifacts are never overwritten. `stop` keeps all volumes and cluster nodes.
 
 </details>
+
+### ML Predictive scaling (M16–M20)
+
+The **ML Predictive** choice uses observed Kafka traffic history, quantile boosted
+trees and a predictive controller to target p95 latency ≤ 2 seconds within 1–3
+replicas. Offline Ax/BoTorch tuning selects a policy once; compatible pilots reuse
+it. Warm-up and reactive fallback are internal statuses, not extra UI modes.
+
+```sh
+./streamscale.sh predictive-prepare
+./streamscale.sh predictive-check
+./streamscale.sh predictive-demo
+./streamscale.sh predictive-evaluate
+./streamscale.sh console
+```
+
+Select **ML Predictive pilot** for enough history to observe forecasting. Initial
+preparation and the 36-run comparison are long live campaigns. The maintained
+`all` workflow includes them. See [run instructions](docs/run-project.md#ml-predictive-m16m20)
+and [implementation evidence](docs/predictive-evidence.md) for validation status,
+cache/resume behavior and the history-only forecasting limitation. Earlier M7
+results remain unchanged; no predictive performance improvement is presumed.

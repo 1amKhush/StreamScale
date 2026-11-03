@@ -78,6 +78,22 @@ def presets(protocol_path=PROTOCOL):
             "description": "Starts overloaded, then drops to steady traffic to show recovery.",
         },
     ]
+    rows.append(
+        {
+            "id": "predictive-pilot",
+            "label": "ML Predictive pilot",
+            "scenario": "flash-sale",
+            "seed": 50001,
+            "schedule": [
+                [60, steady],
+                [20, steady * 2],
+                [20, steady * 3],
+                [20, surge],
+                [60, steady],
+            ],
+            "description": "Three-minute ramp and rush with enough history for ML decisions.",
+        }
+    )
     for row in rows:
         row["faults"] = dict(DEFAULT_FAULTS)
         row["events"] = sum(seconds * rate for seconds, rate in row["schedule"])
@@ -425,6 +441,18 @@ class Component:
         folder = self.store.path(record["id"])
         (folder / "reconciliation.json").write_text(json.dumps(result, indent=2) + "\n")
         record = self.store.load(record["id"])
+        if record.get("config", {}).get("mode") == "ml-predictive":
+            frames = [
+                json.loads(line)["point"]
+                for line in (folder / "telemetry.jsonl").read_text().splitlines()
+                if line.strip()
+            ]
+            predictions = [p.get("predictive") or {} for p in frames]
+            record["predictive_evidence"] = {
+                "model_ids": sorted({p["model_id"] for p in predictions if p.get("model_id")}),
+                "forecast_samples": sum(p.get("forecast_rate") is not None for p in predictions),
+                "policies": [p.get("policy") for p in predictions if p.get("policy")][:1],
+            }
         record["reconciliation_status"] = result["status"]
         record["reconciliation"] = summarize_reconciliation(result)
         record["comparable"] = comparable(record, result)
@@ -654,6 +682,10 @@ def comparable(record, result):
         and not record.get("controls_changed")
         and not record.get("faults")
         and not record.get("segments")
+        and (
+            record.get("config", {}).get("mode") != "ml-predictive"
+            or bool((record.get("predictive_evidence") or {}).get("forecast_samples"))
+        )
     )
 
 

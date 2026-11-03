@@ -76,6 +76,8 @@ def predict(models, history, horizon, quantile):
     with threadpool_limits(limits=1):
         median = np.maximum(0, models[horizon, 0.5].predict(features))
         upper = np.maximum(median, models[horizon, quantile].predict(features))
+    if not np.isfinite(median).all() or not np.isfinite(upper).all():
+        raise ValueError("Non-finite forecast; use reactive fallback")
     return {"median": median.tolist(), "upper": upper.tolist()}
 
 

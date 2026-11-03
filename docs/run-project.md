@@ -1,4 +1,4 @@
-# Run and stop StreamScale through M15
+# Run and stop StreamScale through M20
 
 Start Docker Engine/Desktop first. You need Bash, uv, make, and Node.js 20.19+
 with npm installed. The console's browser checks use the installed Google Chrome.
@@ -272,3 +272,39 @@ live-cluster tests and 9 Chrome tests including the full sale → overload → r
 `artifacts/m15-full-check.log`; details in [M15 evidence](m15-evidence.md).
 Running services were not stopped by these checks; the console's own agent and the
 shared Kafka/PostgreSQL were scaled only by the failure lab's bounded, restored faults.
+
+## ML Predictive (M16–M20)
+
+One new scaling choice combines history-only quantile forecasts and predictive
+capacity control. Its default p95 objective is 2 seconds within 1–3 replicas.
+The predictor cannot see future schedules. Warm-up, fallback and capacity limits
+are statuses within this mode. Bayesian policy tuning happens offline.
+
+```sh
+./streamscale.sh cluster
+./streamscale.sh predictive-prepare   # live calibration, training and 12 tuning trials
+./streamscale.sh predictive-check     # live forecast, override/release and reconciliation
+./streamscale.sh predictive-demo      # one representative three-minute pilot
+./streamscale.sh predictive-evaluate  # separate 36-run held-out comparison
+./streamscale.sh console              # select ML Predictive and ML Predictive pilot
+```
+
+Preparation is a substantial one-time campaign, not a short startup check. It
+records three capacity-calibration runs, twelve training runs, four validation
+runs and two workloads for each of twelve policy candidates, plus drain time.
+Subsequent invocations reuse compatible artifacts or resume at completed captures.
+An interrupted capture is retained in console sessions; let it drain before
+resuming. Training/tuning never use held-out evaluation runs. Close a running
+console server with Ctrl+C before starting a campaign; the command refuses to
+compete with it. A running sale is not stopped automatically.
+
+Results and model/policy provenance live under `artifacts/predictive/`, separate
+from historical `docs/results/current`. Models use checksummed local artifacts,
+not user-uploaded pickle files. Runtime, feature or environment incompatibility
+requires preparation again. If all tuning candidates miss the latency target,
+the default policy is retained and the tuning report says `infeasible`.
+
+`./streamscale.sh all --no-ui` includes these stages and the full predictive
+comparison. Its first execution can take several hours. Performance improvements
+must come from the held-out report; correctness and meeting the latency target
+are separate outcomes. Existing stop/resume commands above retain every artifact.

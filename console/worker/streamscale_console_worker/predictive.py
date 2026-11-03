@@ -20,6 +20,10 @@ class Predictive:
         self.state = {"status": "warming up", "reason": "Waiting for observations"}
 
     def reset(self):
+        self.state = {
+            "status": "warming up",
+            "reason": "Collecting 60 seconds of current run history",
+        }
         self.artifact = None
         self.last_decision = 0
         self.history = History()
@@ -31,6 +35,8 @@ class Predictive:
             try:
                 self.tick(time.time())
             except Exception as error:  # noqa: BLE001 - hold replicas, expose error, retry
+                self.history = History()
+                self.low_since = None
                 self.state = {
                     "status": "fallback",
                     "reason": f"Controller holding: {type(error).__name__}: {error}",
@@ -60,6 +66,11 @@ class Predictive:
             row = observation(sample)
             if self.history.rows and row["t"] == self.history.rows[-1]["t"]:
                 return
+            if self.history.rows and (
+                row["run_id"] != self.history.rows[-1]["run_id"]
+                or row["t"] - self.history.rows[-1]["t"] > 5
+            ):
+                self.reset()
             self.history.append(row)
             if len(self.history.rows) < 2 or now - self.last_decision < 5:
                 return
@@ -79,7 +90,11 @@ class Predictive:
             try:
                 forecast = predict(models, self.history, policy["horizon"], policy["quantile"])
             except Exception as error:  # noqa: BLE001 - internal reactive fallback
-                status = "warming up" if len(self.history.rows) < 13 else "fallback"
+                status = (
+                    "warming up"
+                    if self.history.rows[-1]["t"] - self.history.rows[0]["t"] < 60
+                    else "fallback"
+                )
                 reason = str(error)
             rates = self.history.rates()
             result = recommend(

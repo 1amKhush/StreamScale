@@ -2,9 +2,11 @@
 
 import argparse
 import asyncio
+import csv
 import json
 import os
 import random
+import shutil
 import statistics
 import subprocess
 import time
@@ -27,11 +29,14 @@ def save(path, value):
 
 def fingerprint():
     paths = [
-        ROOT / "src/streamscale/predictive",
+        ROOT / "src/streamscale",
         ROOT / "experiments/predictive",
         ROOT / "console/worker/streamscale_console_worker",
     ]
     files = [p for root in paths for p in root.rglob("*.py") if ".venv" not in p.parts]
+    files.extend(
+        [ROOT / "uv.lock", ROOT / "console/uv.lock", ROOT / "experiments/predictive/uv.lock"]
+    )
     sources = {str(p.relative_to(ROOT)): p.read_text() for p in sorted(files)}
     deployment = json.loads(
         kubectl("get", "deployment", "streamscale-console-consumer", "-o", "json").stdout
@@ -43,7 +48,16 @@ def fingerprint():
             "sources": sources,
             "versions": versions(),
             "resources": resources,
-            "node": node["status"]["nodeInfo"],
+            "node": {
+                key: node["status"]["nodeInfo"][key]
+                for key in (
+                    "architecture",
+                    "kernelVersion",
+                    "kubeletVersion",
+                    "containerRuntimeVersion",
+                    "osImage",
+                )
+            },
             "cpu": node["status"]["capacity"]["cpu"],
         }
     )
@@ -88,7 +102,30 @@ def summary(run):
         if (a.get("predictive") or {}).get("status") in {"fallback", "warming up"}
     )
     latency = run["record"]["reconciliation"]["latency_s"]["p95"]
+    recovery_start = sum(phase[0] for phase in run.get("config", {}).get("schedule", [])[:-1])
+    first = points[0]["t"] if points else 0
+    drained = next(
+        (p["t"] for p in points if p["t"] >= first + recovery_start and p.get("lag_total") == 0),
+        None,
+    )
+    forecast_samples = sum(p.get("forecast_rate") is not None for p in predictive)
     return {
+        "forecast_samples": forecast_samples,
+        "performance_eligible": (
+            run["record"]["reconciliation_status"] == "passed"
+            and (run.get("mode") != "ml-predictive" or forecast_samples > 0)
+        ),
+        "above_latency_target": run["record"]["reconciliation"]["latency_s"].get("above_target"),
+        "recovery_seconds": max(0, drained - first - recovery_start) if drained else None,
+        "measurement_seconds": elapsed,
+        "replica_coverage": sum(
+            b["t"] - a["t"]
+            for a, b in zip(points, points[1:], strict=False)
+            if a.get("ready") is not None and 0 < b["t"] - a["t"] <= 5
+        )
+        / elapsed
+        if elapsed
+        else 0,
         "session": run["id"],
         "p95": latency,
         "target_met": latency is not None and latency <= 2,
@@ -108,6 +145,11 @@ async def retained(console, directory, key, configuration, mode, replicas=None):
     if path.exists():
         print(f"[predictive] reuse {key}", flush=True)
         return json.loads(path.read_text())
+    events = sum(seconds * rate for seconds, rate in configuration["schedule"])
+    if shutil.disk_usage(ROOT).free < events * 4096 + 512 * 1024**2:
+        raise RuntimeError(
+            "Not enough disk space for the next retained capture; free space and resume"
+        )
     print(f"[predictive] capture {key}", flush=True)
     run = await capture(console, configuration, mode, replicas)
     save(path, run)
@@ -117,12 +159,14 @@ async def retained(console, directory, key, configuration, mode, replicas=None):
 def calibration(runs):
     capacities = {}
     actuation = []
+    handling = []
     for n in (1, 2, 3):
         rates = []
         for run in runs:
             if run["replicas"] != n:
                 continue
             rows = run["observations"]
+            handling.extend(p["db_p95"] for p in run["points"] if p.get("db_p95") is not None)
             for a, b in zip(rows, rows[1:], strict=False):
                 dt = b["t"] - a["t"]
                 if (
@@ -139,14 +183,16 @@ def calibration(runs):
             if rows:
                 first = next((r["t"] for r in rows if r["ready"] == n and r["stable"]), None)
                 if first:
-                    actuation.append(max(0, first - rows[0]["t"]))
+                    actuation.append(max(0, first - run["actuation_started_at"]))
         if not rates or max(rates) <= 0:
             raise RuntimeError(f"Insufficient saturated calibration for {n} replicas")
         capacities[n] = statistics.median(rates)
+        if capacities[n] <= 0:
+            raise RuntimeError(f"No positive median capacity for {n} replicas")
     return {
         "capacity": capacities,
         "actuation_seconds": max(5, max(actuation, default=5)),
-        "handling_seconds": 0.1,
+        "handling_seconds": max(handling) if handling else 0,
     }
 
 
@@ -159,6 +205,13 @@ async def prepare(console, directory, identity):
         return
     except (OSError, ValueError, KeyError):
         pass
+    free = shutil.disk_usage(ROOT).free
+    if free < 5 * 1024**3:
+        raise RuntimeError(
+            f"Predictive preparation needs at least 5 GiB free for retained live evidence; "
+            f"only {free / 1024**3:.1f} GiB is available. "
+            "Free space and rerun; nothing was deleted."
+        )
     training, validation = [], []
     # Separate saturated traces measure capacity at each size, never extrapolate n*capacity(1).
     calibrated = []
@@ -225,6 +278,11 @@ async def evaluate(console, directory):
     install(directory / "model")
     _, _, metadata = load(directory / "model")
     base = metadata["calibration"]["capacity"].get("1", metadata["calibration"]["capacity"].get(1))
+    if (
+        shutil.disk_usage(ROOT).free < 5 * 1024**3
+        and not (directory / "evaluation/complete.json").exists()
+    ):
+        raise RuntimeError("Held-out evaluation needs at least 5 GiB free for retained evidence")
     cells = [
         (family, mode, repeat)
         for family in ("steady", "flash-sale", "overload-recovery")
@@ -244,6 +302,24 @@ async def evaluate(console, directory):
         )
         results.append(summary(run) | {"family": family, "mode": mode, "repetition": repeat})
         save(directory / "evaluation" / "summary.json", results)
+    with (directory / "evaluation/summary.csv").open("w") as output:
+        writer = csv.DictWriter(output, fieldnames=list(results[0]))
+        writer.writeheader()
+        writer.writerows(results)
+    report = [
+        "# Held-out ML Predictive comparison",
+        "",
+        "Only correctness-passing live runs are included. Target misses remain visible.",
+        "",
+        "| Workload | Mode | Repeat | Exact p95 (s) | Replica-seconds | Target met |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in results:
+        report.append(
+            f"| {row['family']} | {row['mode']} | {row['repetition']} | "
+            f"{row['p95']:.3f} | {row['replica_seconds']:.1f} | {row['target_met']} |"
+        )
+    (directory / "evaluation/report.md").write_text("\n".join(report) + "\n")
     save(
         directory / "evaluation" / "complete.json",
         {"runs": 36, "model_id": load(directory / "model")[0]},
@@ -255,31 +331,41 @@ async def main_async(command):
     identity = fingerprint()
     directory = ARTIFACTS / identity
     async with driver() as console:
-        if command == "prepare":
-            await prepare(console, directory, identity)
-            save(ARTIFACTS / "current.json", {"fingerprint": identity})
-        else:
-            load(directory / "model", identity)
-            if command == "evaluate":
-                await evaluate(console, directory)
+        try:
+            if command == "prepare":
+                await prepare(console, directory, identity)
+                save(ARTIFACTS / "current.json", {"fingerprint": identity})
             else:
+                load(directory / "model", identity)
+                if command == "evaluate":
+                    await evaluate(console, directory)
+                else:
+                    install(directory / "model")
+                    run = await retained(
+                        console,
+                        directory / "demo",
+                        str(time.time_ns()),
+                        config("ramp", 50001),
+                        "ml-predictive",
+                    )
+                    save(directory / "demo" / "latest.json", summary(run))
+        finally:
+            # An active interrupted sale continues in the agent; don't stop it for cleanup.
+            sales = next(c for c in console.components if hasattr(c, "store"))
+            if sales.record is None:
+                await operation(console, "scaling.mode", {"mode": "fixed"})
+            if command == "prepare" and (directory / "model/current.json").exists():
                 install(directory / "model")
-                run = await retained(
-                    console,
-                    directory / "demo",
-                    str(time.time_ns()),
-                    config("ramp", 50001),
-                    "ml-predictive",
-                )
-                save(directory / "demo" / "latest.json", summary(run))
-        await operation(console, "scaling.mode", {"mode": "fixed"})
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("prepare", "evaluate", "demo"))
     args = parser.parse_args()
-    asyncio.run(main_async(args.command))
+    try:
+        asyncio.run(main_async(args.command))
+    except (RuntimeError, OSError, ValueError) as error:
+        raise SystemExit(f"Predictive {args.command} failed: {error}") from None
 
 
 if __name__ == "__main__":

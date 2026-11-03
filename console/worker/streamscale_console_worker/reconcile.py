@@ -228,6 +228,8 @@ def reconcile(directory: Path, settings):
             "p99": percentile(latencies, 0.99),
             "max": max(latencies) if latencies else None,
             "count": len(latencies),
+            "target_seconds": 2,
+            "above_target": sum(value > 2 for value in latencies),
             "source": "SQL ingested_at - produced_at for every stored fact",
         },
     }

@@ -328,7 +328,7 @@ class Scaling:
     # Transitions ---------------------------------------------------------------
 
     def start(self, changes, label):
-        if not self.work.acquire(blocking=False):
+        if not self.work.acquire(timeout=3):
             raise ScalingError("Another scaling transition is in progress")
         with self.lock:
             target = json.loads(json.dumps(self.state)) | changes

@@ -44,3 +44,53 @@ Predictive sessions use its `fixed` storage category, as manual sessions already
 do. Run JSON, `configuration.experiment_configuration.mode`, console start mode,
 metrics and session configuration retain the actual `ml-predictive` identity;
 predictive comparisons use session/configuration identity, never the SQL category.
+
+## M20 — validation status
+
+Implemented maintained launcher/Make commands, the separate resumable 36-run
+campaign, a three-minute representative UI preset, live forecast/override/fault
+acceptance and browser acceptance. The historical M7 campaign is unchanged.
+
+Validated on 2026-11-03 during implementation:
+
+- 176 pipeline/unit checks passed, including scoped launcher command tests.
+- 144 console unit checks passed (live checks deselected).
+- 20 web checks and the TypeScript/production build passed.
+- Ax CPU-only Sobol and GP generation exercised with an explicitly synthetic
+  objective as an API smoke check; this is not live tuning/performance evidence.
+- Ruff lint/format checks passed before the final validation run.
+
+The complete updated launcher was started with its output retained in
+`artifacts/predictive-full-launcher.log`. Live results are recorded separately
+below when available. A first full campaign requires at least 5 GiB free for
+retained raw evidence, Kafka and SQL growth. Preparation fails before starting
+new captures if space is insufficient; it never deletes project data.
+
+### Live validation outcome
+
+The full launcher passed 176 unit checks and all 28 local integration checks,
+then stopped at the existing `previous_drained` cluster guard. The retained
+2026-10-12 measured consumer reports `Captured source records are no longer
+available` and Kafka offset-out-of-range errors after retention. The guard and
+all retained evidence were preserved; this execution is not marked reconciled.
+
+The current console worker was independently built/deployed without replacing
+that historical measured execution. All console comparison modes share this
+current base and unchanged resource limits. A real 30-second missing-model
+fallback sale reconciled successfully: exact SQL p95 1.073092s, no correctness
+errors, and manual override/release verified. Its scope is explicitly fallback,
+not trained predictive performance (`artifacts/predictive/fallback-live-check.json`).
+
+The live model preparation preflight was attempted separately. Storage is below
+its 5 GiB admission requirement. Full training/tuning, trained-model browser
+acceptance, held-out 36-run evaluation and live complete-launcher reuse remain
+unexecuted; no performance improvement or M16–M20 live acceptance is claimed.
+Scoped tests exercise the entire launcher order, failure propagation and reuse
+command routing without stopping user services.
+
+A real Chrome check of the single selector, editable latency target and 390px
+mobile layout passed (1 Playwright check); no browser errors or horizontal
+page overflow. Screenshot: `artifacts/console/predictive-mobile.png`. The trained
+sale/forecast/recovery/browser journey is a separate check and remains pending.
+Preparation's actual preflight failure reported 1.3 GiB free versus 5 GiB required
+(`artifacts/predictive-prepare-check.log`). No model or tuned policy was promoted.

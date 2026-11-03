@@ -170,7 +170,7 @@ type Comparison = {
 function CompareView({ live }: { live: Live }) {
   const operation = useOperation(live);
   const [data, setData] = useState<{ comparisons: Comparison[]; groups: { workload: Record<string, unknown>; sessions: { id: string; created_at: string; mode: string; outcome: string; eligible: boolean; reasons: string[]; reconciliation: { latency_s?: { p95: number | null } } | null }[] }[] } | null>(null);
-  const [preset, setPreset] = useState("flash-sale");
+  const [preset, setPreset] = useState("predictive-pilot");
   const running = live.extras.comparison as Comparison | null | undefined;
   useEffect(() => {
     getJson<typeof data>("/api/comparisons").then(setData).catch(() => undefined);
@@ -185,6 +185,7 @@ function CompareView({ live }: { live: Live }) {
       </p>
       <div className="button-row">
         <select value={preset} onChange={(event) => setPreset(event.target.value)} aria-label="Comparison preset">
+          <option value="predictive-pilot">ML pilot (3 min per mode)</option>
           <option value="flash-sale">Flash sale (measured)</option>
           <option value="overload-recovery">Overload and recovery (measured)</option>
           <option value="steady">Steady (measured)</option>

@@ -12,11 +12,11 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M15
+StreamScale launcher — integrated milestones M0–M20
 
 Usage: ./streamscale.sh [command] [options]
 
-  all [--no-ui]  Setup, checks, scaling, measured matrix, plots/report, console
+  all [--no-ui]  Setup, checks, baseline and predictive campaigns, reports, console
                 acceptance, then the console with dashboards. This is the default.
                 --no-ui finishes without opening the console or port forwards.
   local         Setup and run a fresh local Kafka/PostgreSQL fixture demo.
@@ -34,7 +34,11 @@ Usage: ./streamscale.sh [command] [options]
                 Build/deploy the interactive console and serve it on loopback with
                 Grafana/Prometheus links. Prints a login URL; Ctrl+C closes it.
                 Pages: Overview, Sale, Scaling, Failure lab, Sessions and Guide.
-  console-check Console unit, web, live-cluster and browser acceptance (M9–M15),
+  predictive-prepare  Prepare/reuse the history-only model and Bayesian policy
+  predictive-check    Verify predictive control, overrides and recovery
+  predictive-demo     Run a reconciled ML Predictive pilot
+  predictive-evaluate Run/resume the separate 36-run held-out comparison
+  console-check Console unit, web, live-cluster and browser acceptance (M9–M20),
                 including real sales, scaling modes, faults, replay and the full journey.
   status        Show this project's containers and, when running, Kubernetes resources.
   stop          Stop local services and kind node containers; keep all stored data.
@@ -309,9 +313,15 @@ case "$command" in
         printf '\n[M8] Auditing measurements and generating plots, report and presentation.\n'
         make analysis
         printf '\n[M9–M15] Verifying the interactive console against the live cluster and browser.\n'
+        make console-deploy
+        printf '\n[M16–M18] Preparing or reusing the predictive model and tuned policy.\n'
+        make predictive-prepare
         make console-check
+        printf '\n[M19–M20] Verifying predictive control and its held-out comparison.\n'
+        make predictive-check
+        make predictive-evaluate
         status
-        printf '\nM0–M15 passed. Report: docs/results/current/report.md; console evidence: artifacts/console/.\n'
+        printf '\nM0–M20 passed. Report: docs/results/current/report.md; console evidence: artifacts/console/.\n'
         if [[ "$no_ui" == false ]]; then console_serve; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
@@ -336,6 +346,12 @@ case "$command" in
         ;;
     ui) ui ;;
     console) console ;;
+    predictive-prepare|predictive-check|predictive-demo|predictive-evaluate)
+        setup
+        console_prerequisites
+        start_cluster_nodes
+        make "$command"
+        ;;
     console-check) setup; console_prerequisites; start_cluster_nodes; make console-check ;;
     status) status ;;
     stop|stop-local|stop-cluster)
