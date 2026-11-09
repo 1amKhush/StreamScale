@@ -102,5 +102,14 @@ M21 expands the maintained configuration to twelve partitions and 1–12 replica
 Live calibration at all twelve counts and the twelve-consumer correctness check
 have now completed. The wider range exposes capacity plateaus as well as scaling
 behavior; it does not establish a performance improvement. Training, offline
-tuning and the final held-out comparison are in progress. See the evolving
+tuning and the final held-out comparison are in progress. As of 2026-11-10
+(India time), all twelve training and four validation captures completed, and
+trained forecasts are operating in real tuning sales. Current automated checks
+pass 195 pipeline, 175 console and 29 web unit tests. The first trained tuning
+sale passed exact reconciliation but missed the latency objective (23.634801s).
+Forecast validation improves on persistence/trend for changing traffic at the
+default horizon/quantile, but is worse for steady traffic; all scores and run
+identities are [published separately](results/capacity-12/forecast-validation.json).
+No final policy optimum, held-out improvement or full acceptance is claimed yet.
+See the evolving
 [M21 evidence](capacity-evidence.md) and [measured capacity report](results/capacity-12/report.md).

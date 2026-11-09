@@ -1,7 +1,10 @@
 # Twelve-partition capacity evidence
 
-Status: partial acceptance on 2026-11-09; full predictive preparation and
-end-to-end acceptance are still running. These measurements are separate from
+Status: partial acceptance, updated 2026-11-10 (India time). All twelve calibration,
+twelve training and four validation captures completed. Trained forecasts are
+operating in live tuning runs; the twelve-policy preparation, complete browser
+acceptance, held-out comparison and launcher reuse remain unfinished.
+These measurements are separate from
 the historical three-partition M7 report under `../current/`.
 
 The configuration is twelve Kafka input and DLQ partitions, initial one consumer,
@@ -110,8 +113,8 @@ That deterministic check is separate from held-out latency measurements.
 
 Data and provenance: [current calibration CSV](final-calibration.csv),
 [calibration with source run IDs](final-calibration.json), and
-[policy projection](policy-capacity-limit-final.json). The nineteen retained manual
-captures used so far pass the stricter complete-workload gate. Formal comparisons
+[policy projection](policy-capacity-limit-final.json). The twenty-eight retained
+manual captures pass the stricter complete-workload gate. Formal comparisons
 require completed, unmodified runs with every planned acknowledgement and actual
 ML forecasts; correctness of an interrupted sale alone is insufficient.
 
@@ -130,6 +133,46 @@ was 419.66 MiB under its unchanged 768 MiB limit.
 Its exact p95 was **286.387491 seconds**, missing the latency objective. This
 manual trace demonstrates completion and bounded memory, not improved latency.
 [Recovery evidence](publisher-memory-recovery.json) records the measurement scope.
-All twelve training captures and three of four validation captures are now
-complete; tuning and held-out comparisons remain pending. **174 console unit
-tests** pass, including eight publisher-memory/inspection regressions.
+All twelve training and four validation captures are complete. **195 pipeline
+unit tests**, **175 console unit tests** and **29 web unit tests** pass, including
+eight publisher-memory/inspection regressions. The twelve-key artifact checksum
+round trip and installation preflight also pass. The final acceptance gates
+remain open as stated above.
+
+## Forecast validation and live tuning
+
+The frozen forecaster uses twelve complete training runs and four disjoint
+validation runs. No tuning or evaluation run is used for training. All 48
+family/horizon/quantile comparisons, their whole-run identities and model/data
+hashes are in [forecast-validation.json](forecast-validation.json) and the
+[flat CSV](forecast-validation.csv). Lower pinball loss is better; these scores
+measure forecast accuracy, not pipeline latency or savings.
+
+The default 20-second, 90th-percentile forecast gives:
+
+| Validation family | Model loss | Persistence loss | Trend loss |
+| --- | ---: | ---: | ---: |
+| Steady | 43.75 | 9.53 | 16.08 |
+| Ramp | 16.16 | 62.06 | 62.34 |
+| Repeated burst | 10.17 | 105.65 | 122.59 |
+| Abrupt step | 55.45 | 73.25 | 79.17 |
+
+The model improves on both baselines for the changing workloads in this table,
+but performs worse on steady traffic. A history-only predictor cannot anticipate
+an unprecedented surge before an observed signal. Validation has one run per
+family and provides no confidence interval.
+
+After correcting JSON normalization of the twelve capacity keys, a real trained
+tuning sale (`session-20261109220230-ee9726`) completed with all 31,740 planned
+acknowledgements, matching SQL facts, zero correctness errors and 135 recorded
+forecast samples. It scaled from one through two to four ready consumers. Exact
+SQL p95 was **23.634801 seconds**, above the objective. This is tuning evidence,
+not held-out performance. A prior checksum-rejected, fallback-only sale remains
+preserved and excluded from formal experiments.
+
+The first policy's two tuning workloads both passed correctness, with combined
+**2,456.36 replica-seconds** and worst exact p95 **248.151284 seconds**. That policy
+is infeasible for the two-second constraint. Preparation must finish all twelve
+candidates before publishing an accepted artifact; if none is feasible, it keeps
+the conservative default and labels tuning infeasible. No successful optimum or
+performance gain is claimed while this campaign is incomplete.

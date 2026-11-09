@@ -125,7 +125,7 @@ checkout, with the real Kafka and Kubernetes names always visible:
 | 🛒 Shoppers | Order events from the publisher |
 | 🧾 Checkout lanes | Kafka partitions (12) |
 | 🧑‍💼 Cashiers | Consumer pods (1–12) |
-| 📋 Floor manager | Scaling controller (fixed, manual, HPA or KEDA) |
+| 📋 Floor manager | Scaling controller (fixed, manual, HPA, KEDA or ML Predictive) |
 | 📒 Sales ledger | PostgreSQL |
 | 🗂️ Problem-items desk | Dead-letter queue |
 
@@ -147,10 +147,10 @@ See the [console guide](docs/console.md) for a walkthrough and its safety scope.
 ```mermaid
 flowchart LR
     P["Seeded publisher<br/>flash-sale workload"] -->|"keyed by order_id"| K[("Kafka<br/>orders · 12 partitions")]
-    K --> C["Consumer pods<br/>1 – 3 replicas"]
+    K --> C["Consumer pods<br/>1 – 12 replicas"]
     C -->|"commit DB first,<br/>then offsets"| DB[("PostgreSQL<br/>facts · state · history")]
     C -->|"invalid events"| DLQ[("Kafka DLQ")]
-    S{{"Scaler<br/>fixed · CPU-HPA · lag-KEDA"}} -.->|"sets replicas"| C
+    S{{"Scaler<br/>fixed · CPU-HPA · lag-KEDA · ML Predictive"}} -.->|"sets replicas"| C
     K -.->|"consumer lag"| S
     C -.->|"metrics"| M["Prometheus → Grafana"]
     UI["Interactive console"] -.-> P & S & C

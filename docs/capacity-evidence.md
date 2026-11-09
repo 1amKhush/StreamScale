@@ -4,8 +4,15 @@ Requested configuration: twelve input and DLQ partitions, initial one consumer,
 1–12 replicas for CPU-HPA, lag-KEDA and ML Predictive. Fixed remains one; manual
 zero retains the existing pause-processing behavior. No extra runtime mode was added.
 
-Status on 2026-11-09: implementation complete enough for validation; **live
+Status updated 2026-11-10 (India time): implementation complete enough for validation; **live
 acceptance is still running**. This document does not assert complete acceptance.
+
+Current totals: **195 pipeline unit tests, 175 console unit tests, 29 web unit
+tests and 31 local integration tests pass**. All twelve calibration, twelve
+training and four validation captures completed. Live tuning now records real
+trained forecasts and correct reconciliations. Preparation, the complete live/
+browser suite, 36 held-out runs and full-launcher reuse remain required gates.
+The chronological entries below retain earlier failures and intermediate totals.
 
 
 ## Why the range changed from three to twelve
@@ -273,3 +280,18 @@ additional checks preserve the prior working artifact on invalid metadata and
 reject a corrupt candidate before contacting Kubernetes. **195 pipeline/unit**
 and **175 console unit tests** pass, along with repository lint/format checks.
 Live tuning, browser acceptance, evaluation and full launcher reuse remain pending.
+
+The corrected artifact loads successfully in the agent. Its first completed
+trained tuning sale reconciled 31,740 attempts with no correctness errors and
+recorded 135 forecasts; exact p95 was 23.634801 seconds and missed the target.
+The first candidate's two tuning workloads both passed correctness but were
+infeasible for two seconds. Final selection is still pending the twelve-policy
+campaign. [Forecast validation](results/capacity-12/forecast-validation.json)
+includes every workload family and baseline, including the steady-traffic cases
+where the model is worse. No held-out improvement is claimed.
+
+Scoped removal of obsolete project images, exact kind import aliases and private
+dependency caches has reclaimed roughly 5 GiB during verification. Each deletion
+was matched to StreamScale build metadata and audited under `artifacts/capacity/`.
+Volumes, node containers, current images, run evidence and unrelated resources
+were retained. Final shutdown remains pending until the verification gates finish.

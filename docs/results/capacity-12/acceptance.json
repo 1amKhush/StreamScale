@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T21:48:01.939496+00:00",
+  "updated_at": "2026-11-09T23:44:15.456828+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -90,7 +90,7 @@
       "session-20261109174752-bdb375"
     ],
     "source_fingerprint": "d2673a0a029ec27ce745ea1573ac13623c07adfb4a18c221159af560753eee13",
-    "validated_for_fingerprint": "076edf5e7ef245a4dc552c63d0bb625476125e0822ece4d5568a0cc6a96ad180"
+    "validated_for_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
   },
   "completed_checks": {
     "pipeline_unit": 195,
@@ -146,7 +146,9 @@
     "publisher_memory_unit": "artifacts/capacity/console-publisher-memory.log",
     "publisher_memory_recovery": "docs/results/capacity-12/publisher-memory-recovery.json",
     "artifact_unit": "artifacts/capacity/pipeline-artifact-json.log",
-    "artifact_console_unit": "artifacts/capacity/console-artifact-json.log"
+    "artifact_console_unit": "artifacts/capacity/console-artifact-json.log",
+    "forecast_validation": "docs/results/capacity-12/forecast-validation.json",
+    "manual_trace_compatibility": "artifacts/capacity/artifact-json-compatible-captures.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -228,5 +230,14 @@
     "latency_target_met": false,
     "preserved": true
   },
-  "preparation_fingerprint": "076edf5e7ef245a4dc552c63d0bb625476125e0822ece4d5568a0cc6a96ad180"
+  "preparation_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e",
+  "predictive_progress": {
+    "completed_policy_trials": 3,
+    "planned_policy_trials": 12,
+    "completed_tuning_workloads": 7,
+    "planned_tuning_workloads": 24,
+    "held_out_completed": 0,
+    "held_out_planned": 36,
+    "accepted_model_published": false
+  }
 }
