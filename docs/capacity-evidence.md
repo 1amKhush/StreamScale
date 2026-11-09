@@ -144,3 +144,25 @@ or agent jobs. All **157 console unit tests** and repository lint/format checks
 pass; live recovery and the complete launcher remain pending for this correction.
 The interrupted launcher log is retained at
 `artifacts/capacity/full-launcher-before-memory-fix.log`.
+
+
+Live recovery after the correction passed for the retained 70,920-event sale:
+70,920 unique facts, zero missing IDs, zero duplicate facts and zero state
+regressions. The agent stayed on the same pod with zero restarts; sampled peak
+cgroup memory was 239,534,080 bytes (228.44 MiB). This is sampled usage, not a
+continuous memory high-water measurement. A second live check exactly reproduced
+the previous fault-mix reconciler's identifier, state, DLQ and percentile results.
+Reviewed JSON evidence is under `docs/results/capacity-12/`.
+
+The focused UI review also found that many short-lived replacements could evict
+a still-running consumer from the CPU chart. Current non-deleting Running pods
+now get series slots first, with recent historical pods filling remaining slots.
+Three regressions cover churn, all twelve current pods and drained replay.
+**29 frontend unit tests** and the production build/type check pass; earlier nine
+focused browser checks passed before this final pure-selector correction. The
+complete browser suite remains a required full-launcher gate.
+
+The corrected agent has a new preparation fingerprint. Earlier traces remain
+retained, but the next complete preparation collects calibration and training
+under this final collector version rather than treating the previous model cache
+as compatible. No trained model has yet been promoted for the new configuration.

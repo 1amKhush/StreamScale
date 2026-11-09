@@ -35,7 +35,7 @@ These checks do not rank performance.
 
 ![Observed per-count capacity, including the original three-replica boundary](calibration.svg)
 
-## Per-count calibration
+## Initial per-count calibration
 
 One retained saturated trace per count, 2,000 events/s published for 20 seconds
 followed by complete drain. Rates are median offset-commit deltas divided by
@@ -78,6 +78,18 @@ The current console exposes every manual value from zero through twelve, with
 keyboard operation and controls that fit a phone. Twelve partition and consumer
 series are available, map cards remain separated through rebalances, and retained
 three-partition sessions replay with three lanes. The focused production build,
-26 web unit tests and nine real-browser capacity/Docs/usability checks passed.
+29 web unit tests and nine real-browser capacity/Docs/usability checks passed.
 The [README pipeline image](../../images/console-twelve-replicas.png) captures a
 real sale with twelve ready consumers and one partition assigned to each.
+
+
+## Large reconciliation recovery
+
+The larger repeated-burst workload exposed a reconciliation OOM at 70,920 events.
+After streaming reads, disk-backed proof tables and bounded telemetry backfill,
+that retained sale reconciled with zero correctness errors and no agent restart.
+Sampled peak cgroup usage was 228.44 MiB under the unchanged 768 MiB memory limit.
+A retained fault-mix sale also reproduced the previous reconciler's results exactly.
+See [live recovery](reconciliation-memory-recovery.json) and
+[equivalence](fault-mix-reconciliation-equivalence.json). Full fresh-fingerprint
+preparation, predictive acceptance and held-out comparison remain pending.

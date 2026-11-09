@@ -1,4 +1,5 @@
-import { MAX_REPLICAS, PARTITION_IDS } from "../capacity";
+import { PARTITION_IDS } from "../capacity";
+import { cpuPodSeries } from "../chart-pods";
 import { useMemo, useState } from "react";
 import { predictiveFlow } from "../predictive";
 import type { JournalEntry, Point } from "../types";
@@ -67,13 +68,7 @@ export function Charts({
       ? [times[times.length - 1] - span, times[times.length - 1]]
       : null;
   const markers = useMemo(() => markersFrom(journal), [journal]);
-  const pods = useMemo(() => {
-    const names: string[] = [];
-    for (const point of visible)
-      for (const pod of point.pods)
-        if (!names.includes(pod.name)) names.push(pod.name);
-    return names.slice(-MAX_REPLICAS);
-  }, [visible]);
+  const pods = useMemo(() => cpuPodSeries(visible), [visible]);
 
   const store = lens === "store";
   const flow: SeriesSpec[] = [

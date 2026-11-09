@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T16:39:14.150690+00:00",
+  "updated_at": "2026-11-09T17:10:40.826176+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -78,7 +78,7 @@
   "completed_checks": {
     "pipeline_unit": 194,
     "console_unit": 157,
-    "web_unit": 26,
+    "web_unit": 29,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
     "cluster_sql_metrics_grafana": "passed",
@@ -87,10 +87,12 @@
     "local_integration": 31,
     "docs_and_usability_browser": 7,
     "manual_twelve_browser": 1,
-    "focused_capacity_docs_usability_browser": 9
+    "focused_capacity_docs_usability_browser": 9,
+    "large_reconciliation_recovery": "passed",
+    "previous_reconciler_equivalence": "passed",
+    "web_build_typecheck": "passed"
   },
   "remaining": [
-    "live recovery of the large reconciliation OOM and fresh full workflow",
     "trained model and policy preparation",
     "complete live and browser acceptance",
     "36-run held-out predictive comparison",
@@ -108,9 +110,13 @@
     "mobile_browser": "artifacts/console/e2e/capacity-scaling-mobile.png",
     "capacity_recheck": "artifacts/capacity/capacity-check-launcher-recheck.json",
     "console_memory_regression": "artifacts/capacity/console-memory-regression.log",
-    "interrupted_memory_launcher": "artifacts/capacity/full-launcher-before-memory-fix.log"
+    "interrupted_memory_launcher": "artifacts/capacity/full-launcher-before-memory-fix.log",
+    "reconciliation_memory_recovery": "artifacts/capacity/reconciliation-memory-recovery.json",
+    "fault_mix_equivalence": "artifacts/capacity/fault-mix-reconciliation-equivalence.json",
+    "web_unit": "artifacts/console/capacity-ui-unit.log",
+    "web_build": "artifacts/console/capacity-ui-build.log"
   },
-  "controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7",
+  "controller_fingerprint": "d2673a0a029ec27ce745ea1573ac13623c07adfb4a18c221159af560753eee13",
   "capacity_rechecks": [
     {
       "status": "passed",
@@ -155,5 +161,7 @@
         "reconciled_at": "2026-11-09T16:33:35.711655Z"
       }
     }
-  ]
+  ],
+  "earlier_controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7",
+  "calibration_role": "initial expanded calibration; final collector fingerprint requires fresh preparation"
 }
