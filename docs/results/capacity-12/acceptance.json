@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T18:17:08.663269+00:00",
+  "updated_at": "2026-11-09T21:17:35.431677+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -94,7 +94,7 @@
   },
   "completed_checks": {
     "pipeline_unit": 194,
-    "console_unit": 166,
+    "console_unit": 174,
     "web_unit": 29,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
@@ -109,7 +109,9 @@
     "previous_reconciler_equivalence": "passed",
     "web_build_typecheck": "passed",
     "fresh_calibration_captures": 12,
-    "completed_fresh_training_captures": 7
+    "completed_fresh_training_captures": 12,
+    "completed_fresh_validation_captures": 2,
+    "publisher_memory_regressions": 8
   },
   "remaining": [
     "trained model and policy preparation",
@@ -137,7 +139,8 @@
     "console_completion_gate": "artifacts/capacity/console-completion-gate.log",
     "capture_compatibility": "artifacts/capacity/completion-gate-compatible-captures.json",
     "agent_health": "artifacts/capacity/agent-health-calibration.json",
-    "interrupted_gate_launcher": "artifacts/capacity/full-launcher-before-completion-gate.log"
+    "interrupted_gate_launcher": "artifacts/capacity/full-launcher-before-completion-gate.log",
+    "publisher_memory_unit": "artifacts/capacity/console-publisher-memory.log"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -207,5 +210,16 @@
       "actuation_seconds": 12.523733139038086,
       "handling_seconds": 0.09422564935064934
     }
+  },
+  "excluded_interrupted_validation": {
+    "session": "session-20261109185425-3fc60e",
+    "reason": "agent OOM during publisher finalization",
+    "acknowledged": 93060,
+    "stored_facts": 93060,
+    "correctness": "passed",
+    "performance_eligible": false,
+    "p95_seconds": 98.39849,
+    "latency_target_met": false,
+    "preserved": true
   }
 }

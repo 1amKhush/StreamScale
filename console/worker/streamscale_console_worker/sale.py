@@ -33,7 +33,6 @@ from streamscale.ids import MAX_SEED, new_run_id
 from streamscale.run_artifacts import (
     manifest_hash,
     offsets,
-    read_jsonl,
     read_run,
     revision_snapshot,
     utc_now,
@@ -340,6 +339,9 @@ class Sale:
             except Exception:  # noqa: BLE001
                 pass
         finally:
+            # The manifest remains durable; finished sales need only summary counts.
+            # Pacer shares this list, so clear it after all callbacks have finished.
+            self.attempts.clear()
             if self.on_finish:
                 self.on_finish(self)
 
@@ -504,7 +506,7 @@ class Sale:
         if not path.exists():
             path.touch()
         _drop_partial_line(path)
-        acknowledged = len(read_jsonl(path))
+        acknowledged, acknowledgement_hash = _acknowledgement_summary(path)
         try:
             end = offsets(settings.kafka_bootstrap_servers, INPUT_TOPIC)
         except Exception:  # noqa: BLE001
@@ -523,12 +525,12 @@ class Sale:
         )
         run["publish_ended_at"] = utc_now()
         run["acknowledged"] = acknowledged
-        run["acknowledgements_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        run["acknowledgements_sha256"] = acknowledgement_hash
         run["console"].update(
             {
                 "outcome": outcome,
                 "attempted": self.cursor,
-                "unsent_attempts": len(self.attempts) - self.cursor,
+                "unsent_attempts": run["attempts"] - self.cursor,
                 "failed_deliveries": len(self.failures),
                 "delivery_failures": self.failures[:200],
                 "purged": self.purged,
@@ -562,7 +564,7 @@ class Sale:
             "run_id": str(self.run_id),
             "group_id": self.run.get("group_id") if hasattr(self, "run") else None,
             "config": self.config,
-            "budget": len(self.attempts),
+            "budget": getattr(self, "run", {}).get("attempts", len(self.attempts)),
             "attempted": self.cursor,
             "acknowledged": self.acknowledged,
             "failed": len(self.failures),
@@ -599,12 +601,13 @@ def recover_interrupted(settings, root=control.ROOT):
     sale.run = run
     sale.run_id = UUID(run["run_id"])
     sale.run_name = pointer["run_name"]
-    sale.cursor = (
-        len(read_jsonl(directory / "acknowledgements.jsonl"))
-        if (directory / "acknowledgements.jsonl").exists()
-        else 0
-    )
-    sale.attempts = read_jsonl(directory / "manifest.jsonl")
+    acknowledgements = directory / "acknowledgements.jsonl"
+    if acknowledgements.exists():
+        _drop_partial_line(acknowledgements)
+        sale.cursor, _ = _acknowledgement_summary(acknowledgements)
+    else:
+        sale.cursor = 0
+    sale.attempts = []  # Recovery never republishes; the durable run holds the budget.
     sale.failures = []
     sale.purged = 0
     sale.recent = deque(maxlen=12)
@@ -621,9 +624,38 @@ def recover_interrupted(settings, root=control.ROOT):
 
 
 def _drop_partial_line(path):
-    data = path.read_bytes()
-    if data and not data.endswith(b"\n"):
-        path.write_bytes(data[: data.rfind(b"\n") + 1])
+    # A crash may leave one partial acknowledgement. Scan backwards without
+    # copying the complete payload log, and preserve every complete line's bytes.
+    with path.open("r+b") as stream:
+        end = stream.seek(0, os.SEEK_END)
+        if not end:
+            return
+        stream.seek(end - 1)
+        if stream.read(1) == b"\n":
+            return
+        while end:
+            start = max(0, end - 64 * 1024)
+            stream.seek(start)
+            block = stream.read(end - start)
+            newline = block.rfind(b"\n")
+            if newline >= 0:
+                stream.truncate(start + newline + 1)
+                return
+            end = start
+        stream.truncate(0)
+
+
+def _acknowledgement_summary(path):
+    """Count validated acknowledgements and hash their exact bytes in bounded space."""
+    count = 0
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for line in stream:
+            digest.update(line)
+            if line.strip():
+                json.loads(line)
+                count += 1
+    return count, digest.hexdigest()
 
 
 def _encoded(value):
@@ -679,7 +711,7 @@ class SaleComponent:
             "run_name": sale.run_name,
             "run_id": str(sale.run_id),
             "group_id": sale.run["group_id"],
-            "attempts": len(sale.attempts),
+            "attempts": sale.run["attempts"],
         }
 
     def finished(self, sale):

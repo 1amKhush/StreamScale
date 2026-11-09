@@ -194,3 +194,34 @@ twelve; the agent remained at zero restarts during the sequence, with a reported
 and source run IDs are in `docs/results/capacity-12/final-calibration.*`; the
 initial curve remains available separately. Training/tuning and complete workflow
 acceptance remain pending.
+
+
+## Publisher finalization memory correction
+
+The next preparation completed all twelve training captures and two validation
+captures. Repeated-burst validation acknowledged all 93,060 planned attempts,
+but the agent was OOM-killed at 2026-11-09T18:57:28Z while finalizing publication.
+Its recovered run remained explicitly interrupted. Exact reconciliation passed
+with 93,060 facts, no missing or duplicate identifiers and no state regressions;
+the strict experiment gate correctly excluded it. Its p95 was 98.39849 seconds,
+which misses the two-second objective. The retained session is
+`session-20261109185425-3fc60e`; it is not experimental performance evidence.
+
+Publisher finalization and restart recovery now validate/count acknowledgement
+lines and hash their exact bytes incrementally. Partial-tail truncation scans
+backwards in 64 KiB blocks. Recovery uses the durable planned count without
+loading the manifest, and finished publishers release their in-memory manifests.
+Read-only event/order inspection also streams the acknowledgement log. These
+changes preserve the event sequence, acknowledgement bytes and interrupted-run
+classification. The agent memory limit remains 768 MiB.
+
+Eight regressions cover a 40 MiB acknowledgement log with less than 3 MiB of
+traced Python peak allocation, exact count/hash, long partial tails, incomplete
+recovery, released-manifest status, corrupt complete records and streaming
+inspection. All **174 console unit tests** pass. Fresh large-sale/live acceptance
+and the complete launcher remain pending. The previous failure log is retained
+at `artifacts/capacity/full-launcher-before-publisher-memory-fix.log`.
+
+After qualification, the user requested scoped shutdown and disposable build
+cleanup. Run evidence and data volumes must remain available; no global Docker
+stop/prune or unrelated resource cleanup is part of that work.

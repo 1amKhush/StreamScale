@@ -14,7 +14,7 @@ from uuid import UUID
 import psycopg
 from confluent_kafka import Consumer, KafkaError, TopicPartition
 
-from streamscale.run_artifacts import read_jsonl, read_run
+from streamscale.run_artifacts import read_run
 from streamscale.topics import DLQ_TOPIC
 from streamscale_console_worker import control
 
@@ -227,13 +227,18 @@ class Inspection:
     def _acknowledgements(self, run):
         path = Path(run["run_dir"]) / "acknowledgements.jsonl"
         if not path.exists():
-            return []
-        try:
-            return read_jsonl(path)
-        except json.JSONDecodeError:
-            # The publisher may be mid-line; ignore the partial tail.
-            lines = path.read_text(encoding="utf-8").splitlines()[:-1]
-            return [json.loads(line) for line in lines if line]
+            return
+        with path.open(encoding="utf-8") as stream:
+            for line in stream:
+                if not line.strip():
+                    continue
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError:
+                    # Ignore only an incomplete final line while publishing.
+                    if line.endswith("\n"):
+                        raise
+                    return
 
 
 def _fact(row):
