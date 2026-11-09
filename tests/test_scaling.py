@@ -41,14 +41,14 @@ def test_chart_installs_only_its_selected_controller(mode):
     if mode == "lag-keda":
         assert "bootstrapServers: streamscale-kafka.default.svc.cluster.local:9092" in rendered
         assert "consumerGroup: streamscale.run.unique-run" in rendered
-        assert "minReplicaCount: 1" in rendered and "maxReplicaCount: 3" in rendered
+        assert "minReplicaCount: 1" in rendered and "maxReplicaCount: 12" in rendered
     elif mode == "cpu-hpa":
-        assert "minReplicas: 1" in rendered and "maxReplicas: 3" in rendered
+        assert "minReplicas: 1" in rendered and "maxReplicas: 12" in rendered
     assert "INTERNAL://streamscale-kafka.default.svc.cluster.local:9092" in rendered
 
 
 @pytest.mark.parametrize(
-    "setting", ["consumer.replicas=2", "scaling.maxReplicas=4", "scaling.mode=both"]
+    "setting", ["consumer.replicas=2", "scaling.maxReplicas=13", "scaling.mode=both"]
 )
 def test_chart_rejects_out_of_contract_scaling(setting):
     if not HELM.exists():

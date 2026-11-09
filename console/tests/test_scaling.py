@@ -113,11 +113,11 @@ def test_ownership_rules():
 
 def test_specs_match_the_measured_modes():
     hpa = hpa_body(DEFAULT_SETTINGS)["spec"]
-    assert (hpa["minReplicas"], hpa["maxReplicas"]) == (1, 3)
+    assert (hpa["minReplicas"], hpa["maxReplicas"]) == (1, 12)
     assert hpa["metrics"][0]["resource"]["target"]["averageUtilization"] == 60
     scaled = scaled_object_body(DEFAULT_SETTINGS, "group-1")["spec"]
     trigger = scaled["triggers"][0]["metadata"]
-    assert (scaled["minReplicaCount"], scaled["maxReplicaCount"]) == (1, 3)
+    assert (scaled["minReplicaCount"], scaled["maxReplicaCount"]) == (1, 12)
     assert trigger["consumerGroup"] == "group-1" and trigger["lagThreshold"] == "100"
     assert trigger["allowIdleConsumers"] == "false"
 
@@ -125,7 +125,7 @@ def test_specs_match_the_measured_modes():
 @pytest.mark.parametrize(
     "changes",
     [
-        {"max": 4},
+        {"max": 13},
         {"min": 0},
         {"min": 3, "max": 2},
         {"cpu_target": 5},
@@ -182,7 +182,7 @@ def test_replicas_are_controller_owned_in_autoscaled_modes(make):
     with pytest.raises(ScalingError):
         scaling.set_replicas({"replicas": 2})
     with pytest.raises(ScalingError):
-        scaling.set_mode({"mode": "manual", "replicas": 4})
+        scaling.set_mode({"mode": "manual", "replicas": 13})
 
 
 def test_a_failed_transition_is_reported_and_keeps_the_last_verified_mode(make):
@@ -213,3 +213,27 @@ def test_an_interrupted_transition_is_reported_after_restart(make):
     scaling.save()
     restarted = Scaling(FakeAgent(kube), root=scaling.root, sleep=lambda seconds: None)
     assert restarted.state["transition"]["state"] == "interrupted"
+
+
+def test_restart_upgrades_legacy_bounds_and_reapplies_the_saved_controller(make):
+    import json
+
+    scaling, kube = make(hpa=True)
+    saved = dict(scaling.state)
+    saved.pop("capacity_version")
+    saved["settings"] = dict(saved["settings"], max=3)
+    scaling.path.write_text(json.dumps(saved))
+    restored = Scaling(FakeAgent(kube), root=scaling.root, sleep=lambda _: None)
+    restored.startup(threading.Event())
+    assert wait(restored)["state"] == "succeeded"
+    assert restored.state["settings"]["max"] == 12
+    assert restored.state["capacity_version"] == 12
+    assert kube.hpa and not kube.keda and "create-hpa" in kube.calls
+
+
+def test_restart_keeps_user_bounds_after_the_capacity_upgrade(make):
+    scaling, kube = make()
+    scaling.state["settings"]["max"] = 6
+    scaling.save()
+    restored = Scaling(FakeAgent(kube), root=scaling.root)
+    assert restored.state["settings"]["max"] == 6

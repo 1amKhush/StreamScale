@@ -13,6 +13,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from streamscale.topics import MAX_REPLICAS
+
 NAMESPACE = "streamscale"
 ACCOUNT = Path("/var/run/secrets/kubernetes.io/serviceaccount")
 API = "https://kubernetes.default.svc"
@@ -25,7 +27,7 @@ SCALED_OBJECT = "streamscale-console-consumer"
 KEDA_HPA = "keda-hpa-" + SCALED_OBJECT
 INFRASTRUCTURE = {"kafka": "streamscale-kafka", "postgres": "streamscale-postgres"}
 POSTGRES_POD = "streamscale-postgres-0"
-MAX_CONSOLE_REPLICAS = 3
+MAX_CONSOLE_REPLICAS = MAX_REPLICAS
 
 
 class ScopeError(ValueError):
@@ -144,7 +146,9 @@ class Kube:
 
     def scale_consumers(self, replicas):
         if type(replicas) is not int or not 0 <= replicas <= MAX_CONSOLE_REPLICAS:
-            raise ScopeError("Console consumer replicas must be an integer from 0 to 3")
+            raise ScopeError(
+                f"Console consumer replicas must be an integer from 0 to {MAX_CONSOLE_REPLICAS}"
+            )
         return self.request(
             "PATCH",
             f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{CONSUMER}/scale",

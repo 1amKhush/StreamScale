@@ -27,12 +27,15 @@ def bootstrap(settings: Settings, timeout=180):
     deadline = time.monotonic() + timeout
     while True:
         try:
-            topics = ensure_topics(settings.kafka_bootstrap_servers)
+            topics = ensure_topics(settings.kafka_bootstrap_servers, allow_expansion=True)
             applied = migrate(settings.database_url)
             return {"topics": topics, "applied": applied}
-        except Exception:
+        except Exception as error:
             if time.monotonic() >= deadline:
-                raise RuntimeError("Kafka/database bootstrap did not become ready") from None
+                detail = f": {error}" if isinstance(error, RuntimeError) else ""
+                raise RuntimeError(
+                    "Kafka/database bootstrap did not become ready" + detail
+                ) from None
             time.sleep(2)
 
 
@@ -75,7 +78,7 @@ def serve_consumer(settings, directory, port, stop):
 
 
 def kafka_snapshot(consumer, admin, run):
-    parts = [TopicPartition(INPUT_TOPIC, part) for part in range(3)]
+    parts = [TopicPartition(INPUT_TOPIC, part) for part in map(int, run["start_offsets"])]
     committed = consumer.committed(parts, timeout=10)
     lag = {}
     for part in committed:

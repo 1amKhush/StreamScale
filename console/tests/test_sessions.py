@@ -13,6 +13,7 @@ from .test_api import FakeHub
 
 
 def sample(run_name, sale_state, remaining=(5, 5, 5), status="published", recovered=None):
+    remaining = tuple(remaining) + (0,) * (12 - len(remaining))
     sale = {"state": sale_state, "run_name": run_name if sale_state != "idle" else None}
     if sale_state == "idle":
         sale = {"state": "idle", "recovered": recovered}

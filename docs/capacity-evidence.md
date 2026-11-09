@@ -1,0 +1,101 @@
+# Twelve-partition capacity acceptance (M21)
+
+Requested configuration: twelve input and DLQ partitions, initial one consumer,
+1–12 replicas for CPU-HPA, lag-KEDA and ML Predictive. Fixed remains one; manual
+zero retains the existing pause-processing behavior. No extra runtime mode was added.
+
+Status on 2026-11-09: implementation complete enough for validation; **live
+acceptance is still running**. This document does not assert complete acceptance.
+
+
+## Why the range changed from three to twelve
+
+Three replicas were sufficient to prove correctness and basic autoscaler ownership,
+but offered only two scale-up steps. That narrow range made it difficult to study
+gradual scale-up, stabilization, manual rescue, predictive decisions and the
+tradeoff between latency and replica-seconds. Twelve gives those behaviors room
+to differ while retaining one configuration across all modes.
+
+Kafka assigns a partition to one member of a consumer group at a time. Raising
+only the replica limit would leave extra consumers idle, so both input and DLQ
+topics now have twelve partitions. Twelve also divides evenly at 1, 2, 3, 4, 6
+and 12 consumers; intermediate counts exercise uneven assignments and skew.
+
+This is an experimental-capacity decision, not a promise of twelvefold throughput.
+The local node and shared PostgreSQL database still impose limits. Capacity is
+measured independently at every count, and overload remains explicitly visible.
+The historical three-partition results cannot establish improvements for the new
+configuration; those require the separate held-out twelve-partition comparison.
+
+## Changes under test
+
+- Topic/bootstrap, CRC32 key routing, source-offset completion, lag export and
+  inspection cover all twelve partitions. An explicit bootstrap upgrade can
+  expand only legacy three-partition topics, retaining records and offsets.
+  Active topic consumers and changing watermarks block expansion. Publishers
+  must be closed; the sampling guard is not a distributed publisher lock.
+- SQL migration `0002_twelve_partitions.sql` widens fact/state coordinate checks
+  to 0–11. It changes no stored facts, original migration checksums or event IDs.
+  The DLQ envelope accepts the expanded source range; event payloads stay v1.
+- Chart/API/manual/override/autoscaler limits agree on twelve. Persisted legacy
+  controller bounds upgrade under the exclusive actuator lock. Later user bounds
+  and overrides remain available. Incomplete transitions remain explicit.
+- Predictive control evaluates twelve targets using separately calibrated
+  aggregate capacities. It uses actual stable assignments, or a conservative
+  balanced-range bound after rebalance, including skew and startup delay. The computation is
+  polynomial in partition and target count rather than exponential enumeration.
+- Calibration runs every size 1–12 with saturated 20-second publishing intervals
+  and full drain. It does not extrapolate linear capacity. Expanded workloads
+  exercise more of the range, within the existing 2,000 events/s publisher limit.
+- Artifacts include partition count, replica bounds and feature version 2; old
+  models are incompatible. Fingerprints separate new traces and comparisons.
+- Console controls, charts, lane ownership, palettes, map layout, guided demos and
+  searchable Docs cover all twelve. Controls wrap on narrow screens. Historical
+  three-lane replay data render with their recorded partition count.
+- `capacity-check` joins the maintained `all` workflow. A completed original M7
+  campaign can be audited as historical evidence despite code drift; incomplete
+  incompatible campaigns remain blocked. The historical report is preserved.
+
+## Verification log
+
+The first launcher pass exposed the original SQL 0–2 bounds; a versioned widening
+migration fixed them. Its interrupted fixture was replayed and reconciled with
+four unique facts, no missing IDs, no duplicate stored IDs, no state regression,
+and zero remaining lag across all twelve partitions.
+
+Current measured summaries are in [the capacity report](results/capacity-12/report.md),
+with machine-readable acceptance and calibration data. Full workflow acceptance
+remains pending; the report separates correctness from the missed latency target.
+The complete launcher log for this run is `/tmp/streamscale-twelve-all.log`.
+Generated evidence is ignored under `artifacts/`; historical milestone evidence
+and `docs/results/current` remain available.
+
+CodeRabbit CLI 0.7.0 is installed but signed out. External CodeRabbit review was
+not performed; source review, the React checklist and executable checks are used.
+
+The initial full launcher was interrupted at a completed manual-capture boundary
+after calibration exposed a capacity-limit selection defect: saturated targets
+shared one sentinel score, which favored the largest count even when measured
+throughput declined. The controller now retains finite projected delays and
+reports saturation separately; a regression test chooses the best measured
+capacity under infeasible demand. All twelve calibration captures and four
+completed manual training captures remain preserved with checksums and original
+source provenance. Manual collection, feature extraction, resources and the
+environment are unchanged; no policy-controlled evidence is reused across this
+controller correction. The final model/policy and held-out campaign use the
+corrected controller fingerprint.
+
+Expanded overload comparison workloads include 60 seconds of observed warm-up,
+a 30-second surge and a 90-second recovery tail. Peaks exercise the wider range
+without creating a fixed-baseline backlog that cannot drain within the campaign's
+bounded timeout. Recovery starts at the end of the surge, not at the final low
+phase. These schedule details are offline experiment metadata, never inference
+features.
+
+Final backend checks after the controller correction: **194 pipeline/unit tests**,
+**149 console unit tests**, **31 live local integration tests** (including real
+3-to-12 Kafka expansion with retained records and SQL partitions 3/11 accepted,
+12 rejected), Ruff and formatting all pass. The web build and 25 web unit tests
+pass. Seven real Chrome Docs/usability/map-access checks and a separate browser
+manual-12 rescue pass; the requested focused UI subagent review remains underway.
+Raw check output is retained under `artifacts/capacity/`.

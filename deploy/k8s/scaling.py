@@ -8,6 +8,7 @@ from addons import main as install_addons
 from manage import CLUSTER, OUTPUT, TOOLS, build, call, cluster, deploy, kubectl, workflow
 
 from streamscale.run_artifacts import utc_now, write_json
+from streamscale.topics import MAX_REPLICAS
 
 MODES = ("fixed", "cpu-hpa", "lag-keda")
 
@@ -50,7 +51,7 @@ def mode_snapshot(mode):
         )
         for pod in pods
     )
-    if not 1 <= desired <= (1 if mode == "fixed" else 3) or ready > 3:
+    if not 1 <= desired <= (1 if mode == "fixed" else MAX_REPLICAS) or ready > MAX_REPLICAS:
         raise RuntimeError("Consumer replica target escaped its mode bounds")
     if mode == "fixed":
         if hpas or scaled:
@@ -66,11 +67,11 @@ def mode_snapshot(mode):
         ):
             raise RuntimeError("Lag-KEDA mode is not isolated")
         spec = scaled[0]["spec"]
-        if spec["minReplicaCount"] != 1 or spec["maxReplicaCount"] != 3:
-            raise RuntimeError("KEDA replica bounds differ from 1–3")
+        if spec["minReplicaCount"] != 1 or spec["maxReplicaCount"] != MAX_REPLICAS:
+            raise RuntimeError("KEDA replica bounds differ from 1–12")
     for hpa in hpas:
-        if hpa["spec"]["minReplicas"] != 1 or hpa["spec"]["maxReplicas"] != 3:
-            raise RuntimeError("HPA replica bounds differ from 1–3")
+        if hpa["spec"]["minReplicas"] != 1 or hpa["spec"]["maxReplicas"] != MAX_REPLICAS:
+            raise RuntimeError("HPA replica bounds differ from 1–12")
     return {
         "at": utc_now(),
         "mode": mode,
@@ -148,7 +149,7 @@ def exercise(metadata, mode, orders=3000, timeout=300):
         "run_id": reconciliation["run_id"],
         "max_ready_replicas": maximum,
         "stored_facts": reconciliation["stored_facts"],
-        "replica_bounds": [1, 1 if mode == "fixed" else 3],
+        "replica_bounds": [1, 1 if mode == "fixed" else MAX_REPLICAS],
         "mode_isolation": True,
         "verified_at": utc_now(),
     }

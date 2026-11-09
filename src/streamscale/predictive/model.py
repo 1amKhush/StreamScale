@@ -15,6 +15,7 @@ from threadpoolctl import threadpool_limits
 
 from streamscale.predictive import FEATURE_VERSION, HORIZONS, QUANTILES
 from streamscale.predictive.data import windows
+from streamscale.topics import MAX_REPLICAS, PARTITIONS
 
 
 def digest(value):
@@ -72,7 +73,7 @@ def train(training, validation):
 
 
 def predict(models, history, horizon, quantile):
-    features = [history.features(p) for p in range(3)]
+    features = [history.features(p) for p in range(PARTITIONS)]
     with threadpool_limits(limits=1):
         median = np.maximum(0, models[horizon, 0.5].predict(features))
         upper = np.maximum(median, models[horizon, quantile].predict(features))
@@ -88,6 +89,8 @@ def publish(folder, models, metadata):
     document = metadata | {
         "runtime_code": code_identity(),
         "feature_version": FEATURE_VERSION,
+        "partitions": PARTITIONS,
+        "replica_bounds": [1, MAX_REPLICAS],
         "versions": versions(),
         "model_sha256": hashlib.sha256(payload).hexdigest(),
     }
@@ -120,6 +123,8 @@ def load(folder, expected=None):
         raise ValueError("Predictive artifact checksum mismatch")
     if (
         document["feature_version"] != FEATURE_VERSION
+        or document.get("partitions") != PARTITIONS
+        or document.get("replica_bounds") != [1, MAX_REPLICAS]
         or document["versions"] != versions()
         or document.get("runtime_code") != code_identity()
     ):

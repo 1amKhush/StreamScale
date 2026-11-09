@@ -37,7 +37,7 @@ def test_flash_sale_builds_backlog_and_reconciles(console):
         or point["lag_total"] > 600
     )
     members = busy["sample"]["kafka"]["group"]["members"]
-    assert sorted(members[0]["partitions"]) == [0, 1, 2]
+    assert sorted(members[0]["partitions"]) == list(range(12))
     facts_during = busy["points"][-1]["facts"]
     drained = console.wait(
         lambda state: (

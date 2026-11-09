@@ -38,6 +38,8 @@ def consumer(pod, run_id, accepted=0, start=1.0, e2e=(0, 0, 0, 0), cpu=0.0, ok=T
 
 
 def sample(at, high, position, consumers=(), run_id="run", members=1, facts=None):
+    high = list(high) + [0] * (12 - len(high))
+    position = list(position) + [0] * (12 - len(position))
     return {
         "sampled_at": at,
         "sequence": int(at),
@@ -51,9 +53,9 @@ def sample(at, high, position, consumers=(), run_id="run", members=1, facts=None
                     "position": position[part],
                     "lag": high[part] - position[part],
                 }
-                for part in range(3)
+                for part in range(12)
             ],
-            "group": {"members": [{"partitions": [0, 1, 2]}] * members, "state": "Stable"},
+            "group": {"members": [{"partitions": list(range(12))}] * members, "state": "Stable"},
         },
         "sql": {"facts": facts, "probe_ms": 1.0},
         "kubernetes": {
@@ -176,3 +178,14 @@ def test_infrastructure_outage_is_critical():
     found = signals(point, {"kubernetes": {"infrastructure": infrastructure}})
     assert [row["id"] for row in found] == ["postgres-unavailable"]
     assert found[0]["severity"] == "critical"
+
+
+def test_rates_and_backlog_cover_all_twelve_partitions():
+    derive = Deriver()
+    first = sample(100, [100] * 12, [90] * 12)
+    second = sample(102, [120] * 12, [100] * 12)
+    derive.point(first, 100)
+    point = derive.point(second, 102)
+    assert point["lag_total"] == 240
+    assert point["rates"]["arrival"] == 120
+    assert point["rates"]["drain"] == 60

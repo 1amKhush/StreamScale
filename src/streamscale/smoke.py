@@ -76,7 +76,7 @@ def smoke(settings: Settings, timeout: float = 30) -> dict:
     if remaining or failures or len(delivered) != PARTITIONS:
         raise RuntimeError("Kafka publish acknowledgements incomplete")
     if {part for part, _ in delivered} != set(range(PARTITIONS)):
-        raise RuntimeError("Key-based Kafka publishing did not cover all three partitions")
+        raise RuntimeError(f"Key-based Kafka publishing did not cover all {PARTITIONS} partitions")
 
     consumer = Consumer(
         {

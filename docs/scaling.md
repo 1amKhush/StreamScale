@@ -1,8 +1,8 @@
 # Scaling modes (M6)
 
-All modes use the same image, three input partitions and consumer resources:
+All modes use the same image, twelve input partitions and consumer resources:
 100m CPU / 128Mi requests, 500m CPU / 256Mi limits. Fixed starts one replica;
-CPU-HPA and lag-KEDA start one and have an enforced 1–3 target range. A temporary
+CPU-HPA and lag-KEDA start one and have an enforced 1–12 target range. A temporary
 zero ready count during rollout/rebalance is recorded, rather than confused
 with the configured minimum. The singleton exporter never joins the group.
 
@@ -16,7 +16,7 @@ uv run --frozen python deploy/k8s/manage.py up --mode lag-keda --orders 3000
 The chart renders exactly one alternative controller: an autoscaling/v2 CPU
 HPA at 60% of the CPU request, or a KEDA Kafka ScaledObject with lag threshold
 100. KEDA owns its generated HPA; it is not a second CPU controller. Targets
-are limited to three replicas. The generator and Kafka scaler use the same
+are limited to twelve replicas. The generator and Kafka scaler use the same
 unique `streamscale.run.<run-name>` group, which starts after retained records.
 Mode switches remove the old controller, wait for its HPA to disappear, and
 reset the drained Deployment to one replica. Autoscaled consumer manifests omit

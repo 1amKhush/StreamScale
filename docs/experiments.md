@@ -1,7 +1,11 @@
 # Measured experiment protocol
 
-M7 is implemented but remains in progress until the pilot and all 27 measured
-cells have passed. Run `./streamscale.sh experiments`, or add `--fresh` to create
+The original M7 campaign completed with three partitions and a 1–3 replica
+range. It is preserved as historical evidence. The maintained configuration now
+uses twelve partitions and 1–12 replicas; its separate four-mode comparison is
+described in [ML Predictive](predictive.md) and [M21 evidence](capacity-evidence.md).
+A newly requested baseline campaign remains in progress until its pilot and all
+27 measured cells pass. Run `./streamscale.sh experiments`, or add `--fresh` to create
 a new campaign while retaining all previous evidence. `all` includes this stage.
 Only one cluster workflow may run at a time; the launcher takes an exclusive
 lock. Do not start a separate cluster/scaling run during measurements.
@@ -35,7 +39,9 @@ the five-fresh-zero recovery criterion as well as the final drain.
 The logical scenario manifest
 hash must match across all nine corresponding runs, while run/event/group IDs
 are fresh. The original immutable image, consumer resource requests/limits,
-three partitions and retained broker/SQL installation are shared. Run metadata
+partition configuration and retained broker/SQL installation are shared within
+each campaign. The preserved original campaign used three partitions; a fresh
+current campaign uses twelve throughout. Run metadata
 contains the configuration and image/Git provenance, including any dirty state.
 Warmup warms the shared services; measured group startup is still included.
 
@@ -52,7 +58,7 @@ publishing window, divided by that window's duration. Separate columns report
 processing-span throughput and drain-inclusive throughput. p95 is the empirical
 nearest rank of all this run's unique SQL `ingested_at - produced_at` values,
 including the drained tail; it is not an average of pod histogram percentiles.
-Maximum lag is the maximum sampled sum of all three partitions. Overload
+Maximum lag is the maximum sampled sum across every configured partition. Overload
 recovery starts at the high-to-steady transition and ends at five distinct fresh
 one-second zero-lag samples; missing recovery is explicitly censored.
 Scaling response is the first increase above the ready replica count preceding

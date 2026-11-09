@@ -15,12 +15,12 @@ def trace(identifier="one", multiplier=1):
             {
                 "t": t,
                 "run_id": identifier,
-                "high": [total] * 3,
-                "position": [total] * 3,
-                "lag": [0] * 3,
+                "high": [total] * 12,
+                "position": [total] * 12,
+                "lag": [0] * 12,
                 "ready": 1,
                 "desired": 1,
-                "assignments": [[0, 1, 2]],
+                "assignments": [list(range(12))],
                 "stable": True,
                 "db_ms": 1,
             }

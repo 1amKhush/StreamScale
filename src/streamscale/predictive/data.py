@@ -5,6 +5,8 @@ from collections import deque
 
 import numpy as np
 
+from streamscale.topics import PARTITIONS
+
 
 def observation(sample):
     sources = sample.get("sources", {})
@@ -14,8 +16,8 @@ def observation(sample):
         if not source.get("ok") or abs(at - source.get("at", 0)) > 5:
             raise ValueError(f"Missing or stale {name}")
     partitions = sorted(sample["kafka"]["partitions"], key=lambda p: p["partition"])
-    if [p["partition"] for p in partitions] != [0, 1, 2]:
-        raise ValueError("Expected three partitions")
+    if [p["partition"] for p in partitions] != list(range(PARTITIONS)):
+        raise ValueError(f"Expected {PARTITIONS} partitions")
     high = [p["high"] for p in partitions]
     position = [p.get("position") for p in partitions]
     lag = [p.get("lag") for p in partitions]
@@ -100,7 +102,7 @@ def windows(runs, horizon):
                 for a, b in zip(segment, segment[1:], strict=False)
             ):
                 continue
-            for p in range(3):
+            for p in range(PARTITIONS):
                 try:
                     features = history.features(p)
                 except ValueError:

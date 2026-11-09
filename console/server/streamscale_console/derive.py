@@ -9,6 +9,8 @@ p95 comes from committed SQL timings after a sale completes.
 import math
 from collections import deque
 
+from streamscale.topics import PARTITIONS
+
 COUNTERS = ("accepted", "duplicate", "invalid", "dlq", "late")
 LATENCY_WINDOW = 15.0
 RATE_WINDOW = 3.0
@@ -149,7 +151,11 @@ class Deriver:
         kafka = sample.get("kafka") or {}
         partitions = kafka.get("partitions") or []
         lag = [row.get("lag") for row in partitions]
-        known_lag = len(lag) == 3 and all(value is not None for value in lag)
+        known_lag = (
+            len(lag) == PARTITIONS
+            and len(partitions) == PARTITIONS
+            and all(value is not None for value in lag)
+        )
         group = kafka.get("group") or {}
         members = group.get("members")
         kube = sample.get("kubernetes") or {}
@@ -170,7 +176,9 @@ class Deriver:
         }
         if previous and dt and dt > 0:
             old_parts = (previous.get("kafka") or {}).get("partitions") or []
-            if len(old_parts) == 3 and len(partitions) == 3:
+            if len(partitions) == PARTITIONS and [p["partition"] for p in old_parts] == [
+                p["partition"] for p in partitions
+            ]:
                 rates["arrival"] = (
                     sum(
                         row["high"] - old["high"]

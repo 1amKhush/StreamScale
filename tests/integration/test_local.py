@@ -39,7 +39,7 @@ def insert_event(connection, run_id, event_id, order_id, offset=0):
 
 
 def test_live_topics_and_repeat_bootstrap(settings):
-    expected = {INPUT_TOPIC: 3, DLQ_TOPIC: 3}
+    expected = {INPUT_TOPIC: 12, DLQ_TOPIC: 12}
     assert ensure_topics(settings.kafka_bootstrap_servers) == expected
     assert ensure_topics(settings.kafka_bootstrap_servers) == expected
 
@@ -48,19 +48,67 @@ def test_live_publish_consume_and_postgres(settings):
     assert migrate(settings.database_url) == []
     result = smoke(settings)
     assert result["status"] == "passed"
-    assert result["published"] == result["consumed"] == 3
+    assert result["published"] == result["consumed"] == 12
     assert result["postgres_decimal"] == "13.37"
-    assert {coordinate["partition"] for coordinate in result["coordinates"]} == {0, 1, 2}
+    assert {coordinate["partition"] for coordinate in result["coordinates"]} == set(range(12))
+
+
+def test_live_legacy_topic_expansion_retains_offsets_and_records(settings, monkeypatch):
+    from confluent_kafka import Consumer, Producer, TopicPartition
+    from confluent_kafka.admin import AdminClient, NewTopic
+
+    from streamscale import topics
+
+    prefix = f"streamscale.capacity-test.{uuid4().hex}"
+    names = [prefix + ".input", prefix + ".dlq"]
+    admin = AdminClient({"bootstrap.servers": settings.kafka_bootstrap_servers})
+    for future in admin.create_topics(
+        [
+            NewTopic(name, num_partitions=3, replication_factor=1, config=topics.TOPIC_CONFIG)
+            for name in names
+        ]
+    ).values():
+        future.result(timeout=20)
+    producer = Producer(topics.producer_config(settings.kafka_bootstrap_servers))
+    for p in range(3):
+        producer.produce(names[0], key=b"retained", value=f"partition-{p}".encode(), partition=p)
+    assert producer.flush(15) == 0
+    monkeypatch.setattr(topics, "INPUT_TOPIC", names[0])
+    monkeypatch.setattr(topics, "DLQ_TOPIC", names[1])
+    assert topics.ensure_topics(settings.kafka_bootstrap_servers, allow_expansion=True) == {
+        name: 12 for name in names
+    }
+    reader = Consumer(
+        {
+            "bootstrap.servers": settings.kafka_bootstrap_servers,
+            "group.id": prefix,
+            "enable.auto.commit": False,
+        }
+    )
+    try:
+        reader.assign([TopicPartition(names[0], p, 0) for p in range(3)])
+        records = reader.consume(num_messages=3, timeout=15)
+        assert sorted((m.partition(), m.offset(), m.value()) for m in records) == [
+            (p, 0, f"partition-{p}".encode()) for p in range(3)
+        ]
+    finally:
+        reader.close()
+    # These tiny, uniquely named test topics expire normally; no project data is deleted.
 
 
 def test_applied_migration_is_idempotent_and_checksum_protected(scratch_database, tmp_path):
     assert migrate(scratch_database) == []
     body = (asset_directory("migrations") / "0001_initial.sql").read_bytes()
+    (tmp_path / "0002_twelve_partitions.sql").write_bytes(
+        (asset_directory("migrations") / "0002_twelve_partitions.sql").read_bytes()
+    )
     copy = tmp_path / "0001_initial.sql"
     copy.write_bytes(body)
     assert migrate(scratch_database, tmp_path) == []
     with psycopg.connect(scratch_database) as connection:
-        stored = connection.execute("SELECT sha256 FROM _streamscale_migration").fetchone()[0]
+        stored = connection.execute(
+            "SELECT sha256 FROM _streamscale_migration WHERE name = '0001_initial.sql'"
+        ).fetchone()[0]
         assert stored == hashlib.sha256(body).hexdigest()
     copy.write_bytes(body + b"\n-- attempted rewrite\n")
     with pytest.raises(RuntimeError, match="Applied migration changed"):
@@ -71,14 +119,17 @@ def test_failing_migration_rolls_back_ddl_and_ledger(scratch_database, tmp_path)
     (tmp_path / "0001_initial.sql").write_bytes(
         (asset_directory("migrations") / "0001_initial.sql").read_bytes()
     )
-    (tmp_path / "0002_failure.sql").write_text(
+    (tmp_path / "0002_twelve_partitions.sql").write_bytes(
+        (asset_directory("migrations") / "0002_twelve_partitions.sql").read_bytes()
+    )
+    (tmp_path / "0003_failure.sql").write_text(
         "CREATE TABLE should_rollback (id INT); SELECT * FROM nonexistent_table;"
     )
     with pytest.raises(psycopg.errors.UndefinedTable):
         migrate(scratch_database, tmp_path)
     with psycopg.connect(scratch_database) as connection:
         assert connection.execute("SELECT to_regclass('should_rollback')").fetchone()[0] is None
-        assert connection.execute("SELECT count(*) FROM _streamscale_migration").fetchone()[0] == 1
+        assert connection.execute("SELECT count(*) FROM _streamscale_migration").fetchone()[0] == 2
 
 
 def test_event_id_is_global_and_source_coordinate_is_unique(scratch_database):
@@ -168,3 +219,30 @@ def test_only_planned_history_indexes_exist(scratch_database):
             "order_event_run_time_idx",
             "order_event_order_time_idx",
         } <= names
+
+
+@pytest.mark.parametrize("partition", [3, 11])
+def test_widened_sql_bounds_accept_new_partitions_without_changing_identity(
+    scratch_database, partition
+):
+    with psycopg.connect(scratch_database) as connection:
+        run, event, order = uuid4(), uuid4(), uuid4()
+        insert_run(connection, run)
+        connection.execute(
+            """INSERT INTO order_event
+               (event_id, run_id, order_id, event_type, event_time, produced_at,
+                order_amount, schema_version, kafka_partition, kafka_offset, accepted_payload)
+               VALUES (%s, %s, %s, 'ORDER_CREATED', now(), now(), '13.37', 1, %s, 0, %s)""",
+            (event, run, order, partition, Jsonb({"test": True})),
+        )
+        assert connection.execute(
+            "SELECT kafka_partition FROM order_event WHERE event_id = %s", (event,)
+        ).fetchone() == (partition,)
+        with pytest.raises(psycopg.errors.CheckViolation), connection.transaction():
+            connection.execute(
+                """INSERT INTO order_event
+                   (event_id, run_id, order_id, event_type, event_time, produced_at,
+                    order_amount, schema_version, kafka_partition, kafka_offset, accepted_payload)
+                   VALUES (%s, %s, %s, 'ORDER_CREATED', now(), now(), '13.37', 1, 12, 0, %s)""",
+                (uuid4(), run, order, Jsonb({"test": True})),
+            )

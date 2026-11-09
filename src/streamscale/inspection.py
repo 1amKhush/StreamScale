@@ -20,13 +20,13 @@ from streamscale.run_artifacts import (
     write_json,
 )
 from streamscale.storage import STATUSES
-from streamscale.topics import DLQ_TOPIC, INPUT_TOPIC, PARTITIONS
+from streamscale.topics import DLQ_TOPIC, INPUT_TOPIC
 
 
 def _dead_letters(settings: Settings, run: dict) -> list[dict]:
     end = offsets(settings.kafka_bootstrap_servers, DLQ_TOPIC)
     active = {
-        part for part in range(PARTITIONS) if run["dlq_start_offsets"][str(part)] < end[str(part)]
+        int(part) for part in run["dlq_start_offsets"] if run["dlq_start_offsets"][part] < end[part]
     }
     if not active:
         return []
@@ -140,7 +140,7 @@ def inspect_run(directory: Path, settings: Settings, group_id: str | None = None
     )
     try:
         committed = reader.committed(
-            [TopicPartition(INPUT_TOPIC, part) for part in range(PARTITIONS)], timeout=10
+            [TopicPartition(INPUT_TOPIC, int(part)) for part in run["end_offsets"]], timeout=10
         )
     finally:
         reader.close()

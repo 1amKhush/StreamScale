@@ -1,7 +1,7 @@
 """Scaling modes for console consumers, with single-controller ownership.
 
-Modes: fixed (1 replica), manual (0–3), cpu-hpa (CPU HorizontalPodAutoscaler, 1–3)
-and lag-keda (KEDA Kafka lag ScaledObject, 1–3). A manual override suspends the
+Modes: fixed (1 replica), manual (0–12), cpu-hpa (CPU HorizontalPodAutoscaler, 1–12)
+and lag-keda (KEDA Kafka lag ScaledObject, 1–12). A manual override suspends the
 active autoscaler by removing it before writing replicas; releasing the override
 recreates the selected controller. HPA and KEDA never target the Deployment at
 the same time: every transition removes unwanted controllers, waits until they
@@ -31,7 +31,7 @@ AUTOSCALED = ("cpu-hpa", "lag-keda", "ml-predictive")
 DEFAULT_SETTINGS = {
     "latency_target": 2,
     "min": 1,
-    "max": 3,
+    "max": MAX_CONSOLE_REPLICAS,
     "cpu_target": 60,
     "lag_threshold": 100,
     "scale_down_seconds": 60,
@@ -198,6 +198,7 @@ class Scaling:
         self.lock = threading.Lock()
         self.work = threading.Lock()
         self.path = root / "control" / "scaling.json"
+        self.capacity_upgrade = False
         self.state = self.load()
         self.commands = {
             "scaling.mode": self.set_mode,
@@ -228,6 +229,12 @@ class Scaling:
     def load(self):
         document = control.read_json(self.path)
         if document:
+            if document.get("capacity_version") != MAX_CONSOLE_REPLICAS:
+                self.capacity_upgrade = True
+                document["settings"] = dict(document.get("settings", {})) | {
+                    "min": 1,
+                    "max": MAX_CONSOLE_REPLICAS,
+                }
             document["settings"] = dict(DEFAULT_SETTINGS) | document.get("settings", {})
             if document.get("transition", {}).get("state") == "running":
                 document["transition"] = {
@@ -238,6 +245,7 @@ class Scaling:
                 }
             return document
         return {
+            "capacity_version": MAX_CONSOLE_REPLICAS,
             "mode": None,
             "override": None,
             "manual_replicas": 1,
@@ -256,6 +264,9 @@ class Scaling:
     def startup(self, stop):
         """Adopt the cluster's actual controller state the first time the agent runs."""
         if self.state["mode"] is not None:
+            if self.capacity_upgrade and self.state["transition"]["state"] != "interrupted":
+                self.start({}, "Apply twelve-partition capacity bounds")
+                return
             self.save()
             return
         try:
@@ -307,7 +318,7 @@ class Scaling:
     def enter_override(self, body):
         if self.state["mode"] not in AUTOSCALED:
             raise ScalingError("Override suspends an autoscaler; use manual mode directly")
-        replicas = self._replicas(body.get("replicas", 3))
+        replicas = self._replicas(body.get("replicas", MAX_CONSOLE_REPLICAS))
         override = {"replicas": replicas, "since": time.time(), "base": self.state["mode"]}
         return self.start({"override": override}, f"Manual override at {replicas}")
 
@@ -322,7 +333,7 @@ class Scaling:
 
     def _replicas(self, value):
         if type(value) is not int or not 0 <= value <= MAX_CONSOLE_REPLICAS:
-            raise ScalingError("Replicas must be an integer from 0 to 3")
+            raise ScalingError(f"Replicas must be an integer from 0 to {MAX_CONSOLE_REPLICAS}")
         return value
 
     # Transitions ---------------------------------------------------------------
@@ -357,6 +368,8 @@ class Scaling:
                 previous = (self.state["mode"], bool(self.state["override"]))
                 for key in ("mode", "override", "manual_replicas", "settings"):
                     self.state[key] = target[key]
+                self.state["capacity_version"] = MAX_CONSOLE_REPLICAS
+                self.capacity_upgrade = False
                 current = (self.state["mode"], bool(self.state["override"]))
                 if current != previous:
                     now = time.time()

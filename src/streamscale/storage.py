@@ -10,6 +10,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from streamscale.contract import timestamp
+from streamscale.topics import PARTITIONS
 
 STATUSES = {
     "ORDER_CREATED": "CREATED",
@@ -53,7 +54,7 @@ class EventStore:
         return self.connection
 
     def persist(self, event: dict, partition: int, offset: int) -> WriteResult:
-        if not 0 <= partition <= 2 or offset < 0:
+        if not 0 <= partition < PARTITIONS or offset < 0:
             raise IntegrityFailure("Source coordinate is outside the v1 contract")
         for attempt in range(self.attempts):
             try:

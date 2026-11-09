@@ -3,7 +3,7 @@
 One scaling mode uses 60 seconds of observed Kafka arrivals to forecast 10, 20
 or 30 seconds ahead. Twelve quantile HGBT models predict per-partition counts
 (median, 80th, 90th and 95th percentile for each horizon). The controller evaluates
-1–3 replicas every five seconds, using empirical capacity at each count and
+1–12 replicas every five seconds, using empirical capacity at each count and
 partition assignment constraints. It minimizes capacity while aiming for p95
 latency ≤ 2 seconds. Its queue-delay estimate is a control proxy, not an exact
 p95 guarantee. DB failures, skew and unprecedented jumps can defeat that target.
@@ -38,10 +38,21 @@ remain gaps. The latency target is the primary setting; tuning stays offline.
 Status, decision reason, model/policy identity and forecasts remain in session
 telemetry and exports for replay.
 
-No SQL migration is required: the legacy `experiment_run.mode` category is fixed
+ML mode itself keeps `experiment_run.mode` set to the legacy `fixed` category
 for predictive sessions. JSON configuration/session identity and metrics retain
 `ml-predictive`. SQL users should read `configuration->'experiment_configuration'
 ->>'mode'` for the actual policy. Historical M7 evidence is preserved separately.
+
+The twelve-partition configuration applies `0002_twelve_partitions.sql` during
+bootstrap to widen source-coordinate checks without rewriting stored facts.
+Capacity is measured separately at every replica count, 1 through 12; no linear
+throughput extrapolation is used by the controller. Rebalance projections use
+a conservative range-assignment bound instead of enumerating assignments.
+Old three-partition models are incompatible and must be prepared again.
+When every target is infeasible, finite projected delays still rank candidates;
+extra replicas are not preferred merely because capacity is limited. The held-out
+overload workload has 60 seconds of warm-up, a 30-second surge and 90 seconds
+of recovery, with the same logical sequence across compared modes.
 
 See [run commands](run-project.md#ml-predictive-m16m20) and
 [validation evidence](predictive-evidence.md).

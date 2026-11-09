@@ -21,7 +21,7 @@ def test_real_cluster_state_reaches_the_console(console):
     assert state["status"]["agent"] == "connected"
     assert all(source["ok"] for source in sample["sources"].values() if source)
     partitions = sample["kafka"]["partitions"]
-    assert [row["partition"] for row in partitions] == [0, 1, 2]
+    assert [row["partition"] for row in partitions] == list(range(12))
     assert all(row["high"] >= 0 for row in partitions)
     pods = kube_json("get", "pods", "-l", "app=streamscale-console-consumer")["items"]
     live_pods = {

@@ -14,7 +14,7 @@ def series(value, **labels):
 def complete_samples():
     return {
         "streamscale_accepted_total": [series(396)],
-        "streamscale_kafka_lag": [series(0, partition=str(part)) for part in range(3)],
+        "streamscale_kafka_lag": [series(0, partition=str(part)) for part in range(12)],
         "streamscale_failed_total": [series(0)],
         "streamscale_exporter_last_success_unixtime": [series(101)],
     }

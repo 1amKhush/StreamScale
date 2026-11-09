@@ -19,7 +19,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="streamscale")
     commands = parser.add_subparsers(dest="command", required=True)
     for name in ("topics", "migrate", "smoke"):
-        commands.add_parser(name)
+        command = commands.add_parser(name)
+        if name == "topics":
+            command.add_argument("--upgrade-partitions", action="store_true")
     workload = commands.add_parser("generate", help="Generate a fresh reproducible execution")
     workload.add_argument("--output", type=Path, required=True)
     workload.add_argument("--seed", type=int, default=42)
@@ -80,7 +82,7 @@ def main() -> int:
             bootstrap = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:19092").strip()
             if not bootstrap:
                 raise ValueError("KAFKA_BOOTSTRAP_SERVERS must not be empty")
-            result = {"topics": ensure_topics(bootstrap)}
+            result = {"topics": ensure_topics(bootstrap, allow_expansion=args.upgrade_partitions)}
         elif args.command == "migrate":
             result = {"applied": migrate(Settings.from_env().database_url)}
         elif args.command == "generate":

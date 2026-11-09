@@ -14,12 +14,12 @@ def controller(tmp_path, monkeypatch):
         "sampled_at": 100,
         "t": 100,
         "run_id": "run",
-        "high": [100] * 3,
-        "position": [100] * 3,
-        "lag": [0] * 3,
+        "high": [100] * 12,
+        "position": [100] * 12,
+        "lag": [0] * 12,
         "ready": 1,
         "desired": 1,
-        "assignments": [[0, 1, 2]],
+        "assignments": [list(range(12))],
         "stable": True,
     }
     agent.observer = SimpleNamespace(latest=lambda: sample)
@@ -29,7 +29,12 @@ def controller(tmp_path, monkeypatch):
     predictor.artifact = (
         "model",
         {},
-        {"calibration": {"capacity": {1: 30, 2: 45, 3: 60}, "actuation_seconds": 3}},
+        {
+            "calibration": {
+                "capacity": {n: min(30 * n, 180) for n in range(1, 13)},
+                "actuation_seconds": 3,
+            }
+        },
     )
     monkeypatch.setattr("streamscale_console_worker.predictive.observation", lambda s: deepcopy(s))
     return predictor, scaling, kube, sample
@@ -65,9 +70,9 @@ def test_predictive_override_and_release_retain_single_ownership(controller):
 def test_warmup_reactive_fallback_scales_without_repeated_writes(controller):
     predictor, scaling, kube, sample = controller
     predictor.tick(100)
-    sample.update(sampled_at=101, t=101, high=[200] * 3, lag=[100] * 3)
+    sample.update(sampled_at=101, t=101, high=[200] * 12, lag=[100] * 12)
     predictor.tick(101)
-    assert predictor.state["applied"] and kube.replicas == 3
+    assert predictor.state["applied"] and kube.replicas == 6
     sample.update(sampled_at=107, t=107)
     predictor.tick(107)
-    assert kube.calls.count("scale-3") == 1
+    assert kube.calls.count("scale-6") == 1

@@ -28,7 +28,7 @@ from confluent_kafka import Consumer, KafkaError, KafkaException, TopicPartition
 from streamscale.contract import ContractError, timestamp, validate_event
 from streamscale.run_artifacts import offsets, read_jsonl, read_run, utc_now, write_json
 from streamscale.storage import STATUSES
-from streamscale.topics import DLQ_TOPIC, INPUT_TOPIC, PARTITIONS
+from streamscale.topics import DLQ_TOPIC, INPUT_TOPIC
 
 MAX_RECORDS = 500_000
 
@@ -43,7 +43,7 @@ def read_range(bootstrap, topic, starts, ends, deadline_seconds=120):
             "enable.partition.eof": True,
         }
     )
-    pending = {part for part in range(PARTITIONS) if starts[part] < ends[part]}
+    pending = {part for part in range(len(starts)) if starts[part] < ends[part]}
     records = []
     try:
         if not pending:
@@ -102,8 +102,9 @@ def reconcile(directory: Path, settings):
     if run.get("status") != "published":
         raise RuntimeError("Only a finalized (published) console run can be reconciled")
     started = time.time()
-    starts = [run["start_offsets"][str(part)] for part in range(PARTITIONS)]
-    ends = [run["end_offsets"][str(part)] for part in range(PARTITIONS)]
+    partition_count = len(run["start_offsets"])
+    starts = [run["start_offsets"][str(part)] for part in range(partition_count)]
+    ends = [run["end_offsets"][str(part)] for part in range(partition_count)]
     records = read_range(settings.kafka_bootstrap_servers, INPUT_TOPIC, starts, ends)
     valid = {}
     invalid = {}
@@ -158,12 +159,12 @@ def reconcile(directory: Path, settings):
     regressions = sum(actual.get(order) != value for order, value in expected.items())
     regressions += len(actual.keys() - expected.keys())
     dlq_end = offsets(settings.kafka_bootstrap_servers, DLQ_TOPIC)
-    dlq_starts = [run["dlq_start_offsets"][str(part)] for part in range(PARTITIONS)]
+    dlq_starts = [run["dlq_start_offsets"][str(part)] for part in range(partition_count)]
     dlq_records = read_range(
         settings.kafka_bootstrap_servers,
         DLQ_TOPIC,
         dlq_starts,
-        [dlq_end[str(part)] for part in range(PARTITIONS)],
+        [dlq_end[str(part)] for part in range(partition_count)],
     )
     envelopes = {}
     for _part, _offset, _key, value in dlq_records:
@@ -184,7 +185,7 @@ def reconcile(directory: Path, settings):
     )
     try:
         committed = group.committed(
-            [TopicPartition(INPUT_TOPIC, part) for part in range(PARTITIONS)], timeout=10
+            [TopicPartition(INPUT_TOPIC, part) for part in range(partition_count)], timeout=10
         )
     finally:
         group.close()

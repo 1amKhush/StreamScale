@@ -119,6 +119,7 @@ def consume(
             "auto.offset.reset": "earliest",
             "allow.auto.create.topics": False,
             "enable.partition.eof": True,
+            "partition.assignment.strategy": "range",
             "max.poll.interval.ms": 300000,
             "session.timeout.ms": 10000,
             "heartbeat.interval.ms": 3000,
@@ -247,7 +248,8 @@ def consume(
             if run is not None and assigned and assigned <= finished:
                 status = "drained"
                 all_offsets = consumer.committed(
-                    [TopicPartition(INPUT_TOPIC, part) for part in range(3)], timeout=10
+                    [TopicPartition(INPUT_TOPIC, part) for part in map(int, run["start_offsets"])],
+                    timeout=10,
                 )
                 if all(p.offset >= run["end_offsets"][str(p.partition)] for p in all_offsets):
                     if not completed:

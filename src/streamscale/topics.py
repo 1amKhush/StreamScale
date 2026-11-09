@@ -1,15 +1,18 @@
-"""Explicit bootstrap; existing topic drift is a failure, never silently repaired."""
+"""Explicit bootstrap, with a guarded, opt-in legacy partition expansion."""
 
-from confluent_kafka import KafkaError, KafkaException
-from confluent_kafka.admin import AdminClient, ConfigResource, NewTopic, ResourceType
+import time
+
+from confluent_kafka import Consumer, KafkaError, KafkaException, TopicPartition
+from confluent_kafka.admin import AdminClient, ConfigResource, NewPartitions, NewTopic, ResourceType
 
 INPUT_TOPIC = "orders.events.v1"
 DLQ_TOPIC = "orders.events.dlq.v1"
-PARTITIONS = 3
+PARTITIONS = 12
+MAX_REPLICAS = PARTITIONS
 TOPIC_CONFIG = {"cleanup.policy": "delete", "retention.ms": "604800000"}
 
 
-def ensure_topics(bootstrap_servers: str) -> dict[str, int]:
+def ensure_topics(bootstrap_servers: str, *, allow_expansion=False) -> dict[str, int]:
     admin = AdminClient({"bootstrap.servers": bootstrap_servers, "socket.timeout.ms": 10000})
     definitions = [
         NewTopic(name, num_partitions=PARTITIONS, replication_factor=1, config=TOPIC_CONFIG)
@@ -29,7 +32,7 @@ def ensure_topics(bootstrap_servers: str) -> dict[str, int]:
         if topic is None or topic.error:
             raise RuntimeError(f"Topic {name} is unavailable after bootstrap")
         count = len(topic.partitions)
-        if count != PARTITIONS:
+        if count != PARTITIONS and not (allow_expansion and count == 3):
             raise RuntimeError(
                 f"Topic {name} has {count} partitions; contract requires {PARTITIONS}"
             )
@@ -42,7 +45,60 @@ def ensure_topics(bootstrap_servers: str) -> dict[str, int]:
         for key, expected in TOPIC_CONFIG.items():
             if config[key].value != expected:
                 raise RuntimeError(f"Topic {resource.name} configuration drift: {key}")
+    legacy = [name for name, count in counts.items() if count == 3]
+    if legacy:
+        _expand_idle_topics(admin, bootstrap_servers, legacy)
+        metadata = admin.list_topics(timeout=15)
+        for name in counts:
+            counts[name] = len(metadata.topics[name].partitions)
+            if counts[name] != PARTITIONS:
+                raise RuntimeError(f"Topic {name} expansion has not settled; retry bootstrap")
     return counts
+
+
+def _expand_idle_topics(admin, bootstrap, names):
+    """Retain old offsets; never change key routing while a pipeline is running.
+
+    Invoke only during setup with publishers closed. Active group membership and
+    changing watermarks are extra fail-closed guards, not a distributed publisher lock.
+    A partial broker operation can be retried safely without deleting either topic.
+    """
+    listings = admin.list_consumer_groups(request_timeout=15).result(timeout=20)
+    if listings.errors:
+        raise RuntimeError("Cannot verify idle consumer groups before partition expansion")
+    groups = [group.group_id for group in listings.valid]
+    if groups:
+        for future in admin.describe_consumer_groups(groups, request_timeout=15).values():
+            group = future.result(timeout=20)
+            if any(
+                part.topic in names
+                for member in group.members
+                for part in member.assignment.topic_partitions
+            ):
+                raise RuntimeError(
+                    "Partition expansion requires idle topics: finish and drain sales, "
+                    "close publishers and pause consumers before retrying bootstrap"
+                )
+    probe = Consumer({"bootstrap.servers": bootstrap, "group.id": "streamscale.expansion-probe"})
+    try:
+
+        def watermarks():
+            return [
+                probe.get_watermark_offsets(TopicPartition(name, p), timeout=10, cached=False)
+                for name in names
+                for p in range(3)
+            ]
+
+        before = watermarks()
+        time.sleep(2)
+        if watermarks() != before:
+            raise RuntimeError("Publishers are active; close them before expanding partitions")
+        for future in admin.create_partitions(
+            [NewPartitions(name, PARTITIONS) for name in names], request_timeout=15
+        ).values():
+            future.result(timeout=20)
+    finally:
+        probe.close()
 
 
 def producer_config(bootstrap_servers: str) -> dict[str, str | int | bool]:

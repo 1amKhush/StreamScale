@@ -16,6 +16,7 @@ from streamscale_console.cluster import ROOT, kubectl
 from experiments.predictive.runtime import capture, driver, install, operation
 from streamscale.predictive import DEFAULT_POLICY
 from streamscale.predictive.model import digest, load, publish, train, versions
+from streamscale.topics import MAX_REPLICAS, PARTITIONS
 
 ARTIFACTS = ROOT / "artifacts/predictive"
 
@@ -48,6 +49,8 @@ def fingerprint():
             "sources": sources,
             "versions": versions(),
             "resources": resources,
+            "partitions": PARTITIONS,
+            "replica_bounds": [1, MAX_REPLICAS],
             "node": {
                 key: node["status"]["nodeInfo"][key]
                 for key in (
@@ -64,24 +67,41 @@ def fingerprint():
 
 
 def config(family, seed, base=40, seconds=180):
+    if seconds < 60 or seconds % 6:
+        raise ValueError("Trace duration must be at least 60 seconds and divisible by six")
     rng = random.Random(seed)
     low = max(2, int(base * rng.uniform(0.30, 0.45)) // 2 * 2)
-    high = max(low + 2, int(base * rng.uniform(2.1, 2.6)) // 2 * 2)
+    high = max(low + 2, int(base * rng.uniform(6, 9)) // 2 * 2)
+    overload = max(high, int(base * rng.uniform(13, 16)) // 2 * 2)
     # Six phases fit the publisher limit and retain a full 60s of history.
     step = seconds // 6
     patterns = {
         "steady": [low] * 6,
-        "ramp": [low, low, low * 2, low * 3, low * 4, low * 2],
+        "ramp": [low, low, low * 2, low * 6, low * 10, low * 3],
         "repeated-burst": [low, high, low, high, low, high],
         "abrupt-step": [low, low, low, high, high, low],
         "flash-sale": [low, low, low, high, high, low],
-        "overload-recovery": [high, high, high, high, low, low],
+        "overload-recovery": [overload, overload, overload, overload, low, low],
     }
+    schedule = [[step, min(2000, rate)] for rate in patterns[family]]
+    if family == "overload-recovery":
+        # Give all modes observed warm-up, then a short saturated surge and a
+        # recovery tail. Sustaining 13–16x single-consumer capacity for 120s would
+        # exceed the fixed baseline's bounded drain budget before reconciliation.
+        burst = max(1, step // 3)
+        schedule = [
+            [2 * step, low],
+            [burst, min(2000, overload)],
+            [burst, min(2000, overload)],
+            [step - 2 * burst, min(2000, overload)],
+            [step, low],
+            [seconds - 4 * step, low],
+        ]
     return {
         "preset": "custom",
         "scenario": "steady",
         "seed": seed,
-        "schedule": [[step, min(2000, rate)] for rate in patterns[family]],
+        "schedule": schedule,
         "faults": {"malformed_pct": 0, "duplicate_pct": 0, "late_pct": 0},
         "family": family,
     }
@@ -102,7 +122,10 @@ def summary(run):
         if (a.get("predictive") or {}).get("status") in {"fallback", "warming up"}
     )
     latency = run["record"]["reconciliation"]["latency_s"]["p95"]
-    recovery_start = sum(phase[0] for phase in run.get("config", {}).get("schedule", [])[:-1])
+    schedule = run.get("config", {}).get("schedule", [])
+    peak = max((rate for _, rate in schedule), default=0)
+    last_peak = max((i for i, (_, rate) in enumerate(schedule) if rate == peak), default=-1)
+    recovery_start = sum(seconds for seconds, _ in schedule[: last_peak + 1])
     first = points[0]["t"] if points else 0
     drained = next(
         (p["t"] for p in points if p["t"] >= first + recovery_start and p.get("lag_total") == 0),
@@ -116,7 +139,9 @@ def summary(run):
             and (run.get("mode") != "ml-predictive" or forecast_samples > 0)
         ),
         "above_latency_target": run["record"]["reconciliation"]["latency_s"].get("above_target"),
-        "recovery_seconds": max(0, drained - first - recovery_start) if drained else None,
+        "recovery_seconds": max(0, drained - first - recovery_start)
+        if drained is not None and run.get("family") == "overload-recovery"
+        else None,
         "measurement_seconds": elapsed,
         "replica_coverage": sum(
             b["t"] - a["t"]
@@ -160,7 +185,7 @@ def calibration(runs):
     capacities = {}
     actuation = []
     handling = []
-    for n in (1, 2, 3):
+    for n in range(1, MAX_REPLICAS + 1):
         rates = []
         for run in runs:
             if run["replicas"] != n:
@@ -215,12 +240,12 @@ async def prepare(console, directory, identity):
     training, validation = [], []
     # Separate saturated traces measure capacity at each size, never extrapolate n*capacity(1).
     calibrated = []
-    for n in (1, 2, 3):
+    for n in range(1, MAX_REPLICAS + 1):
         run = await retained(
             console,
             directory,
             f"calibration-{n}",
-            config("steady", 9000 + n, base=1500, seconds=120),
+            config("steady", 9000 + n, seconds=120) | {"schedule": [[20, 2000]]},
             "manual",
             n,
         )
@@ -245,7 +270,7 @@ async def prepare(console, directory, identity):
                         f"{split}-{family}-{repeat}",
                         config(family, seed, base),
                         "manual",
-                        3,
+                        MAX_REPLICAS,
                     )
                 )
     models, scores = train(training, validation)

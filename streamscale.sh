@@ -12,7 +12,7 @@ KUBECONFIG_FILE="$ROOT/artifacts/kubeconfig"
 
 usage() {
     cat <<'HELP'
-StreamScale launcher — integrated milestones M0–M20
+StreamScale launcher — integrated milestones M0–M21 (12 partitions, 1–12 replicas)
 
 Usage: ./streamscale.sh [command] [options]
 
@@ -23,6 +23,7 @@ Usage: ./streamscale.sh [command] [options]
   check         Start local dependencies and run unit, lint and live integration checks.
   cluster       Setup and deploy/verify a fresh kind cluster execution.
   scaling       Exercise fixed/CPU-HPA/lag-KEDA independently; retain replica evidence.
+  capacity-check Verify twelve ready consumers, all partitions, drain and SQL correctness.
   experiments [--fresh]  Pilot and 27 measured runs; resume/reuse retained evidence.
   analysis      Audit completed measurements and regenerate SVG/PNG/PDF/report.
   verify        Verify the current fresh cluster execution without republishing.
@@ -314,6 +315,8 @@ case "$command" in
         make analysis
         printf '\n[M9–M15] Verifying the interactive console against the live cluster and browser.\n'
         make console-deploy
+        printf '\n[M21] Verifying all twelve partitions and the full replica range.\n'
+        make capacity-check
         printf '\n[M16–M18] Preparing or reusing the predictive model and tuned policy.\n'
         make predictive-prepare
         make console-check
@@ -321,7 +324,7 @@ case "$command" in
         make predictive-check
         make predictive-evaluate
         status
-        printf '\nM0–M20 passed. Report: docs/results/current/report.md; console evidence: artifacts/console/.\n'
+        printf '\nM0–M21 passed. Historical report: docs/results/current/report.md; current evidence: artifacts/predictive/ and artifacts/console/.\n'
         if [[ "$no_ui" == false ]]; then console_serve; fi
         ;;
     local) setup; local_start; make smoke; local_demo ;;
@@ -346,7 +349,7 @@ case "$command" in
         ;;
     ui) ui ;;
     console) console ;;
-    predictive-prepare|predictive-check|predictive-demo|predictive-evaluate)
+    capacity-check|predictive-prepare|predictive-check|predictive-demo|predictive-evaluate)
         setup
         console_prerequisites
         start_cluster_nodes

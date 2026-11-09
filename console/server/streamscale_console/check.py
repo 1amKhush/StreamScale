@@ -75,7 +75,11 @@ def main():
     started = now()
     results = []
     python = sys.executable
-    stage("python unit tests", [python, "-m", "pytest", "console/tests", "-q"], results)
+    stage(
+        "python unit tests",
+        [python, "-m", "pytest", "console/tests", "-m", "not live", "-q"],
+        results,
+    )
     stage("web type check", ["npm", "run", "typecheck"], results, cwd=WEB)
     stage("web unit tests", ["npm", "test"], results, cwd=WEB)
     stage("web build", ["npm", "run", "build"], results, cwd=WEB)

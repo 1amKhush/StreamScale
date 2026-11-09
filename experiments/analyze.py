@@ -75,6 +75,12 @@ def report(campaign, state, frozen, rows, aggregates, verification):
     replicas = value_table(aggregates, "replica_seconds")
     recovery = value_table(aggregates, "recovery_seconds")
     resources = verification["consumer_resources"][0]
+    partition_count = len(
+        json.loads(
+            (campaign / rows[0]["artifact_directory"].split("/")[-1] / "run.json").read_text()
+        )["start_offsets"]
+    )
+    partition_word = "three" if partition_count == 3 else str(partition_count)
     lines = [
         "# StreamScale measured results",
         "",
@@ -168,7 +174,8 @@ def report(campaign, state, frozen, rows, aggregates, verification):
         "It can be lower during a burst even when every event eventually arrives. "
         "`summary.csv` also reports processing-span and drain-inclusive throughput. "
         "Latency uses every unique accepted event, including the drained tail. Maximum lag is "
-        "the maximum sampled sum of three broker-offset partitions. Recovery ends after five "
+        f"the maximum sampled sum of {partition_word} broker-offset partitions. "
+        "Recovery ends after five "
         "distinct fresh zero-lag observations, including their confirmation delay. "
         "Missing recovery "
         "or scaling response remains missing; it is never filled with zero.",
@@ -197,7 +204,8 @@ def report(campaign, state, frozen, rows, aggregates, verification):
         f"{resources['requests']['memory']}; limits: {resources['limits']['cpu']} CPU / "
         f"{resources['limits']['memory']} per replica. Fixed uses "
         "one replica; CPU-HPA targets 60% of requested CPU; KEDA targets 100 Kafka records of "
-        "lag per replica. Autoscaled modes are bounded at 1–3, with three input partitions. "
+        f"lag per replica. Autoscaled modes are bounded at 1–{partition_count}, "
+        f"with {partition_word} input partitions. "
         "Controllers are alternative, never simultaneously attached to the consumer.",
         "",
         "The same logical scenario manifest must match across all nine corresponding cells. "

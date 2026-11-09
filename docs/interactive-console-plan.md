@@ -33,7 +33,7 @@ stand idle. Queue length is a direct picture of lag.
 | --- | --- | --- |
 | Shoppers arriving through the doors | Interactive publisher producing order events | One order normally creates two events. |
 | Loyalty-card lane rule | `order_id` key hashed to one partition | Routing is deterministic, not a shopper's choice. |
-| Checkout lanes 0–2 | Partitions 0–2 of `orders.events.v1` | Kafka keeps records after they are read. |
+| Checkout lanes 0–11 | Partitions 0–11 of `orders.events.v1` | Kafka keeps records after they are read. |
 | Ticket dispensed / "now serving" board | High watermark / committed group offset | |
 | Queue length | Partition lag | |
 | Cashier, lanes covered | Consumer pod, partition assignment | |
@@ -87,7 +87,7 @@ refuse the audited 27-run matrix. The console is therefore strictly additive:
 | Live flow map | Actual pod/partition topology; sampled animated traffic; per-partition backlog; links from each consumer to owned partitions; accepted/duplicate/late/DLQ branches; DB-before-offset explanation; node health, bottleneck highlights, zoom/fit and component inspector. Animation is a sampled illustration, not a claim of observing every processing step. |
 | Sale configuration | Steady, flash-sale and overload/recovery presets; seed; order/event budget; duration and multi-phase rate schedule; pre-run malformed/duplicate/late percentages; validation and estimated event volume; reusable saved presets and repeat settings with a fresh run UUID/group. |
 | Sale operation | Start; pause new production while consumers drain; resume; change live publishing rate; end the sale with acknowledged-message flush and backlog drain; explicit abort with a retained partial-run result; publisher progress, confirmed acknowledgements, remaining budget and delivery failures. |
-| Scaling | Fixed one consumer; Manual 0–3; CPU-HPA 1–3; lag-KEDA 1–3; change strategy within an interactive session; enter/release manual override; CPU target and lag threshold settings; desired/ready/group-member counts displayed separately; min/max controls within the three-partition cap; scale decision reasons and transition history. Zero manual replicas is labelled stopped processing, not crashed. |
+| Scaling | Fixed one consumer; Manual 0–12; CPU-HPA 1–12; lag-KEDA 1–12; change strategy within an interactive session; enter/release manual override; CPU target and lag threshold settings; desired/ready/group-member counts displayed separately; min/max controls within the twelve-partition cap; scale decision reasons and transition history. Zero manual replicas is labelled stopped processing, not crashed. |
 | Metrics and explanations | Publish/accept rates; per-partition/total lag and lag growth; live histogram p95 estimate; exact completed-run SQL p95; CPU, memory, restarts, readiness, DB latency, duplicates, invalids, late events, DLQ outcomes and replica-seconds; separate order and event totals; configurable backlog/latency targets; observed drain rate and a qualified drain-time estimate. Missing/stale measurements remain unknown. |
 | Event and data inspection | Bounded event samples; run/order/event lookup; producer acknowledgement, source partition/offset, accepted SQL fact and latest state; validation reason/DLQ envelope; demonstrate duplicate facts remaining unique and late arrivals retaining history without rolling state backward. Intermediate stages are shown only when instrumented; otherwise the UI states the evidence it actually has. |
 | Failure lab | Restart a selected consumer; deliberate crash after DB commit before offset commit; crash after DLQ acknowledgement; stop all consumers; consumer processing delay/CPU restriction; temporary PostgreSQL outage; temporary Kafka outage; malformed/duplicate/late fixture presets; bounded, low-memory consumer OOM demonstration; adjustable duration and automatic recovery for temporary faults. Each action displays its actual scope, progress, observed failure and recovery result. |
@@ -101,9 +101,9 @@ refuse the audited 27-run matrix. The console is therefore strictly additive:
 | Mode | Controller | Consumer range | Purpose |
 | --- | --- | --- | --- |
 | Fixed | No autoscaler | 1 | Existing fixed baseline and no-scaling demonstration. |
-| Manual | No active autoscaler | 0–3 | Direct experimentation, including pausing consumers and rescuing backlog. |
-| CPU-HPA | CPU HPA | 1–3 | Observe CPU-triggered scale-up/down. |
-| Lag-KEDA | KEDA and its owned HPA | 1–3 | Observe Kafka-lag-triggered scale-up/down. |
+| Manual | No active autoscaler | 0–12 | Direct experimentation, including pausing consumers and rescuing backlog. |
+| CPU-HPA | CPU HPA | 1–12 | Observe CPU-triggered scale-up/down. |
+| Lag-KEDA | KEDA and its owned HPA | 1–12 | Observe Kafka-lag-triggered scale-up/down. |
 
 Manual override explicitly suspends/removes the active controller before writing
 replicas. Releasing override restores the chosen autoscaler. HPA and KEDA never
@@ -127,7 +127,7 @@ flowchart LR
     API --> Kube[Scoped Kubernetes operations]
     API --> Observe[Prometheus / Kafka admin / SQL / artifacts]
     Kube --> Sale[Interactive publisher Job]
-    Sale --> Kafka[Kafka: three partitions]
+    Sale --> Kafka[Kafka: twelve partitions]
     Kafka --> Consumer[Consumer replicas]
     Consumer --> SQL[PostgreSQL history and state]
     Consumer --> DLQ[Invalid-event DLQ]

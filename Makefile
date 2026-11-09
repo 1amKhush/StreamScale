@@ -11,7 +11,7 @@ up:
 	$(COMPOSE) up -d --wait --wait-timeout 180
 
 bootstrap:
-	$(RUN) streamscale topics
+	$(RUN) streamscale topics --upgrade-partitions
 	$(RUN) streamscale migrate
 
 smoke:
@@ -97,7 +97,7 @@ console-web: console-install
 	cd console/web && npm run build
 
 console-test: console-install
-	$(CONSOLE) pytest console/tests
+	$(CONSOLE) pytest console/tests -m 'not live'
 	cd console/web && npm run typecheck && npm test
 
 console-deploy: console-install .tools/bin/kind .tools/bin/kubectl .tools/bin/helm
@@ -130,3 +130,7 @@ predictive-demo: predictive-install
 
 predictive-evaluate: predictive-install
 	$(PREDICTIVE) python -m experiments.predictive.campaign evaluate
+
+.PHONY: capacity-check
+capacity-check: console-install
+	$(CONSOLE) pytest console/tests/live/test_capacity.py -m live -q

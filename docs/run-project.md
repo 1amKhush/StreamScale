@@ -1,4 +1,4 @@
-# Run and stop StreamScale through M20
+# Run and stop StreamScale through M21
 
 Start Docker Engine/Desktop first. You need Bash, uv, make, and Node.js 20.19+
 with npm installed. The console's browser checks use the installed Google Chrome.
@@ -93,7 +93,7 @@ and four invalid/DLQ sources. Both should have zero missing valid IDs, zero
 duplicate stored IDs, zero state regression and zero lag after drain.
 
 Cluster verification allows up to 60 seconds for the independent Prometheus
-scrapes to match the completed run. It requires zero lag in all three partitions
+scrapes to match the completed run. It requires zero lag in all twelve partitions
 and a Kafka exporter sample newer than SQL reconciliation. Persistent backlog,
 incorrect counters or missing series still fail with their observed values.
 To repeat verification without rebuilding or republishing, run
@@ -277,7 +277,7 @@ shared Kafka/PostgreSQL were scaled only by the failure lab's bounded, restored 
 ## ML Predictive (M16–M20)
 
 One new scaling choice combines history-only quantile forecasts and predictive
-capacity control. Its default p95 objective is 2 seconds within 1–3 replicas.
+capacity control. Its default p95 objective is 2 seconds within 1–12 replicas.
 The predictor cannot see future schedules. Warm-up, fallback and capacity limits
 are statuses within this mode. Bayesian policy tuning happens offline.
 
@@ -291,7 +291,7 @@ are statuses within this mode. Bayesian policy tuning happens offline.
 ```
 
 Preparation is a substantial one-time campaign, not a short startup check. It
-records three capacity-calibration runs, twelve training runs, four validation
+records twelve capacity-calibration runs, twelve training runs, four validation
 runs and two workloads for each of twelve policy candidates, plus drain time.
 Subsequent invocations reuse compatible artifacts or resume at completed captures.
 An interrupted capture is retained in console sessions; let it drain before
@@ -329,3 +329,43 @@ On phones all six destinations remain visible. The diagram's List view and the
 component inspector provide readable details; Map remains available. View options
 retains vocabulary, reduced motion and presentation. Selecting a component or
 looking up a record opens the same keyboard-accessible inspector.
+
+## Twelve-partition configuration (M21)
+
+The maintained configuration uses **12 input and DLQ partitions**, starts at one
+consumer and permits **1–12 replicas** in CPU-HPA, lag-KEDA and ML Predictive.
+Fixed remains one; manual zero pauses processing. All comparisons use the same
+partition count and per-consumer resource limits.
+
+```sh
+./streamscale.sh all --no-ui    # complete validation, preparation and comparison
+./streamscale.sh capacity-check # twelve consumers, ownership, downscale and SQL
+./streamscale.sh console        # Scaling: choose a mode or manually choose 0–12
+```
+
+For an existing three-partition installation, finish and drain every sale, close
+publishers and pause consumers before bootstrap. `make bootstrap` explicitly
+enables guarded expansion from 3 to 12 and applies SQL migration 0002. Expansion
+retains records and offsets; never delete topics or volumes to upgrade. An active
+group or changing source watermark blocks expansion. Do not resume an old
+publisher after expansion: start a fresh run so each order keeps one partition
+throughout its execution. Counts other than legacy 3 or current 12 are rejected.
+
+The agent upgrades persisted legacy bounds and reapplies its selected controller
+under the existing ownership lock. Historical reports and replay data remain
+available. The launcher audits the completed historical M7 matrix even when its
+code fingerprint differs; it explicitly labels that evidence historical. It
+never resumes an unfinished campaign with incompatible code.
+
+Preparation recalibrates **all twelve replica counts** and invalidates old models
+through capacity and feature metadata. Higher replica limits do not promise
+linear throughput: the database and local node can still constrain capacity.
+The historical report under `docs/results/current` describes the old 1–3 range.
+Current results belong to the separate fingerprinted predictive campaign.
+
+The move from three to twelve provides a wider experimental range: three replicas
+allowed only two upward steps, whereas twelve lets us inspect gradual scaling,
+stabilization, manual rescue and predictive resource savings. Partition count
+must grow with the replica ceiling so added consumers can receive useful work.
+This does not guarantee linear throughput or a latency improvement; use the
+measured evidence in [M21 acceptance](capacity-evidence.md).

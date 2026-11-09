@@ -27,7 +27,7 @@ at `postgres:5432`, externally at `127.0.0.1:15432`. Change `KAFKA_PORT` alongsi
 Database credentials in `DATABASE_URL` must match the `POSTGRES_*` values.
 The sample credentials are for this loopback development stack only.
 
-`orders.events.v1` and `orders.events.dlq.v1` each have exactly three partitions,
+`orders.events.v1` and `orders.events.dlq.v1` each have exactly twelve partitions,
 replication factor 1, delete retention of seven days and no compaction. Startup
 does not auto-create topics. Bootstrap verifies retained topics and fails on
 partition/replication/config drift rather than expanding or deleting them.
@@ -71,7 +71,7 @@ PY
 Expected output includes that fixture's order ID, partition/offset and JSON
 payload. The static fixture is an old timestamped contract example, not latency
 evidence or a measured workload. `make smoke` instead stamps actual publish times,
-uses fresh run/event IDs and explicitly verifies all three partitions. Manually
+uses fresh run/event IDs and explicitly verifies all twelve partitions. Manually
 publishing test records adds retained broker records; later experiment groups must
 start from captured offsets and isolate run IDs as specified in M0.
 

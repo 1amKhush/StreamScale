@@ -59,7 +59,7 @@ explanation and the point where the analogy stops being accurate.
 | Store lens | System lens |
 | --- | --- |
 | Store doors | Interactive publisher |
-| Checkout lanes 0–2 | Partitions 0–2 of `orders.events.v1` |
+| Checkout lanes 0–11 | Partitions 0–11 of `orders.events.v1` |
 | Tickets issued / now serving / queue length | High watermark / committed offset / lag |
 | Cashiers and the lanes they cover | Console consumer pods and their partition assignment |
 | Floor manager | Scaling controller (fixed, manual, CPU-HPA, lag-KEDA, ML Predictive) |
@@ -118,7 +118,7 @@ The **Sale** page plans a sale before the doors open:
 - **Problem shoppers**: malformed, duplicate and late percentages (0–20%), seeded
   like the measured correctness profile (defaults 1%, 2%, 5%).
 - **Estimate**: events, orders, expected DLQ items, duplicates and late events, and
-  the queue one, two or three consumers would build at the M7 pilot's measured
+  the queue one through twelve consumers would build at the M7 pilot's measured
   capacity (about 130 events/s each). It is labelled as an estimate.
 - **Saved presets** live in `artifacts/console/presets.json`; *Run the last sale
   again* repeats its settings as a fresh run.
@@ -160,10 +160,10 @@ The **Scaling** page chooses how many console consumers run:
 | Mode | Replicas | Who decides |
 | --- | --- | --- |
 | Fixed | 1 | Nobody: the baseline. |
-| Manual | 0–3 | You. Zero stops processing; it is not a crash. |
-| CPU-HPA | 1–3 | Kubernetes, from CPU use relative to the pod's request (target 60%). |
-| Lag-KEDA | 1–3 | KEDA, from consumer-group lag per replica (threshold 100). |
-| ML Predictive | 1–3 | History-only quantile forecasts and predictive control, targeting p95 ≤ 2 seconds. Prepare the reusable model/policy first. |
+| Manual | 0–12 | You. Zero stops processing; it is not a crash. |
+| CPU-HPA | 1–12 | Kubernetes, from CPU use relative to the pod's request (target 60%). |
+| Lag-KEDA | 1–12 | KEDA, from consumer-group lag per replica (threshold 100). |
+| ML Predictive | 1–12 | History-only quantile forecasts and predictive control, targeting p95 ≤ 2 seconds. Prepare the reusable model/policy first. |
 
 From CPU-HPA, lag-KEDA or ML Predictive, **Manual override** suspends the autoscaler first and
 then sets replicas directly, so two controllers never compete; *Resume* restores

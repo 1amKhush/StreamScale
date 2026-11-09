@@ -60,7 +60,8 @@ pilot, use `./streamscale.sh cluster` followed by `./streamscale.sh console`.
 | --- | --- |
 | `./streamscale.sh console` | Deploy and serve the interactive console (prints a login link) |
 | `./streamscale.sh cluster` | Deploy and verify a fresh run on the kind cluster |
-| `./streamscale.sh scaling` | Exercise fixed / CPU-HPA / lag-KEDA and their 1–3 replica bounds |
+| `./streamscale.sh capacity-check` | Verify all twelve consumers, partition ownership and SQL reconciliation |
+| `./streamscale.sh scaling` | Exercise fixed / CPU-HPA / lag-KEDA and their 1–12 replica bounds |
 | `./streamscale.sh experiments [--fresh]` | Run or resume the 27-run measured campaign |
 | `./streamscale.sh analysis` | Re-audit raw measurements and regenerate plots, report and PDF |
 | `./streamscale.sh ui` | Open Grafana and Prometheus port forwards |
@@ -76,7 +77,7 @@ covers each stage, expected outputs, manual `make` targets and shutdown/resume.
 ## Results
 
 Three scenarios: a **steady** 52 events/s, a **flash-sale** surge to 390 events/s,
-and an **overload-recovery** test. Each scenario × mode cell was measured three times
+and an **overload-recovery** test. These historical measurements used three partitions and a 1–3 replica range; the current configuration uses twelve partitions and 1–12 replicas. Each scenario × mode cell was measured three times
 in randomized order. Values are medians.
 
 | Flash-sale scenario | p95 latency | Peak backlog | Throughput | Pod time used |
@@ -116,8 +117,8 @@ checkout, with the real Kafka and Kubernetes names always visible:
 | In the store | In the pipeline |
 | --- | --- |
 | 🛒 Shoppers | Order events from the publisher |
-| 🧾 Checkout lanes | Kafka partitions (3) |
-| 🧑‍💼 Cashiers | Consumer pods (1–3) |
+| 🧾 Checkout lanes | Kafka partitions (12) |
+| 🧑‍💼 Cashiers | Consumer pods (1–12) |
 | 📋 Floor manager | Scaling controller (fixed, manual, HPA or KEDA) |
 | 📒 Sales ledger | PostgreSQL |
 | 🗂️ Problem-items desk | Dead-letter queue |
@@ -139,7 +140,7 @@ See the [console guide](docs/console.md) for a walkthrough and its safety scope.
 
 ```mermaid
 flowchart LR
-    P["Seeded publisher<br/>flash-sale workload"] -->|"keyed by order_id"| K[("Kafka<br/>orders · 3 partitions")]
+    P["Seeded publisher<br/>flash-sale workload"] -->|"keyed by order_id"| K[("Kafka<br/>orders · 12 partitions")]
     K --> C["Consumer pods<br/>1 – 3 replicas"]
     C -->|"commit DB first,<br/>then offsets"| DB[("PostgreSQL<br/>facts · state · history")]
     C -->|"invalid events"| DLQ[("Kafka DLQ")]
@@ -210,6 +211,7 @@ docs/                 guides, evidence and results
 | M13 | Failure lab and recovery | [m13](docs/m13-evidence.md) |
 | M14 | Replay, comparison and guided demos | [m14](docs/m14-evidence.md) |
 | M15 | Full browser-to-pipeline acceptance | [m15](docs/m15-evidence.md) |
+| M21 | Twelve partitions, 1–12 replicas, capacity calibration and guarded upgrade | [capacity](docs/capacity-evidence.md) |
 | UI | Focused task pages and mobile layout | [ui-refinement](docs/ui-refinement-evidence.md) |
 
 The complete M0–M15 launcher, including live-cluster and browser acceptance, passed on 2026-10-12.
@@ -238,7 +240,7 @@ The complete M0–M15 launcher, including live-cluster and browser acceptance, p
 ### ML Predictive scaling (M16–M20)
 
 The **ML Predictive** choice uses observed Kafka traffic history, quantile boosted
-trees and a predictive controller to target p95 latency ≤ 2 seconds within 1–3
+trees and a predictive controller to target p95 latency ≤ 2 seconds within 1–12
 replicas. Offline Ax/BoTorch tuning selects a policy once; compatible pilots reuse
 it. Warm-up and reactive fallback are internal statuses, not extra UI modes.
 
@@ -263,3 +265,16 @@ copyable start/stop commands and troubleshooting. Guided demos remain under
 **Docs → Guided demos**. Task pages keep live context compact; detailed settings,
 controller internals and fault history expand when needed. After login, `#docs`
 opens the guide and `#docs/scaling` links directly to predictive scaling help.
+
+The maintained capacity configuration is **12 Kafka partitions and 1–12 consumer
+replicas**, starting at one. Fixed mode uses one consumer; manual zero pauses
+processing. Bootstrap widens the SQL partition checks and can expand idle legacy
+topics without deleting data. Finish and drain existing sales and close publishers
+before upgrading. Old predictive artifacts require preparation for the new
+capacity range. See [upgrade and verification](docs/run-project.md#twelve-partition-configuration-m21).
+
+Why twelve? Three replicas offered only two upward steps, limiting what scaling
+and predictive experiments could show. Twelve provides a useful range for
+gradual scaling, rescue and resource tradeoffs, with matching partitions so
+added consumers can work. It remains one configuration. Database/node limits
+still apply; the wider limit alone is not evidence of a performance gain.

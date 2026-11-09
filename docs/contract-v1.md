@@ -46,11 +46,17 @@ comparison excludes this per-attempt field. Reusing an event ID with different
 logical fields is an integrity failure: stop the run, preserve the offset and
 investigate; do not silently classify it as a normal duplicate.
 
-Publish to `orders.events.v1` with `order_id` bytes as the key. Exactly three
+Publish to `orders.events.v1` with `order_id` bytes as the key. Exactly twelve
 partitions, replication factor one locally. Pin librdkafka's `consistent`
 partitioner (unsigned CRC32 of the nonempty key modulo partition count) in
 all future publishers. Disable topic auto-creation and refuse partition drift.
-The DLQ `orders.events.dlq.v1` also uses three partitions locally.
+The DLQ `orders.events.dlq.v1` also uses twelve partitions locally.
+Setup can expand the legacy three-partition topics only when explicitly enabled
+and its idle-consumer and unchanged-watermark guards pass. Publishers must be
+closed for this upgrade; existing offsets and records are retained. New runs
+use the new key mapping; a run must never publish across a partition expansion.
+`0002_twelve_partitions.sql` widens source-coordinate constraints to 0–11.
+The original migration checksum and all existing facts remain unchanged.
 
 ## Persistence, late events and failures
 
@@ -109,7 +115,7 @@ coordinate and preserve raw copies. Do not promise unique DLQ entries.
 
 ## Workload and measurement definitions for later milestones
 
-Modes are `fixed` (1), `cpu-hpa` (1–3), `lag-keda` (1–3), mutually exclusive.
+Modes are `fixed` (1), `cpu-hpa` (1–12), `lag-keda` (1–12), mutually exclusive.
 All use identical images, resources, topics, database and logical seed workload.
 One pilot precedes 27 measured runs: three modes × three scenarios × three repeats.
 

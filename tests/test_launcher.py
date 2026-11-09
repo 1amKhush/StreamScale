@@ -129,6 +129,7 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
         "experiments",
         "analysis",
         "console-deploy",
+        "capacity-check",
         "predictive-prepare",
         "console-check",
         "predictive-check",
@@ -236,7 +237,14 @@ def test_invalid_ui_options_fail_before_services_or_publication(launcher, argume
 
 
 @pytest.mark.parametrize(
-    "command", ["predictive-prepare", "predictive-check", "predictive-demo", "predictive-evaluate"]
+    "command",
+    [
+        "capacity-check",
+        "predictive-prepare",
+        "predictive-check",
+        "predictive-demo",
+        "predictive-evaluate",
+    ],
 )
 def test_predictive_commands_use_the_maintained_make_entrypoint(launcher, command):
     result, calls, _ = launcher(command)

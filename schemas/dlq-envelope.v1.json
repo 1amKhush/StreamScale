@@ -15,7 +15,7 @@
       "required": ["topic", "partition", "offset"],
       "properties": {
         "topic": {"const": "orders.events.v1"},
-        "partition": {"type": "integer", "minimum": 0, "maximum": 2},
+        "partition": {"type": "integer", "minimum": 0, "maximum": 11},
         "offset": {"type": "integer", "minimum": 0}
       }
     },

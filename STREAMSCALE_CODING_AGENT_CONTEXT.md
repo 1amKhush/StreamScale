@@ -9,11 +9,19 @@ Build a small, reproducible Kafka-to-PostgreSQL order-event pipeline and compare
 
 Start by inspecting the repository and existing requirements. If there is no implementation repository yet, create or ask for its location before writing source files. Begin with **M0: freeze the executable contract**, then implement **M1**. Do not mark a milestone done merely because files exist; run its checks and record the results. At each step, give the user a short approach outline, the files/modules you plan to touch and why, the acceptance evidence, and the next milestone.
 
+## Current capacity amendment (M21)
+
+The current configuration is twelve input and DLQ partitions, with autoscalers
+limited to 1–12 replicas. Fixed remains one; manual zero pauses processing.
+Historical M0–M8 evidence below used three partitions and 1–3 replicas. It is
+retained as historical evidence, not a measurement of the expanded configuration.
+The original event payload and transactional ordering rules still apply.
+
 ## What the system does
 
 1. A seeded Python workload tool creates synthetic order events and publishes them to Kafka. It can deliberately inject malformed, duplicate, and late events. Generated files and run outputs are experiment artifacts; the generator's source belongs in the repo, but it is **not** part of the continuously running consumer service.
-2. Kafka input topic `orders.events.v1` has **exactly three partitions**. Publish with `order_id` as the message key. Ordering is per partition and per order, not global.
-3. One to three replicas of the same Python consumer, in one consumer group, poll bounded batches. The consumer decodes and validates each record.
+2. Kafka input topic `orders.events.v1` has **exactly twelve partitions**. Publish with `order_id` as the message key. Ordering is per partition and per order, not global.
+3. One to twelve replicas of the same Python consumer, in one consumer group, poll bounded batches. The consumer decodes and validates each record.
 4. For a valid record, one PostgreSQL transaction inserts an immutable `order_event` fact if new and conditionally updates `order_state`. **Commit the database transaction before committing that partition's Kafka offset.**
 5. For an invalid record, publish an envelope with the original record and reason to `orders.events.dlq.v1`. Wait for broker acknowledgement **before** committing the source offset.
 6. Prometheus collects operational metrics; Grafana displays them. SQL reads the accepted event history and latest state. An experiment runner records configuration and exports per-run summaries.
@@ -70,10 +78,10 @@ Compare these **alternative** modes with the same consumer image and resource li
 | Mode | Scaling control | Replica range |
 | --- | --- | --- |
 | Fixed | One consumer | 1 |
-| CPU-HPA | Kubernetes CPU-based Horizontal Pod Autoscaler | 1–3 |
-| Lag-KEDA | KEDA Kafka consumer-lag scaler | 1–3 |
+| CPU-HPA | Kubernetes CPU-based Horizontal Pod Autoscaler | 1–12 |
+| Lag-KEDA | KEDA Kafka consumer-lag scaler | 1–12 |
 
-Never enable HPA and KEDA together for a measured run. Three partitions cap useful consumer parallelism at three. Use a local `kind` Kubernetes cluster and Helm for the deployment experiment; use a small local Kafka/PostgreSQL stack for early development. HPA needs usable Kubernetes CPU metrics. Keep Kafka, PostgreSQL, topic partitioning, consumer image and resource configuration comparable across modes.
+Never enable HPA and KEDA together for a measured run. Twelve partitions cap useful consumer parallelism at twelve. Use a local `kind` Kubernetes cluster and Helm for the deployment experiment; use a small local Kafka/PostgreSQL stack for early development. HPA needs usable Kubernetes CPU metrics. Keep Kafka, PostgreSQL, topic partitioning, consumer image and resource configuration comparable across modes.
 
 Run three scenarios—steady traffic, flash-sale burst, and sustained overload followed by recovery—with three repetitions of each mode/scenario pair: **27 planned measured runs**, after a pilot. Reuse the same scenario seed and logical workload across compared modes. Capture run ID, seed, mode, scenario, image/Git revision, configuration, warm-up and measurement windows, resource limits, and start/end times. Isolate each run's state and offsets, or explicitly reset them, so a previous run cannot affect the next one.
 
@@ -107,12 +115,12 @@ Adjust this to the existing repository instead of reshuffling working code. Keep
 | Milestone | Deliverable | Acceptance evidence |
 | --- | --- | --- |
 | **M0 — Contract** | Schema, run/ID generation rule, late-event rule, DLQ codes, SQL migration plan, workload and measurement definitions. | Reviewed decisions and fixtures; contradictions with older documents resolved before migration. |
-| **M1 — Local foundation** | Repo structure, dependencies, Kafka/PostgreSQL local stack, three-partition topic. | Reproducible startup and manual publish/consume smoke test. |
+| **M1 — Local foundation** | Repo structure, dependencies, Kafka/PostgreSQL local stack, twelve-partition topic. | Reproducible startup and manual publish/consume smoke test. |
 | **M2 — Workload** | Seeded generator and publisher, normal/invalid/duplicate/late fixtures. | Same seed gives same logical sequence; key/partition, fault and ID behavior verified. |
 | **M3 — One consumer** | Validation, one transactional DB write, manual source-offset commits. | SQL history/state inspection and crash-after-DB-commit replay without duplicate rows. |
 | **M4 — Fault handling** | DLQ, retry/backoff, late-event rule, restart/rebalance behavior. | Deliberate malformed input, DB outage, duplicate, late arrival and replay cases pass. |
 | **M5 — Deployment and metrics** | Container, kind/Helm, Prometheus and Grafana. | One consumer works in cluster; metrics and run labels are inspectable. |
-| **M6 — Scaling modes** | Fixed, CPU-HPA and lag-KEDA configurations. | Independently exercise each mode; 1–3 replica bound and mode isolation verified. |
+| **M6 — Scaling modes** | Fixed, CPU-HPA and lag-KEDA configurations. | Independently exercise each mode; 1–12 replica bound and mode isolation verified. |
 | **M7 — Runs** | Pilot, then controlled 27-run matrix and reconciliation. | Per-run configuration, raw evidence and CSV; only correct runs enter comparison. |
 | **M8 — Analysis** | Plots, interpretation, reproducibility instructions and presentation evidence. | Report explains limitations and results without claiming unmeasured improvement. |
 

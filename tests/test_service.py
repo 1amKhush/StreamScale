@@ -35,7 +35,9 @@ def test_unavailable_group_metrics_do_not_fabricate_zero_replicas():
     admin = Mock()
     admin.describe_consumer_groups.return_value = {"group": future}
     with pytest.raises(KafkaException):
-        kafka_snapshot(client, admin, {"group_id": "group"})
+        kafka_snapshot(
+            client, admin, {"group_id": "group", "start_offsets": {str(p): 0 for p in range(12)}}
+        )
 
 
 def test_failed_workload_fails_waiter_immediately(tmp_path):

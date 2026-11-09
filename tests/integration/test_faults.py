@@ -39,7 +39,9 @@ def group_offsets(settings, run):
     try:
         return {
             str(p.partition): p.offset
-            for p in probe.committed([TopicPartition(INPUT_TOPIC, p) for p in range(3)], timeout=10)
+            for p in probe.committed(
+                [TopicPartition(INPUT_TOPIC, p) for p in range(12)], timeout=10
+            )
         }
     finally:
         probe.close()
@@ -211,14 +213,14 @@ def test_live_join_leave_rebalance_preserves_facts_and_projection(
     threads = [Thread(target=worker, args=(i,), daemon=True) for i in range(2)]
     try:
         threads[0].start()
-        until(lambda: assignments[0] and len(assignments[0][-1]) == 3)
+        until(lambda: assignments[0] and len(assignments[0][-1]) == 12)
         threads[1].start()
-        until(lambda: all(history and 0 < len(history[-1]) < 3 for history in assignments))
+        until(lambda: all(history and 0 < len(history[-1]) < 12 for history in assignments))
         assert set(assignments[0][-1]).isdisjoint(assignments[1][-1])
-        assert set(assignments[0][-1] + assignments[1][-1]) == {0, 1, 2}
+        assert set(assignments[0][-1] + assignments[1][-1]) == set(range(12))
         stops[0].set()
         threads[0].join(20)
-        until(lambda: assignments[1] and len(assignments[1][-1]) == 3)
+        until(lambda: assignments[1] and len(assignments[1][-1]) == 12)
         until(
             lambda: group_offsets(local, read_run(directory)) == read_run(directory)["end_offsets"]
         )

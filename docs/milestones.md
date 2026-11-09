@@ -43,3 +43,12 @@ available locally. No claims are made about reviewing or updating those artifact
 Predictive evidence and limitations: [ML Predictive](predictive.md) and
 [implementation acceptance](predictive-evidence.md). These states distinguish
 implemented code from unexecuted live training and performance campaigns.
+
+## Capacity expansion
+
+| Milestone | Scope estimate | Dependencies | Acceptance | State |
+| --- | --- | --- | --- | --- |
+| M21 | Large: one twelve-partition configuration and 1–12 scaling | M0–M20 | SQL/topic upgrade, all replica counts, predictive calibration, full launcher and browser acceptance | In progress 2026-11-09; implementation and automated checks underway; live acceptance running |
+
+M21 retains the historical three-partition milestones and measured reports above.
+Current configuration and acceptance evidence: [twelve-partition capacity](capacity-evidence.md).

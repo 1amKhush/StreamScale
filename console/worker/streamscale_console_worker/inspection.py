@@ -15,7 +15,7 @@ import psycopg
 from confluent_kafka import Consumer, KafkaError, TopicPartition
 
 from streamscale.run_artifacts import read_jsonl, read_run
-from streamscale.topics import DLQ_TOPIC, PARTITIONS
+from streamscale.topics import DLQ_TOPIC
 from streamscale_console_worker import control
 
 
@@ -59,7 +59,7 @@ class DeadLetterTail:
             self.consumer.assign(
                 [
                     TopicPartition(DLQ_TOPIC, part, run["dlq_start_offsets"][str(part)])
-                    for part in range(PARTITIONS)
+                    for part in map(int, run["dlq_start_offsets"])
                 ]
             )
             with self.lock:

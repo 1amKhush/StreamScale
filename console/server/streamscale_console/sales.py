@@ -16,6 +16,7 @@ from pathlib import Path
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from streamscale.topics import PARTITIONS
 from streamscale_console.cluster import ARTIFACTS, ROOT
 from streamscale_console.operations import Rejected
 from streamscale_console.telemetry import AgentRejected, AgentUnavailable
@@ -694,7 +695,9 @@ def drained(sample, run_name):
     if run.get("run_name") != run_name or run.get("status") != "published":
         return False
     partitions = (sample.get("kafka") or {}).get("partitions") or []
-    return len(partitions) == 3 and all(row.get("run_remaining") == 0 for row in partitions)
+    return len(partitions) == PARTITIONS and all(
+        row.get("run_remaining") == 0 for row in partitions
+    )
 
 
 def _sale_brief(sale):

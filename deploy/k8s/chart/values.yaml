@@ -12,7 +12,7 @@ consumer:
 scaling:
   mode: fixed
   minReplicas: 1
-  maxReplicas: 3
+  maxReplicas: 12
   cpuTarget: 60
   lagThreshold: 100
   pollingInterval: 2

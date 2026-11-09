@@ -149,3 +149,19 @@ def test_schema_is_draft_2020_12():
     for name in ("order-event.v1.json", "dlq-envelope.v1.json"):
         assert validator(name).schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
     assert UUID(FIXTURE["event_id"])
+
+
+@pytest.mark.parametrize(
+    "partition,valid", [(0, True), (3, True), (11, True), (12, False), (-1, False)]
+)
+def test_dlq_partition_bounds_match_twelve_partition_source(partition, valid):
+    envelope = {
+        "schema_version": 1,
+        "original_key_base64": None,
+        "original_payload_base64": None,
+        "source": {"topic": "orders.events.v1", "partition": partition, "offset": 0},
+        "error_code": "INVALID_JSON",
+        "detail": "Malformed",
+        "failed_at": FIXTURE["produced_at"],
+    }
+    assert validator("dlq-envelope.v1.json").is_valid(envelope) is valid

@@ -94,3 +94,13 @@ page overflow. Screenshot: `artifacts/console/predictive-mobile.png`. The traine
 sale/forecast/recovery/browser journey is a separate check and remains pending.
 Preparation's actual preflight failure reported 1.3 GiB free versus 5 GiB required
 (`artifacts/predictive-prepare-check.log`). No model or tuned policy was promoted.
+
+## Twelve-partition follow-up (2026-11-09)
+
+The earlier low-disk outcome above describes the original three-partition attempt.
+M21 expands the maintained configuration to twelve partitions and 1–12 replicas.
+Live calibration at all twelve counts and the twelve-consumer correctness check
+have now completed. The wider range exposes capacity plateaus as well as scaling
+behavior; it does not establish a performance improvement. Training, offline
+tuning and the final held-out comparison are in progress. See the evolving
+[M21 evidence](capacity-evidence.md) and [measured capacity report](results/capacity-12/report.md).

@@ -8,8 +8,8 @@ Start with the processing path and its correctness rule:
 
 ```mermaid
 flowchart LR
-    G[Seeded offline publisher] -->|order_id key, 3 partitions| K[Kafka orders.events.v1]
-    K --> C[1–3 identical consumers]
+    G[Seeded offline publisher] -->|order_id key, 12 partitions| K[Kafka orders.events.v1]
+    K --> C[1–12 identical consumers]
     C -->|valid: one transaction| D[(PostgreSQL facts + latest state)]
     C -->|invalid: wait for acknowledgement| Q[Kafka DLQ]
     D --> O[Then commit source offset]
@@ -52,7 +52,10 @@ printed by verification; the experiment CSV lists the measured run UUIDs for
 historical inspection. The login is in `artifacts/k8s/credentials.json`. Use
 `make experiment-audit` to show the completed matrix's integrity checks.
 
-Close with the limits: one shared kind node, three partitions, three repetitions,
+Close with the limits: one shared kind node and database, twelve configured
+partitions, and three repetitions per held-out comparison cell. The historical
+M7 plots used three partitions; do not present them as twelve-partition results.
+Also disclose
 short pilot-calibrated local windows, shared broker/SQL bottlenecks, controller
 cadence, cache/data carryover and sampled maxima. These measurements describe
 this installation and do not establish a production or exactly-once improvement.

@@ -1,0 +1,106 @@
+{
+  "updated_at": "2026-11-09T15:58:19.147631+00:00",
+  "status": "partial_acceptance_ui_review_and_full_workflow_pending",
+  "configuration": {
+    "input_partitions": 12,
+    "dlq_partitions": 12,
+    "initial_replicas": 1,
+    "autoscaler_min": 1,
+    "autoscaler_max": 12,
+    "fixed_replicas": 1,
+    "manual_pause_replicas": 0
+  },
+  "rationale": "Three replicas allowed only two upward steps; twelve expands scaling experiments with matching Kafka parallelism. Throughput is measured, not assumed linear.",
+  "capacity_check": {
+    "status": "passed",
+    "partitions": 12,
+    "ready_peak": 12,
+    "ready_after_downscale": 1,
+    "session": "session-20261109150144-91e5b3",
+    "reconciliation": {
+      "status": "passed",
+      "outcome": "completed",
+      "acknowledged": 9450,
+      "stored_facts": 8820,
+      "missing_acknowledged_count": 0,
+      "duplicate_stored_ids": 0,
+      "state_regressions": 0,
+      "invalid_sources": 180,
+      "dlq_unique_sources": 180,
+      "dlq_copies": 180,
+      "missing_dlq_sources": 0,
+      "unacknowledged_in_log": 0,
+      "log_duplicates": 450,
+      "checks": {
+        "no_missing_acknowledged_ids": true,
+        "no_unexpected_ids": true,
+        "no_duplicate_stored_ids": true,
+        "no_state_regression": true,
+        "every_invalid_source_in_dlq": true,
+        "no_foreign_records": true,
+        "acknowledgements_in_log": true,
+        "backlog_drained": true
+      },
+      "latency_s": {
+        "p50": 4.027955,
+        "p95": 7.286299,
+        "p99": 8.496003,
+        "max": 9.138916,
+        "count": 8820,
+        "target_seconds": 2,
+        "above_target": 8519,
+        "source": "SQL ingested_at - produced_at for every stored fact"
+      },
+      "reconciled_at": "2026-11-09T15:02:35.903190Z"
+    }
+  },
+  "calibration": {
+    "fingerprint": "5daee841f8fced10448322204bdc805c220b10baa41724126ec3c5ed27fbb29e",
+    "calibration": {
+      "capacity": {
+        "1": 84.98372985480465,
+        "2": 172.96989535722474,
+        "3": 251.94852068847894,
+        "4": 264.957801863755,
+        "5": 255.95868586770715,
+        "6": 272.46161252290113,
+        "7": 348.8203739337963,
+        "8": 320.9592230876071,
+        "9": 294.45222693909835,
+        "10": 269.9618321975486,
+        "11": 277.4528904222547,
+        "12": 297.9447569816325
+      },
+      "actuation_seconds": 12.523733139038086,
+      "handling_seconds": 0.09422564935064934
+    }
+  },
+  "completed_checks": {
+    "pipeline_unit": 194,
+    "console_unit": 149,
+    "web_unit": 25,
+    "local_integration_before_expansion_test": 28,
+    "local_sql_and_expansion_suite": 19,
+    "cluster_sql_metrics_grafana": "passed",
+    "fixed_cpu_hpa_lag_keda_isolation": "passed",
+    "historical_m7_audit": "passed",
+    "local_integration": 31,
+    "docs_and_usability_browser": 7,
+    "manual_twelve_browser": 1
+  },
+  "remaining": [
+    "trained model and policy preparation",
+    "complete live and browser acceptance",
+    "36-run held-out predictive comparison",
+    "complete launcher rerun and evidence reuse"
+  ],
+  "evidence": {
+    "launcher_log": "artifacts/capacity/full-launcher-initial.log",
+    "capacity": "artifacts/console/capacity-check.json",
+    "calibration": "artifacts/console/capacity-calibration.json",
+    "pipeline_unit": "artifacts/capacity/pipeline-unit.log",
+    "console_unit": "artifacts/capacity/console-unit.log",
+    "local_integration": "artifacts/capacity/local-integration.log"
+  },
+  "controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7"
+}

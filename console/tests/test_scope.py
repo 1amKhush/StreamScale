@@ -87,8 +87,8 @@ def test_restart_deletes_only_a_verified_console_consumer(kube):
     ]
 
 
-@pytest.mark.parametrize("replicas", [-1, 4, 1.5, "2", True])
-def test_console_replicas_stay_within_zero_to_three(kube, replicas):
+@pytest.mark.parametrize("replicas", [-1, 13, 1.5, "2", True])
+def test_console_replicas_stay_within_zero_to_twelve(kube, replicas):
     with pytest.raises(ScopeError):
         kube.scale_consumers(replicas)
     assert not mutations(kube)

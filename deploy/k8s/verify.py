@@ -10,6 +10,7 @@ from access import fetch, forward
 from manage import OUTPUT, ROOT, kubectl
 
 from streamscale.run_artifacts import utc_now, write_json
+from streamscale.topics import PARTITIONS
 
 
 def query(url, expression):
@@ -46,8 +47,8 @@ def wait_for_run_metrics(prometheus, run_id, expected, fresh_after, timeout=60):
             if samples[metric] and observed != value:
                 problems.append(f"{metric}: expected {value}, observed {observed:g}")
         lag = samples["streamscale_kafka_lag"]
-        if {row["metric"].get("partition") for row in lag} != {"0", "1", "2"}:
-            problems.append("Kafka lag samples must cover all three partitions")
+        if {row["metric"].get("partition") for row in lag} != {str(p) for p in range(PARTITIONS)}:
+            problems.append(f"Kafka lag samples must cover all {PARTITIONS} partitions")
         pending = sum(float(row["value"][1]) for row in lag)
         if pending != 0:
             problems.append(f"Kafka backlog did not drain: observed lag {pending:g}")

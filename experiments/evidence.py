@@ -107,7 +107,9 @@ def audit(campaign, complete=True):
             sample_count += 1
             require(sample["mode"] == row["mode"], "Sample controller mode changed")
             require(
-                1 <= sample["desired"] <= (1 if row["mode"] == "fixed" else 3),
+                1
+                <= sample["desired"]
+                <= (1 if row["mode"] == "fixed" else len(run["start_offsets"])),
                 "Desired replica count escaped its mode bounds",
             )
             hpas = sample.get("hpas", [])

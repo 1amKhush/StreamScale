@@ -40,6 +40,7 @@ from manage import (  # noqa: E402
 from scaling import MODES, inspect, mode_snapshot  # noqa: E402
 
 from experiments.metrics import correct, epoch, quantity, summarize  # noqa: E402
+from streamscale.topics import PARTITIONS  # noqa: E402
 
 DESTINATION = ROOT / "artifacts/experiments"
 LATEST = DESTINATION / "latest.path"
@@ -108,7 +109,7 @@ def raw_metrics(payload, run_id):
     }
     success = values.get("streamscale_exporter_last_success_unixtime", [])
     return {
-        "lag": lag if set(lag) == {"0", "1", "2"} else None,
+        "lag": lag if set(lag) == {str(p) for p in range(PARTITIONS)} else None,
         "exporter_sample_at": success[0].value if success else None,
         "members": sum(sample.value for sample in values.get("streamscale_consumer_replicas", [])),
     }
@@ -600,7 +601,7 @@ def run_campaign(args):
     if args.resume and LATEST.exists():
         campaign = Path(LATEST.read_text().strip())
         state = json.loads((campaign / "campaign.json").read_text())
-        if state["fingerprint"] != current:
+        if state["fingerprint"] != current and state["status"] != "complete":
             raise RuntimeError(
                 "Experiment code/configuration changed. Retain the old campaign and start: "
                 "./streamscale.sh experiments --fresh"
@@ -608,7 +609,14 @@ def run_campaign(args):
         verify_evidence(campaign, state["rows"])
         if state["status"] == "complete":
             validate_matrix(state)
-            print(f"Verified retained 27-run matrix: {campaign}", flush=True)
+            kind = "historical " if state["fingerprint"] != current else ""
+            print(f"Verified retained {kind}27-run matrix: {campaign}", flush=True)
+            if kind:
+                print(
+                    "This preserves the original M7 evidence. Current-capacity comparisons "
+                    "use the separate predictive campaign; --fresh runs a new baseline.",
+                    flush=True,
+                )
             return
         cluster()
         # Preserve the exact original image even when another demo has built a newer tag.

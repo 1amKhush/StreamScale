@@ -50,3 +50,28 @@ def test_preparation_refuses_insufficient_space_before_live_captures(tmp_path, m
     with pytest.raises(RuntimeError, match="5 GiB"):
         asyncio.run(prepare(None, tmp_path, "identity"))
     assert not list(tmp_path.iterdir())
+
+
+def test_overload_has_observed_warmup_and_a_bounded_surge_before_recovery():
+    phases = config("overload-recovery", 42, base=85)["schedule"]
+    assert sum(seconds for seconds, _ in phases) == 180
+    assert phases[0][0] == 60
+    assert sum(seconds for seconds, rate in phases if rate == max(r for _, r in phases)) == 30
+    assert phases[-1][0] == 60
+    assert all(1 <= rate <= 2000 for _, rate in phases)
+
+
+def test_recovery_begins_after_the_last_peak_not_only_the_last_low_phase():
+    run = {
+        "id": "recovery",
+        "family": "overload-recovery",
+        "config": config("overload-recovery", 42),
+        "points": [
+            {"t": 0, "ready": 1, "lag_total": 100},
+            {"t": 90, "ready": 1, "lag_total": 10},
+            {"t": 100, "ready": 1, "lag_total": 0},
+        ],
+        "record": {"reconciliation_status": "passed", "reconciliation": {"latency_s": {"p95": 3}}},
+    }
+    assert summary(run)["recovery_seconds"] == 10
+    assert summary(run)["correct"] and not summary(run)["target_met"]

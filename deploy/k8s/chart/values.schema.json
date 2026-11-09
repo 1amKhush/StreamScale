@@ -33,7 +33,7 @@
           "const": 1
         },
         "maxReplicas": {
-          "const": 3
+          "const": 12
         },
         "cpuTarget": {
           "type": "integer",
