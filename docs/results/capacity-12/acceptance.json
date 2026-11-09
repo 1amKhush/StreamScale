@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T21:17:35.431677+00:00",
+  "updated_at": "2026-11-09T21:40:02.596826+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -90,7 +90,7 @@
       "session-20261109174752-bdb375"
     ],
     "source_fingerprint": "d2673a0a029ec27ce745ea1573ac13623c07adfb4a18c221159af560753eee13",
-    "validated_for_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0"
+    "validated_for_fingerprint": "076edf5e7ef245a4dc552c63d0bb625476125e0822ece4d5568a0cc6a96ad180"
   },
   "completed_checks": {
     "pipeline_unit": 194,
@@ -110,8 +110,9 @@
     "web_build_typecheck": "passed",
     "fresh_calibration_captures": 12,
     "completed_fresh_training_captures": 12,
-    "completed_fresh_validation_captures": 2,
-    "publisher_memory_regressions": 8
+    "completed_fresh_validation_captures": 3,
+    "publisher_memory_regressions": 8,
+    "publisher_memory_recovery": "passed"
   },
   "remaining": [
     "trained model and policy preparation",
@@ -140,7 +141,8 @@
     "capture_compatibility": "artifacts/capacity/completion-gate-compatible-captures.json",
     "agent_health": "artifacts/capacity/agent-health-calibration.json",
     "interrupted_gate_launcher": "artifacts/capacity/full-launcher-before-completion-gate.log",
-    "publisher_memory_unit": "artifacts/capacity/console-publisher-memory.log"
+    "publisher_memory_unit": "artifacts/capacity/console-publisher-memory.log",
+    "publisher_memory_recovery": "docs/results/capacity-12/publisher-memory-recovery.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -221,5 +223,6 @@
     "p95_seconds": 98.39849,
     "latency_target_met": false,
     "preserved": true
-  }
+  },
+  "preparation_fingerprint": "076edf5e7ef245a4dc552c63d0bb625476125e0822ece4d5568a0cc6a96ad180"
 }

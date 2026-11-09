@@ -114,3 +114,22 @@ Data and provenance: [current calibration CSV](final-calibration.csv),
 captures used so far pass the stricter complete-workload gate. Formal comparisons
 require completed, unmodified runs with every planned acknowledgement and actual
 ML forecasts; correctness of an interrupted sale alone is insufficient.
+
+
+## Publisher finalization recovery
+
+A later 93,060-event validation capture exposed a separate publisher-finalization
+OOM after all broker acknowledgements. The interrupted capture passed SQL
+correctness but was excluded from experiments. Finalization, restart recovery
+and read-only acknowledgement inspection now stream the payload log; finished
+publishers release their manifests. The fresh retry completed with all 93,060
+facts and zero missing IDs, duplicate facts or state regressions. The agent had
+zero restarts/OOM events; the pod-wide kernel peak read after reconciliation
+was 419.66 MiB under its unchanged 768 MiB limit.
+
+Its exact p95 was **286.387491 seconds**, missing the latency objective. This
+manual trace demonstrates completion and bounded memory, not improved latency.
+[Recovery evidence](publisher-memory-recovery.json) records the measurement scope.
+All twelve training captures and three of four validation captures are now
+complete; tuning and held-out comparisons remain pending. **174 console unit
+tests** pass, including eight publisher-memory/inspection regressions.

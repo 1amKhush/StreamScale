@@ -225,3 +225,30 @@ at `artifacts/capacity/full-launcher-before-publisher-memory-fix.log`.
 After qualification, the user requested scoped shutdown and disposable build
 cleanup. Run evidence and data volumes must remain available; no global Docker
 stop/prune or unrelated resource cleanup is part of that work.
+
+
+The fresh 93,060-event retry (`session-20261109212841-3cb849`) completed
+publication and exact reconciliation with zero missing IDs, duplicate facts or
+state regressions. The same agent pod remained at zero restarts and zero OOM
+events. Its kernel-recorded cgroup peak since startup, read after reconciliation
+when the next validation had begun, was 419.66 MiB under the 768 MiB limit. This
+is a pod-wide high-water reading, not an isolated allocation profile of the sale.
+Exact p95 was **286.387491 seconds**: correctness passed and the latency objective
+failed. This manual validation workload is not a held-out comparison. See
+[publisher recovery evidence](results/capacity-12/publisher-memory-recovery.json).
+
+All twelve training captures and the first three validation captures are now
+complete. Twenty-six earlier completed manual captures were revalidated and copied
+byte-for-byte with checksums into the publisher-correction fingerprint; their
+active collection, features, controller and environment were unchanged. No
+interrupted run or policy-controlled evidence was reused. Compatibility provenance
+is retained at `artifacts/capacity/publisher-memory-compatible-captures.json`.
+Tuning, full browser/live acceptance, held-out evaluation and launcher reuse
+remain pending.
+
+Six recorded private StreamScale dependency build caches were removed after
+large-sale recovery, freeing about 2.79 GiB. This deletion targeted exact cache
+IDs, with matching build commands and recorded project build history. It removed
+no images, containers, volumes or run evidence. Services remain running for the
+remaining checks and will be stopped at the end as requested. The cleanup audit
+is retained at `artifacts/capacity/cache-cleanup.json`.
