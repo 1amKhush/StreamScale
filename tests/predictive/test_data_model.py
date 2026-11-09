@@ -57,10 +57,24 @@ def test_whole_run_splits_and_artifact_integrity(tmp_path):
         train([trace()], [trace()])
     models, report = train([trace()], [trace("validation", 2)])
     assert len(models) == 12 and len(report) == 12
-    identifier = publish(tmp_path, models, {"fingerprint": "test", "scores": report})
+    metadata = {
+        "fingerprint": "test",
+        "scores": report,
+        "calibration": {"capacity": {n: 30 * n for n in range(1, 13)}},
+    }
+    identifier = publish(tmp_path, models, metadata)
     assert load(tmp_path, "test")[0] == identifier
+    assert load(tmp_path)[2]["calibration"]["capacity"]["12"] == 360
+    assert list(metadata["calibration"]["capacity"]) == list(range(1, 13))
     with pytest.raises(ValueError, match="environment"):
         load(tmp_path, "changed")
     (tmp_path / f"{identifier}.pkl").write_bytes(b"corrupt")
     with pytest.raises(ValueError, match="checksum"):
         load(tmp_path)
+
+
+def test_invalid_metadata_preserves_the_previous_working_artifact(tmp_path):
+    identifier = publish(tmp_path, {}, {"fingerprint": "working"})
+    with pytest.raises(ValueError, match="JSON"):
+        publish(tmp_path, {}, {"fingerprint": "invalid", "capacity": float("nan")})
+    assert load(tmp_path, "working")[0] == identifier

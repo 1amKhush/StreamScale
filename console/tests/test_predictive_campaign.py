@@ -118,6 +118,19 @@ def test_complete_predictive_workload_is_eligible():
     assert summary(run)["performance_eligible"]
 
 
+def test_install_rejects_corrupt_artifacts_before_any_cluster_write(tmp_path, monkeypatch):
+    from experiments.predictive import runtime
+    from streamscale.predictive.model import publish
+
+    identifier = publish(tmp_path, {}, {"fingerprint": "test"})
+    (tmp_path / f"{identifier}.pkl").write_bytes(b"corrupt")
+    calls = []
+    monkeypatch.setattr(runtime, "kubectl", lambda *a, **kw: calls.append(a))
+    with pytest.raises(ValueError, match="checksum"):
+        runtime.install(tmp_path)
+    assert calls == []
+
+
 @pytest.mark.parametrize(
     "change", ["interrupted", "partial", "modified", "paused", "fault", "no_forecast"]
 )

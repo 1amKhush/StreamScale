@@ -94,6 +94,10 @@ def publish(folder, models, metadata):
         "versions": versions(),
         "model_sha256": hashlib.sha256(payload).hexdigest(),
     }
+    # Hash the JSON representation readers will see. Numeric replica keys sort
+    # differently from their JSON string keys once the range includes 10–12.
+    # Reject non-finite metadata before replacing any previously valid pointer.
+    document = json.loads(json.dumps(document, allow_nan=False))
     identifier = digest(document)
     for name, data in (
         (f"{identifier}.pkl", payload),

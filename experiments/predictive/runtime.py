@@ -142,7 +142,11 @@ async def capture(console, config, mode, replicas=None):
 
 def install(folder):
     """Copy trusted local model artifacts to the existing scoped runs PVC."""
-    identifier = json.loads((folder / "current.json").read_text())["id"]
+    from streamscale.predictive.model import load
+
+    # Reject broken candidates locally, before changing the live artifact pointer
+    # or starting a policy trial that could only run in fallback.
+    identifier, _, _ = load(folder)
     files = {
         name: base64.b64encode((folder / name).read_bytes()).decode()
         for name in (f"{identifier}.pkl", f"{identifier}.json", "current.json")

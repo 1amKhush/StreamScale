@@ -252,3 +252,24 @@ IDs, with matching build commands and recorded project build history. It removed
 no images, containers, volumes or run evidence. Services remain running for the
 remaining checks and will be stopped at the end as requested. The cleanup audit
 is retained at `artifacts/capacity/cache-cleanup.json`.
+
+
+## Twelve-key model metadata round trip
+
+All twelve training and four validation captures completed and the forecaster
+trained. The first live tuning workload exposed an artifact-publication defect:
+integer capacity keys sorted numerically before hashing, but JSON readers saw
+string keys and sorted 1, 10, 11, 12, 2, ... . Three-count metadata had hidden
+this difference. Model bytes matched their checksum; the metadata identifier
+did not. The agent rejected the candidate and held replicas with an explicit
+checksum-error fallback. No trained artifact was promoted and no fallback-only
+tuning run can pass the formal comparison gate.
+
+Publication now normalizes metadata to its JSON representation before hashing
+and rejects non-finite values before replacing any valid artifact pointer.
+Installation validates the candidate locally before any cluster write. A real
+trained-model round-trip regression includes all twelve integer capacity keys;
+additional checks preserve the prior working artifact on invalid metadata and
+reject a corrupt candidate before contacting Kubernetes. **195 pipeline/unit**
+and **175 console unit tests** pass, along with repository lint/format checks.
+Live tuning, browser acceptance, evaluation and full launcher reuse remain pending.
