@@ -13,7 +13,7 @@ import time
 
 from streamscale_console.cluster import ROOT, kubectl
 
-from experiments.predictive.runtime import capture, driver, install, operation
+from experiments.predictive.runtime import capture, complete_workload, driver, install, operation
 from streamscale.predictive import DEFAULT_POLICY
 from streamscale.predictive.model import digest, load, publish, train, versions
 from streamscale.topics import MAX_REPLICAS, PARTITIONS
@@ -135,7 +135,7 @@ def summary(run):
     return {
         "forecast_samples": forecast_samples,
         "performance_eligible": (
-            run["record"]["reconciliation_status"] == "passed"
+            complete_workload(run["record"])
             and (run.get("mode") != "ml-predictive" or forecast_samples > 0)
         ),
         "above_latency_target": run["record"]["reconciliation"]["latency_s"].get("above_target"),
@@ -168,8 +168,15 @@ def summary(run):
 async def retained(console, directory, key, configuration, mode, replicas=None):
     path = directory / f"{key}.json"
     if path.exists():
+        run = json.loads(path.read_text())
+        if (
+            not complete_workload(run["record"])
+            or run.get("config") != configuration
+            or run.get("mode") != mode
+        ):
+            raise RuntimeError(f"Cached capture {path} is incomplete or incompatible; preserved")
         print(f"[predictive] reuse {key}", flush=True)
-        return json.loads(path.read_text())
+        return run
     events = sum(seconds * rate for seconds, rate in configuration["schedule"])
     if shutil.disk_usage(ROOT).free < events * 4096 + 512 * 1024**2:
         raise RuntimeError(
@@ -325,7 +332,12 @@ async def evaluate(console, directory):
             config(family, seed, base),
             mode,
         )
-        results.append(summary(run) | {"family": family, "mode": mode, "repetition": repeat})
+        score = summary(run)
+        if not score["performance_eligible"]:
+            raise RuntimeError(
+                f"Held-out capture {run['id']} is not performance eligible; preserved"
+            )
+        results.append(score | {"family": family, "mode": mode, "repetition": repeat})
         save(directory / "evaluation" / "summary.json", results)
     with (directory / "evaluation/summary.csv").open("w") as output:
         writer = csv.DictWriter(output, fieldnames=list(results[0]))

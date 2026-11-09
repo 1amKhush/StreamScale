@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T17:10:40.826176+00:00",
+  "updated_at": "2026-11-09T18:17:08.663269+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -55,29 +55,46 @@
     }
   },
   "calibration": {
-    "fingerprint": "5daee841f8fced10448322204bdc805c220b10baa41724126ec3c5ed27fbb29e",
+    "fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
     "calibration": {
       "capacity": {
-        "1": 84.98372985480465,
-        "2": 172.96989535722474,
-        "3": 251.94852068847894,
-        "4": 264.957801863755,
-        "5": 255.95868586770715,
-        "6": 272.46161252290113,
-        "7": 348.8203739337963,
-        "8": 320.9592230876071,
-        "9": 294.45222693909835,
-        "10": 269.9618321975486,
-        "11": 277.4528904222547,
-        "12": 297.9447569816325
+        "1": 111.98622301067445,
+        "2": 237.96624233384404,
+        "3": 365.94826142334364,
+        "4": 433.9549936241564,
+        "5": 347.4559670627142,
+        "6": 345.9313795786358,
+        "7": 395.94534197974053,
+        "8": 349.4673378012866,
+        "9": 344.9585487583699,
+        "10": 355.9614700061362,
+        "11": 353.94962314533535,
+        "12": 345.96197498548787
       },
-      "actuation_seconds": 12.523733139038086,
-      "handling_seconds": 0.09422564935064934
-    }
+      "actuation_seconds": 12.661959171295166,
+      "handling_seconds": 0.09303175554224086
+    },
+    "data_sha256": "464e05e0d1615c112827c2cc804df4034fce052e21e49a7a3757a7b357ebe521",
+    "sessions": [
+      "session-20261109171822-609904",
+      "session-20261109172434-e07fd4",
+      "session-20261109172744-3bed3c",
+      "session-20261109173002-e1b8a6",
+      "session-20261109173201-b91b89",
+      "session-20261109173421-366985",
+      "session-20261109173627-f89479",
+      "session-20261109173840-2aec16",
+      "session-20261109174050-3f7014",
+      "session-20261109174302-0026c2",
+      "session-20261109174525-0ad7d1",
+      "session-20261109174752-bdb375"
+    ],
+    "source_fingerprint": "d2673a0a029ec27ce745ea1573ac13623c07adfb4a18c221159af560753eee13",
+    "validated_for_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0"
   },
   "completed_checks": {
     "pipeline_unit": 194,
-    "console_unit": 157,
+    "console_unit": 166,
     "web_unit": 29,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
@@ -90,7 +107,9 @@
     "focused_capacity_docs_usability_browser": 9,
     "large_reconciliation_recovery": "passed",
     "previous_reconciler_equivalence": "passed",
-    "web_build_typecheck": "passed"
+    "web_build_typecheck": "passed",
+    "fresh_calibration_captures": 12,
+    "completed_fresh_training_captures": 7
   },
   "remaining": [
     "trained model and policy preparation",
@@ -114,9 +133,13 @@
     "reconciliation_memory_recovery": "artifacts/capacity/reconciliation-memory-recovery.json",
     "fault_mix_equivalence": "artifacts/capacity/fault-mix-reconciliation-equivalence.json",
     "web_unit": "artifacts/console/capacity-ui-unit.log",
-    "web_build": "artifacts/console/capacity-ui-build.log"
+    "web_build": "artifacts/console/capacity-ui-build.log",
+    "console_completion_gate": "artifacts/capacity/console-completion-gate.log",
+    "capture_compatibility": "artifacts/capacity/completion-gate-compatible-captures.json",
+    "agent_health": "artifacts/capacity/agent-health-calibration.json",
+    "interrupted_gate_launcher": "artifacts/capacity/full-launcher-before-completion-gate.log"
   },
-  "controller_fingerprint": "d2673a0a029ec27ce745ea1573ac13623c07adfb4a18c221159af560753eee13",
+  "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
     {
       "status": "passed",
@@ -163,5 +186,26 @@
     }
   ],
   "earlier_controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7",
-  "calibration_role": "initial expanded calibration; final collector fingerprint requires fresh preparation"
+  "calibration_role": "fresh collector calibration, validated under the stricter complete-workload gate",
+  "initial_calibration": {
+    "fingerprint": "5daee841f8fced10448322204bdc805c220b10baa41724126ec3c5ed27fbb29e",
+    "calibration": {
+      "capacity": {
+        "1": 84.98372985480465,
+        "2": 172.96989535722474,
+        "3": 251.94852068847894,
+        "4": 264.957801863755,
+        "5": 255.95868586770715,
+        "6": 272.46161252290113,
+        "7": 348.8203739337963,
+        "8": 320.9592230876071,
+        "9": 294.45222693909835,
+        "10": 269.9618321975486,
+        "11": 277.4528904222547,
+        "12": 297.9447569816325
+      },
+      "actuation_seconds": 12.523733139038086,
+      "handling_seconds": 0.09422564935064934
+    }
+  }
 }

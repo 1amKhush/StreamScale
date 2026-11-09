@@ -93,3 +93,24 @@ A retained fault-mix sale also reproduced the previous reconciler's results exac
 See [live recovery](reconciliation-memory-recovery.json) and
 [equivalence](fault-mix-reconciliation-equivalence.json). Full fresh-fingerprint
 preparation, predictive acceptance and held-out comparison remain pending.
+
+
+## Fresh collector calibration
+
+All twelve fresh captures reconciled successfully under the bounded-memory
+collector. These measurements are separate from the initial calibration above.
+Four consumers had the highest median in this calibration (433.95 events/s),
+while twelve measured 345.96 events/s. This is one saturated trace per count,
+not a replicated ranking or evidence of a causal improvement from the memory fix.
+The controller projection selects one replica under quiet synthetic demand and
+four as the best available capacity-limited target under synthetic overload.
+That deterministic check is separate from held-out latency measurements.
+
+![Fresh per-count calibration with the former three-replica boundary](final-calibration.svg)
+
+Data and provenance: [current calibration CSV](final-calibration.csv),
+[calibration with source run IDs](final-calibration.json), and
+[policy projection](policy-capacity-limit-final.json). The nineteen retained manual
+captures used so far pass the stricter complete-workload gate. Formal comparisons
+require completed, unmodified runs with every planned acknowledgement and actual
+ML forecasts; correctness of an interrupted sale alone is insufficient.

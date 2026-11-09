@@ -166,3 +166,31 @@ The corrected agent has a new preparation fingerprint. Earlier traces remain
 retained, but the next complete preparation collects calibration and training
 under this final collector version rather than treating the previous model cache
 as compatible. No trained model has yet been promoted for the new configuration.
+
+
+## Formal comparison completion gate
+
+Review reproduced a separate eligibility defect: a correctness-passing interrupted
+sale could be marked performance-eligible. The gate now requires a completed,
+unmodified sale, all planned acknowledgements and (for ML) recorded forecasts.
+It checks newly captured runs and cached captures; held-out evaluation cannot
+write completion evidence for an ineligible row. Pipeline correctness and the
+latency objective remain separate outcomes.
+
+The coordinator paused at a completed capture after twelve fresh calibrations
+and seven training runs. All nineteen manual captures passed the stricter gate,
+configuration equality and twelve-partition observation checks. Only post-capture
+acceptance/reporting checks changed; collection, feature extraction, controller,
+workload schedules, dependencies and environment are unchanged. Their original
+files remain retained, and checksummed copies with provenance seed the new
+preparation fingerprint. No model, tuned policy or policy-controlled capture is
+reused across this correction. The interrupted log is retained at
+`artifacts/capacity/full-launcher-before-completion-gate.log`.
+
+All **166 console unit tests**, the focused eligibility regressions and repository
+lint/format checks pass. Fresh calibration completed every size from one through
+twelve; the agent remained at zero restarts during the sequence, with a reported
+496 MiB working set under twelve-consumer telemetry. The reviewed current curve
+and source run IDs are in `docs/results/capacity-12/final-calibration.*`; the
+initial curve remains available separately. Training/tuning and complete workflow
+acceptance remain pending.

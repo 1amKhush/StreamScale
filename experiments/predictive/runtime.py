@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from streamscale_console.app import Console, create_app, register_core_operations
 from streamscale_console.cluster import ARTIFACTS, kubectl
 from streamscale_console.components import attach
+from streamscale_console.sales import comparable
 from streamscale_console.workflow import WorkflowLock
 
 from streamscale.predictive.data import observation
@@ -21,6 +22,22 @@ class ReservedLock(WorkflowLock):
 
     def close(self):
         super().release()
+
+
+def complete_workload(record):
+    """Correct SQL for a partial sale is not a completed experimental workload."""
+    result = record.get("reconciliation") or {}
+    attempts = record.get("attempts")
+    return (
+        record.get("reconciliation_status") == "passed"
+        and result.get("status") == "passed"
+        and record.get("outcome") == "completed"
+        and record.get("comparable") is True
+        and type(attempts) is int
+        and attempts > 0
+        and result.get("acknowledged") == attempts
+        and comparable(record, result)
+    )
 
 
 @asynccontextmanager
@@ -104,6 +121,11 @@ async def capture(console, config, mode, replicas=None):
         if record.get("reconciliation_status"):
             if record["reconciliation_status"] != "passed":
                 raise RuntimeError(f"Correctness failed for {identifier}")
+            if not complete_workload(record):
+                raise RuntimeError(
+                    f"Incomplete or modified workload {identifier}; "
+                    "retained outside experimental results"
+                )
             return {
                 "actuation_started_at": actuation_started_at,
                 "id": identifier,

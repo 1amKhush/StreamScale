@@ -1,3 +1,5 @@
+import pytest
+
 from experiments.predictive.campaign import config, summary
 from experiments.predictive.tuning import select
 from streamscale.predictive import DEFAULT_POLICY
@@ -75,3 +77,107 @@ def test_recovery_begins_after_the_last_peak_not_only_the_last_low_phase():
     }
     assert summary(run)["recovery_seconds"] == 10
     assert summary(run)["correct"] and not summary(run)["target_met"]
+
+
+def complete_run():
+    return {
+        "id": "eligible-run",
+        "mode": "ml-predictive",
+        "config": {},
+        "points": [
+            {
+                "t": t,
+                "ready": 1,
+                "lag_total": 0,
+                "predictive": {"forecast_rate": 10, "model_id": "model"},
+            }
+            for t in (0, 2)
+        ],
+        "record": {
+            "attempts": 10,
+            "outcome": "completed",
+            "comparable": True,
+            "config": {"mode": "ml-predictive"},
+            "reconciliation_status": "passed",
+            "predictive_evidence": {"forecast_samples": 2},
+            "reconciliation": {
+                "status": "passed",
+                "outcome": "completed",
+                "acknowledged": 10,
+                "latency_s": {"p95": 1.5},
+            },
+        },
+    }
+
+
+def test_complete_predictive_workload_is_eligible():
+    from experiments.predictive.runtime import complete_workload
+
+    run = complete_run()
+    assert complete_workload(run["record"])
+    assert summary(run)["performance_eligible"]
+
+
+@pytest.mark.parametrize(
+    "change", ["interrupted", "partial", "modified", "paused", "fault", "no_forecast"]
+)
+def test_correct_but_incomplete_or_modified_workload_is_not_a_performance_result(change):
+    run = complete_run()
+    record = run["record"]
+    if change == "interrupted":
+        record["outcome"] = "interrupted"
+    elif change == "partial":
+        record["reconciliation"]["acknowledged"] = 9
+    elif change == "modified":
+        record["segments"] = [{"mode": "manual"}]
+    elif change == "paused":
+        record["controls_changed"] = True
+    elif change == "fault":
+        record["faults"] = [{"kind": "postgres_outage"}]
+    else:
+        for point in run["points"]:
+            point["predictive"]["forecast_rate"] = None
+    result = summary(run)
+    assert result["correct"] and result["target_met"]
+    assert not result["performance_eligible"]
+
+
+def test_cached_incomplete_capture_is_rejected_without_overwrite(tmp_path):
+    import asyncio
+    import json
+
+    from experiments.predictive.campaign import retained
+
+    run = complete_run()
+    run["record"]["outcome"] = "interrupted"
+    path = tmp_path / "trace.json"
+    original = json.dumps(run)
+    path.write_text(original)
+    with pytest.raises(RuntimeError, match="incomplete or incompatible; preserved"):
+        asyncio.run(retained(None, tmp_path, "trace", {}, "ml-predictive"))
+    assert path.read_text() == original
+
+
+def test_heldout_campaign_cannot_complete_with_an_ineligible_run(tmp_path, monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+
+    from experiments.predictive import campaign
+
+    run = complete_run()
+    run["record"]["outcome"] = "interrupted"
+
+    async def retained(*args, **kwargs):
+        return run
+
+    monkeypatch.setattr(
+        campaign, "load", lambda *a: ("model", {}, {"calibration": {"capacity": {1: 10}}})
+    )
+    monkeypatch.setattr(campaign, "install", lambda *a: None)
+    monkeypatch.setattr(campaign, "retained", retained)
+    monkeypatch.setattr(
+        campaign.shutil, "disk_usage", lambda *a: SimpleNamespace(free=10 * 1024**3)
+    )
+    with pytest.raises(RuntimeError, match="not performance eligible; preserved"):
+        asyncio.run(campaign.evaluate(None, tmp_path))
+    assert not (tmp_path / "evaluation/complete.json").exists()

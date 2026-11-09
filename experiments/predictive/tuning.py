@@ -71,7 +71,8 @@ async def tune(console, directory, models, metadata, base):
             score = summary(run)
             if not score["performance_eligible"]:
                 raise RuntimeError(
-                    "Tuning candidate produced no ML forecasts; inspect retained telemetry"
+                    "Tuning workload incomplete, modified or without ML forecasts; "
+                    "inspect retained telemetry"
                 )
             scores.append(score)
         row = {
