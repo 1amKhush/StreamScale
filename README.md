@@ -18,9 +18,9 @@ for a Kafka → PostgreSQL order pipeline, with an interactive console to watch 
 
 [Quick start](#quick-start) · [Results](#results) · [Console](#the-interactive-console) · [How it works](#how-it-works) · [Docs](#documentation)
 
-<img src="docs/images/console-overview.png" alt="StreamScale console during a flash sale: arrivals at 376/s, one consumer draining 136/s, and backlog building in all three partitions" width="820">
+<img src="docs/images/console-twelve-replicas.png" alt="StreamScale pipeline during a real sale: twelve ready consumers, each assigned one of twelve Kafka partitions" width="820">
 
-<sub>The console mid-sale: shoppers arrive at 376/s, the single fixed consumer drains 136/s, and every lane's queue is growing.</sub>
+<sub>The current twelve-partition pipeline during a real sale, with twelve ready consumers and one partition assigned to each.</sub>
 
 </div>
 
@@ -31,8 +31,8 @@ for a Kafka → PostgreSQL order pipeline, with an interactive console to watch 
 | | |
 | --- | --- |
 | **Question** | Under a sudden traffic surge, which scaling policy keeps end-to-end latency lowest, and what does it cost? |
-| **Answer (this setup)** | Scaling on **Kafka lag** cut flash-sale p95 latency from **37.8 s to 4.5 s**, about 8× lower than a fixed consumer and 4× lower than CPU-based scaling, using roughly twice the pod time. |
-| **Evidence** | 27 measured runs (3 scenarios × 3 modes × 3 repetitions). Every run reconciled exactly against Kafka, SQL and the DLQ, before and after a restart. |
+| **Historical answer (three partitions)** | Scaling on **Kafka lag** cut flash-sale p95 latency from **37.8 s to 4.5 s**, about 8× lower than a fixed consumer and 4× lower than CPU-based scaling, using roughly twice the pod time. |
+| **Historical evidence** | 27 measured runs (3 scenarios × 3 modes × 3 repetitions). Every run reconciled exactly against Kafka, SQL and the DLQ, before and after a restart. |
 | **Run it** | `./streamscale.sh all`: one command sets up, tests, deploys, measures, plots and opens the console. |
 
 ---
@@ -75,6 +75,12 @@ covers each stage, expected outputs, manual `make` targets and shutdown/resume.
 ---
 
 ## Results
+
+The current configuration and its new acceptance measurements are documented in
+[the twelve-partition capacity report](docs/results/capacity-12/report.md). Moving
+from three to twelve gives the controllers more than two upward scaling steps
+and makes manual rescue and replica cost easier to study. It requires matching
+Kafka partitions; throughput still depends on measured database and node capacity.
 
 Three scenarios: a **steady** 52 events/s, a **flash-sale** surge to 390 events/s,
 and an **overload-recovery** test. These historical measurements used three partitions and a 1–3 replica range; the current configuration uses twelve partitions and 1–12 replicas. Each scenario × mode cell was measured three times

@@ -1,6 +1,8 @@
 // Planning arithmetic for the sale form. Estimates are labelled as such: they use the
 // M7 pilot's measured capacity, not a promise about this run.
 
+import { MAX_REPLICAS } from "./capacity";
+
 export type Phase = [number, number];
 
 export type SaleDraft = {
@@ -49,7 +51,7 @@ export function estimate(draft: SaleDraft, capacityPerConsumer: number | null): 
   const baseEvents = draft.schedule.reduce((sum, [seconds, rate]) => sum + seconds * rate, 0);
   const evenEvents = baseEvents - (baseEvents % 2);
   const duplicates = Math.round((evenEvents * draft.faults.duplicate_pct) / 100);
-  const backlog = [1, 2, 3].map((cashiers) => {
+  const backlog = Array.from({ length: MAX_REPLICAS }, (_, i) => i + 1).map((cashiers) => {
     if (!capacityPerConsumer) return { cashiers, peak: 0, clearAfterSeconds: null };
     const capacity = capacityPerConsumer * cashiers;
     let queue = 0;

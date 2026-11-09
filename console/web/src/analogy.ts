@@ -29,7 +29,7 @@ export const TERMS = {
   partition: {
     store: "Checkout lane",
     system: "Kafka partition",
-    explain: "orders.events.v1 has exactly three partitions, like three checkout lanes.",
+    explain: "orders.events.v1 has exactly twelve partitions, like twelve checkout lanes.",
     limit: "Kafka keeps every record after it is read; the lane keeps a numbered ticket roll.",
   },
   high: {
@@ -53,7 +53,7 @@ export const TERMS = {
     system: "Consumer pod",
     explain:
       "One replica of the same Python consumer in one consumer group. A cashier can cover several lanes.",
-    limit: "A lane has at most one cashier, so a fourth cashier at three lanes would stand idle.",
+    limit: "A lane has at most one cashier, so a thirteenth cashier at twelve lanes would stand idle.",
   },
   assignment: {
     store: "Lanes covered",
@@ -124,7 +124,7 @@ export type TermId = keyof typeof TERMS;
 export const MODE_LABELS: Record<string, Term> = {
   "ml-predictive": {
     store: "ML Predictive",
-    system: "ML Predictive · 1–3 replicas",
+    system: "ML Predictive · 1–12 replicas",
     explain: "Forecasts traffic from recent history and prepares capacity for a latency target.",
   },
   fixed: {
@@ -134,17 +134,17 @@ export const MODE_LABELS: Record<string, Term> = {
   },
   manual: {
     store: "You call cashiers in",
-    system: "Manual · 0–3 replicas",
+    system: "Manual · 0–12 replicas",
     explain: "No autoscaler; you set replicas directly. Zero pauses processing; it is not a crash.",
   },
   "cpu-hpa": {
     store: "“Cashiers look busy” rule",
-    system: "CPU-HPA · 1–3 replicas",
+    system: "CPU-HPA · 1–12 replicas",
     explain: "Kubernetes adds or removes replicas from average CPU utilisation.",
   },
   "lag-keda": {
     store: "“Queues are long” rule",
-    system: "Lag-KEDA · 1–3 replicas",
+    system: "Lag-KEDA · 1–12 replicas",
     explain: "KEDA adds or removes replicas from Kafka consumer-group lag.",
   },
 };

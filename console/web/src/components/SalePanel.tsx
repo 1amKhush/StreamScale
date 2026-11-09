@@ -201,7 +201,7 @@ function Setup({ live, sales }: { live: Live; sales: SalesState }) {
                 ))}
               </tbody>
             </table>
-            <p className="hint">Rough estimate from the earlier pilot's {Math.round(capacity)} events/s per consumer. Actual capacity is measured during the live run.</p>
+            <p className="hint">Illustrative estimate assuming {Math.round(capacity)} events/s per consumer from the earlier pilot. It assumes linear scaling and omits database limits; measured capacity can be lower.</p>
           </details>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { MAX_REPLICAS, PARTITION_IDS } from "../capacity";
 import { useMemo, useState } from "react";
 import { predictiveFlow } from "../predictive";
 import type { JournalEntry, Point } from "../types";
@@ -12,7 +13,7 @@ const WINDOWS: { id: string; label: string; seconds: number | null }[] = [
   { id: "all", label: "All", seconds: null },
 ];
 
-const POD_COLORS = ["--series-b1", "--series-b2", "--series-b3"];
+const POD_COLORS = PARTITION_IDS.map((p) => `--lane-${p}`);
 
 const MARKED = /^(sale|scaling|fault|recover)\./;
 
@@ -71,7 +72,7 @@ export function Charts({
     for (const point of visible)
       for (const pod of point.pods)
         if (!names.includes(pod.name)) names.push(pod.name);
-    return names.slice(-3);
+    return names.slice(-MAX_REPLICAS);
   }, [visible]);
 
   const store = lens === "store";
@@ -93,7 +94,9 @@ export function Charts({
     { label: "ML upper forecast (interval end)", color: "--series-b1", value: (i) => predictive.forecast[i], dashed: true },
     { label: "Committed", color: "--series-b3", value: (i) => predictive.served[i] },
   ] : flow;
-  const lanes: SeriesSpec[] = [0, 1, 2].map((lane) => ({
+  // A missing final sample must not change the number of charted partitions.
+  const recordedLag = visible.findLast((point) => point.lag?.length)?.lag;
+  const lanes: SeriesSpec[] = (recordedLag?.map((_, i) => i) ?? PARTITION_IDS).map((lane) => ({
     label: store ? `Lane ${lane}` : `P${lane} lag`,
     color: `--lane-${lane}`,
     value: (i: number) => visible[i].lag?.[lane] ?? null,

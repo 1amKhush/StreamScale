@@ -69,6 +69,7 @@ export function Pipeline({
             <span>04 Storage</span>
           </div>
           <p className="stage-note muted">
+            {floor.lanes.length > 6 && `Scroll inside the map to follow all ${floor.lanes.length} partitions. Use List for a compact overview. `}
             Dots illustrate traffic rate. Numbers are live measurements; missing
             readings appear as —.
           </p>

@@ -41,18 +41,18 @@ test("start a sale, overload it, rescue it, crash it, recover and reconcile", as
   await expect.poll(async () => (await state(page)).points.at(-1).lag_total ?? 0, { timeout: 120_000 }).toBeGreaterThan(2000);
   await page.screenshot({ path: `${evidence}/journey-1-overload.png`, fullPage: true });
 
-  // 4. Rescue: call in three cashiers, one per lane.
+  // 4. Rescue: call in twelve cashiers, one per lane.
   await page.getByTestId("tab-scaling").click();
   await page.getByTestId("mode-manual").click();
   await expect(page.getByTestId("mode-manual")).toHaveAttribute("aria-checked", "true", { timeout: 180_000 });
-  await page.getByTestId("manual-3").click();
+  await page.getByTestId("manual-12").click();
   await page.getByTestId("view-live").click();
-  await expect(page.locator("[data-testid^='node-cashier-']")).toHaveCount(3, { timeout: 120_000 });
+  await expect(page.locator("[data-testid^='node-cashier-']")).toHaveCount(12, { timeout: 120_000 });
   await expect
     .poll(async () => (await state(page)).sample.kafka.group.members.map((m: { partitions: number[] }) => m.partitions.join(",")).sort().join("|"), {
       timeout: 120_000,
     })
-    .toBe("0|1|2");
+    .toBe(Array.from({ length: 12 }, (_, p) => String(p)).sort().join("|"));
   await page.screenshot({ path: `${evidence}/journey-2-rescue.png`, fullPage: true });
 
   // 5. Fault: a cashier faints after writing the ledger; the replacement replays it.

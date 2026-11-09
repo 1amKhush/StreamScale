@@ -1029,3 +1029,13 @@ body { line-height: 1.55; }
   .navigation nav button, .navigation nav button:last-child { padding: 10px 8px; font-size: 11.5px; min-width: 0; }
   .navigation nav .nav-icon svg { width: 17px; height: 17px; }
 }
+
+/* Every supported replica count remains reachable on small screens. */
+.replica-buttons { display: flex; flex-wrap: wrap; max-width: 100%; }
+
+/* Keep twelve-lane diagrams readable instead of shrinking the whole floor. */
+.expanded-flow-scroll { max-height: 640px; overflow: auto; overscroll-behavior: contain; }
+.expanded-flow-scroll .flow-map { min-width: 1000px; }
+.expanded-flow-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.expanded-flow-scroll .react-flow__controls { top: 12px; bottom: auto; }
+@media (max-width: 800px) { .expanded-flow-scroll { max-height: 500px; } }

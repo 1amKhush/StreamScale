@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-09T15:58:19.147631+00:00",
-  "status": "partial_acceptance_ui_review_and_full_workflow_pending",
+  "updated_at": "2026-11-09T16:26:06.775776+00:00",
+  "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
     "dlq_partitions": 12,
@@ -78,7 +78,7 @@
   "completed_checks": {
     "pipeline_unit": 194,
     "console_unit": 149,
-    "web_unit": 25,
+    "web_unit": 26,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
     "cluster_sql_metrics_grafana": "passed",
@@ -86,7 +86,8 @@
     "historical_m7_audit": "passed",
     "local_integration": 31,
     "docs_and_usability_browser": 7,
-    "manual_twelve_browser": 1
+    "manual_twelve_browser": 1,
+    "focused_capacity_docs_usability_browser": 9
   },
   "remaining": [
     "trained model and policy preparation",
@@ -95,12 +96,15 @@
     "complete launcher rerun and evidence reuse"
   ],
   "evidence": {
-    "launcher_log": "artifacts/capacity/full-launcher-initial.log",
+    "launcher_log": "artifacts/capacity/full-launcher.log",
     "capacity": "artifacts/console/capacity-check.json",
     "calibration": "artifacts/console/capacity-calibration.json",
     "pipeline_unit": "artifacts/capacity/pipeline-unit.log",
     "console_unit": "artifacts/capacity/console-unit.log",
-    "local_integration": "artifacts/capacity/local-integration.log"
+    "local_integration": "artifacts/capacity/local-integration.log",
+    "twelve_consumer_browser": "artifacts/console/e2e/capacity-twelve-consumers-desktop.png",
+    "historical_browser": "artifacts/console/e2e/capacity-historical-three-lane-replay.png",
+    "mobile_browser": "artifacts/console/e2e/capacity-scaling-mobile.png"
   },
   "controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7"
 }

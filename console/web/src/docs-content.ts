@@ -54,7 +54,7 @@ export const DOC_ARTICLES: DocArticle[] = [
       },
       {
         title: "4. Add capacity",
-        paragraphs: ["Return to Scaling, select Manual and choose three consumers. Wait for pods to become ready and for Kafka to assign their partitions. There are three partitions, so useful parallelism is capped at three consumers."],
+        paragraphs: ["Return to Scaling, select Manual and choose twelve consumers. Wait for pods to become ready and for Kafka to assign their partitions. There are twelve partitions, so useful parallelism is capped at twelve consumers."],
         action: { label: "Add consumers", page: "scaling" },
       },
       {
@@ -135,14 +135,18 @@ export const DOC_ARTICLES: DocArticle[] = [
           headings: ["Strategy", "Who chooses capacity?", "Useful for"],
           rows: [
             ["Fixed", "One consumer, always", "Seeing the baseline queue under a surge."],
-            ["Manual", "You choose 0–3 consumers", "Rescuing a backlog or testing capacity limits."],
+            ["Manual", "You choose 0–12 consumers", "Rescuing a backlog or testing capacity limits."],
             ["CPU-HPA", "Kubernetes reacts to CPU relative to the pod request", "Observing a CPU-based autoscaler."],
             ["Lag-KEDA", "KEDA reacts to consumer-group lag", "Observing queue-based autoscaling."],
-            ["ML Predictive", "The agent forecasts arrivals and evaluates 1–3 consumers", "Anticipating patterns while balancing latency and resource use."],
+            ["ML Predictive", "The agent forecasts arrivals and evaluates 1–12 consumers", "Anticipating patterns while balancing latency and resource use."],
           ],
         },
         note: "Zero manual replicas pauses processing; it is not a crash. Kafka keeps the work until consumers return, subject to broker retention.",
         action: { label: "Choose a strategy", page: "scaling" },
+      },
+      {
+        title: "Why twelve consumers?",
+        paragraphs: ["Three replicas offered only two upward scaling steps. Twelve gives more room to observe gradual scaling, manual rescue, stabilization and predictive resource decisions while keeping one configuration for all modes.", "Kafka gives each partition to one consumer in the group at a time. Twelve partitions let up to twelve consumers do useful work. More consumers do not guarantee proportional throughput: the shared database and local node can become the limit. Historical three-replica measurements remain historical; use the new campaign for comparisons."],
       },
       {
         title: "Try ML Predictive",
@@ -154,11 +158,11 @@ export const DOC_ARTICLES: DocArticle[] = [
           "Stop & drain, then review the exact result and recorded decisions in Sessions.",
         ],
         command: { label: "Prepare once, then reopen the console", text: "./streamscale.sh predictive-prepare\n./streamscale.sh console" },
-        note: "Preparation needs at least 5 GiB free and is a substantial live campaign. The recorded implementation evidence reports preparation blocked by low disk space; a trained artifact was not promoted in that validation. Historical charts and a selectable mode do not prove a model is prepared on this machine. Read the live mode status and model identity.",
+        note: "Preparation needs at least 5 GiB free and is a substantial live campaign. Old three-partition models require preparation again. Historical charts and a selectable mode do not prove a compatible model is prepared on this machine. Read the live mode status and model identity.",
       },
       {
         title: "What the predictor sees",
-        paragraphs: ["Quantile HistGradientBoostingRegressor models use 60 seconds of observed traffic history to predict per-partition arrivals over 10, 20 and 30 seconds. They estimate the median and upper quantiles. Future schedules, scenario names and seeds never enter model features.", "Every five seconds the controller projects partition backlog for one, two and three replicas. It uses separately measured capacity at each count, startup and rebalance delays, assignment constraints and database limits. It chooses the smallest capacity expected to satisfy the target; the queue-delay projection is a control estimate, not an exact p95 guarantee.", "The default policy looks ahead 20 seconds using the 90th-percentile forecast, 15% capacity headroom and 60 seconds of scale-down stabilization. The chart places horizon-mean forecasts at their future interval ends and compares them with actual means over the same intervals."],
+        paragraphs: ["Quantile HistGradientBoostingRegressor models use 60 seconds of observed traffic history to predict per-partition arrivals over 10, 20 and 30 seconds. They estimate the median and upper quantiles. Future schedules, scenario names and seeds never enter model features.", "Every five seconds the controller projects partition backlog for every replica count from one to twelve. It uses separately measured capacity at each count, startup and rebalance delays, assignment constraints and database limits. It chooses the smallest capacity expected to satisfy the target; the queue-delay projection is a control estimate, not an exact p95 guarantee.", "The default policy looks ahead 20 seconds using the 90th-percentile forecast, 15% capacity headroom and 60 seconds of scale-down stabilization. The chart places horizon-mean forecasts at their future interval ends and compares them with actual means over the same intervals."],
       },
       {
         title: "Understand the status",
@@ -193,12 +197,12 @@ export const DOC_ARTICLES: DocArticle[] = [
     sections: [
       {
         title: "The pipeline",
-        paragraphs: ["Seeded publisher → Kafka orders.events.v1 (three partitions) → consumer group → PostgreSQL order_event and order_state. Invalid records go to orders.events.dlq.v1 with their source identity and reason.", "The same seed produces the same logical event sequence. Partition keys preserve per-order routing. Each execution gets a new run ID and consumer group, while earlier source ranges and artifacts remain available."],
+        paragraphs: ["Seeded publisher → Kafka orders.events.v1 (twelve partitions) → consumer group → PostgreSQL order_event and order_state. Invalid records go to orders.events.dlq.v1 with their source identity and reason.", "The same seed produces the same logical event sequence. Partition keys preserve per-order routing. Each execution gets a new run ID and consumer group, while earlier source ranges and artifacts remain available."],
         table: {
           headings: ["Store term", "System component"],
           rows: [
             ["Store doors", "Interactive publisher"],
-            ["Checkout lanes", "Three Kafka partitions"],
+            ["Checkout lanes", "Twelve Kafka partitions"],
             ["Tickets issued / now serving / queue", "High watermark / committed offset / lag"],
             ["Cashiers", "Consumer pods and their partition assignments"],
             ["Floor manager", "Scaling controller"],
@@ -311,7 +315,7 @@ export const DOC_ARTICLES: DocArticle[] = [
       },
       {
         title: "The queue grows or will not drain",
-        paragraphs: ["Compare arrivals with processing first. If arrivals are higher, wait for the surge to end, stop production or add consumers. Check desired, ready and assigned consumer counts separately; startup and rebalancing take time.", "If consumers are ready but throughput stays low, inspect database latency, CPU restrictions and active faults. Three consumers cannot overcome every database bottleneck or a heavily skewed partition. Recover pipeline ends active faults; Stop & drain ends new production."],
+        paragraphs: ["Compare arrivals with processing first. If arrivals are higher, wait for the surge to end, stop production or add consumers. Check desired, ready and assigned consumer counts separately; startup and rebalancing take time.", "If consumers are ready but throughput stays low, inspect database latency, CPU restrictions and active faults. Twelve consumers cannot overcome every database bottleneck or a heavily skewed partition. Recover pipeline ends active faults; Stop & drain ends new production."],
         action: { label: "Inspect live measurements", page: "overview" },
       },
       {

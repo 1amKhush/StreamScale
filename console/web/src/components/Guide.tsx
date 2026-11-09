@@ -33,7 +33,7 @@ export const DEMOS: Demo[] = [
     id: "no-scaling",
     title: "No scaling",
     store: "One cashier faces a flash-sale rush.",
-    system: "A fixed single consumer under a burst three times its capacity.",
+    system: "A fixed single consumer under a burst above its capacity.",
     steps: [
       {
         store: "Keep one cashier on duty.",
@@ -53,7 +53,7 @@ export const DEMOS: Demo[] = [
           label: "Start the flash sale",
         },
         watch:
-          "Arrivals jump to about 390/s while serving stays near 140/s; every lane's queue grows.",
+          "Arrivals rise above one consumer's capacity; watch processing and each lane's queue.",
         done: backlog(2000),
       },
       {
@@ -69,9 +69,9 @@ export const DEMOS: Demo[] = [
   {
     id: "manual-rescue",
     title: "Manual rescue",
-    store: "You call two more cashiers in when queues build.",
+    store: "You add cashiers when queues build.",
     system:
-      "Switch to manual three replicas under backlog and watch the drain rate.",
+      "Switch to manual twelve replicas under backlog and watch the drain rate.",
     steps: [
       {
         store: "Start with one cashier.",
@@ -93,17 +93,17 @@ export const DEMOS: Demo[] = [
         done: backlog(3000),
       },
       {
-        store: "Call in three cashiers: one per lane.",
+        store: "Call in twelve cashiers: one per lane.",
         system:
-          "Manual mode at three replicas: the group rebalances to one partition each.",
+          "Manual mode at twelve replicas: the group rebalances to one partition each.",
         action: {
           kind: "scaling.mode",
-          params: { mode: "manual", replicas: 3 },
-          label: "Manual: three cashiers",
+          params: { mode: "manual", replicas: 12 },
+          label: "Manual: twelve cashiers",
         },
         watch:
-          "A brief handover, then serving roughly triples and queues shrink.",
-        done: members(3),
+          "After the handover, compare the measured serving rate and queue trend. Shared database and node capacity can limit the gain.",
+        done: members(12),
       },
       {
         store: "Close the doors and let the queues clear.",
@@ -172,12 +172,12 @@ export const DEMOS: Demo[] = [
       "Restrict PostgreSQL CPU, then add consumers and see the drain stay flat.",
     steps: [
       {
-        store: "Three cashiers on duty.",
-        system: "Manual three replicas.",
+        store: "Twelve cashiers on duty.",
+        system: "Manual twelve replicas.",
         action: {
           kind: "scaling.mode",
-          params: { mode: "manual", replicas: 3 },
-          label: "Manual: three",
+          params: { mode: "manual", replicas: 12 },
+          label: "Manual: twelve",
         },
       },
       {
@@ -201,7 +201,7 @@ export const DEMOS: Demo[] = [
           label: "Start the flash sale",
         },
         watch:
-          "DB p95 rises and the database-slow signal appears; three consumers drain little faster than one would.",
+          "DB p95 rises and the database-slow signal appears; twelve consumers drain little faster than one would.",
         done: idle,
       },
     ],

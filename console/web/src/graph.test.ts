@@ -146,3 +146,27 @@ describe("particles", () => {
     expect(particleCount(null, false)).toBe(0);
   });
 });
+
+describe("expanded capacity", () => {
+  it("preserves a historical three-lane replay without a full Kafka snapshot", () => {
+    const recorded = point([pod({})]);
+    const floor = buildFloor([recorded], null, 100);
+    expect(floor.lanes.map((lane) => lane.partition)).toEqual([0, 1, 2]);
+    const unavailable = point([], null);
+    const gap = buildFloor([recorded, unavailable], null, 101);
+    expect(gap.lanes.map((lane) => lane.lag)).toEqual([null, null, null]);
+  });
+
+  it("maps twelve partitions to twelve consumers without dropping the final lane", () => {
+    const ids = Array.from({ length: 12 }, (_, p) => p);
+    const consumers = ids.map((p) => pod({ name: `consumer-${p}`, ip: `10.0.0.${p}`, assigned: [p] }));
+    const snapshot = sample(ids.map((p) => ({ host: `10.0.0.${p}`, partitions: [p] })));
+    snapshot.kafka!.partitions = ids.map((partition) => ({ partition, low: 0, high: 100, committed: 90, lag: 10 }));
+    const floor = buildFloor([point(consumers, ids.map(() => 10))], snapshot, 100);
+    expect(floor.lanes).toHaveLength(12);
+    expect(floor.cashiers).toHaveLength(12);
+    expect(floor.lanes.at(-1)?.owner).toBe("consumer-11");
+    expect(floor.cashiers.flatMap((c) => c.lanes).sort((a, b) => a - b)).toEqual(ids);
+    expect(floor.edges.filter((e) => e.source.startsWith("lane"))).toHaveLength(12);
+  });
+});

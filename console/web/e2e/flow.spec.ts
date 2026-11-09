@@ -19,7 +19,7 @@ test("a real flash sale moves the floor, stays bounded under burst, and drains",
   await page.getByTestId("start-sale").dblclick();
   await expect(page.getByTestId("sale-state")).toBeVisible({ timeout: 60_000 });
 
-  for (const lane of [0, 1, 2]) {
+  for (const lane of Array.from({ length: 12 }, (_, p) => p)) {
     await expect.poll(() => lag(page, lane), { timeout: 120_000, intervals: [1000] }).toBeGreaterThan(200);
   }
   await expect(page.getByTestId("node-cashier-" + (await firstCashier(page)))).toContainText("Lane 0");
@@ -49,7 +49,7 @@ test("a real flash sale moves the floor, stays bounded under burst, and drains",
   await expect(page.getByTestId("start-sale")).toBeVisible({ timeout: 420_000 });
   await page.locator("summary").filter({ hasText: "Activity timeline" }).click();
   await expect(page.getByTestId("timeline")).toContainText("drained; backlog is zero");
-  for (const lane of [0, 1, 2]) expect(await lag(page, lane)).toBe(0);
+  for (const lane of Array.from({ length: 12 }, (_, p) => p)) expect(await lag(page, lane)).toBe(0);
   await page.screenshot({ path: `${evidence}/flow-drained.png`, fullPage: true });
   expect(errors).toEqual([]);
 });

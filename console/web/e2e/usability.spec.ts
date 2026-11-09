@@ -138,3 +138,19 @@ test("phone and dark layouts keep navigation and inspection usable", async ({
   });
   expect(errors).toEqual([]);
 });
+
+test("the twelve-partition map stays readable and the final lane is reachable", async ({ page }) => {
+  await login(page);
+  const map = page.getByRole("region", { name: "Scrollable pipeline map" });
+  await expect(map).toBeVisible();
+  await expect(page.locator("[data-testid^='node-lane-']")).toHaveCount(12);
+  await expect.poll(async () => (await page.getByTestId("node-lane-0").boundingBox())?.width ?? 0).toBeGreaterThan(150);
+  await map.focus();
+  await page.keyboard.press("End");
+  await expect.poll(() => map.evaluate((element) => element.scrollTop)).toBeGreaterThan(100);
+  await page.getByTestId("node-lane-11").scrollIntoViewIfNeeded();
+  await page.getByTestId("node-lane-11").click();
+  await expect(page.getByRole("dialog", { name: "Component inspector" })).toBeVisible();
+  await expect(page.getByTestId("inspector")).toContainText("11");
+  await page.keyboard.press("Escape");
+});

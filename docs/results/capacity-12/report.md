@@ -26,6 +26,8 @@ CPU-HPA and lag-KEDA each reached five ready replicas in their independent
 acceptance workloads, with configured bounds 1–12 and no competing controller.
 These checks verify control behavior; they do not rank performance.
 
+![Observed per-count capacity, including the original three-replica boundary](calibration.svg)
+
 ## Per-count calibration
 
 One retained saturated trace per count, 2,000 events/s published for 20 seconds
@@ -62,3 +64,13 @@ Machine-readable evidence: [acceptance.json](acceptance.json) and
 `artifacts/predictive/`, with original run IDs, configurations and reconciliations.
 Run `./streamscale.sh all --no-ui` to reproduce complete verification and
 `./streamscale.sh predictive-evaluate` for the separate held-out comparison.
+
+## Console acceptance
+
+The current console exposes every manual value from zero through twelve, with
+keyboard operation and controls that fit a phone. Twelve partition and consumer
+series are available, map cards remain separated through rebalances, and retained
+three-partition sessions replay with three lanes. The focused production build,
+26 web unit tests and nine real-browser capacity/Docs/usability checks passed.
+The [README pipeline image](../../images/console-twelve-replicas.png) captures a
+real sale with twelve ready consumers and one partition assigned to each.

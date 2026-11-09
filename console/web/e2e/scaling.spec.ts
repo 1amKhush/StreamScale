@@ -5,7 +5,7 @@ async function state(page: Page) {
   return (await page.request.get(`${server().url}/api/state`)).json();
 }
 
-test("manual rescue from the staffing tab spreads lanes across three cashiers", async ({ page }) => {
+test("manual rescue from the staffing tab spreads lanes across twelve cashiers", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   await login(page);
@@ -28,15 +28,15 @@ test("manual rescue from the staffing tab spreads lanes across three cashiers", 
   await page.getByTestId("tab-scaling").click();
   await page.getByTestId("mode-manual").click();
   await expect(page.getByTestId("mode-manual")).toHaveAttribute("aria-checked", "true", { timeout: 180_000 });
-  await page.getByTestId("manual-3").click();
+  await page.getByTestId("manual-12").click();
   await expect
     .poll(async () => {
       const members = (await state(page)).sample.kafka.group.members;
       return members.map((member: { partitions: number[] }) => member.partitions.join(",")).sort().join("|");
     }, { timeout: 180_000, intervals: [1000] })
-    .toBe("0|1|2");
+    .toBe(Array.from({ length: 12 }, (_, p) => String(p)).sort().join("|"));
   await page.getByTestId("view-live").click();
-  await expect(page.locator("[data-testid^='node-cashier-']")).toHaveCount(3, { timeout: 60_000 });
+  await expect(page.locator("[data-testid^='node-cashier-']")).toHaveCount(12, { timeout: 60_000 });
   await page.getByTestId("tab-scaling").click();
   await expect(page.getByTestId("ownership")).toContainText("none");
   await expect(page.getByTestId("ownership")).toContainText("as expected");

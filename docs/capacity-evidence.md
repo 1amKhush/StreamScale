@@ -27,6 +27,16 @@ measured independently at every count, and overload remains explicitly visible.
 The historical three-partition results cannot establish improvements for the new
 configuration; those require the separate held-out twelve-partition comparison.
 
+| Setting | Historical system | Maintained configuration |
+| --- | --- | --- |
+| Input and DLQ partitions | 3 each | 12 each |
+| Autoscaler range | 1–3 | 1–12 |
+| Initial / fixed consumers | 1 | 1 |
+| Useful parallelism ceiling | 3 consumers | 12 consumers |
+| Predictive capacity calibration | Counts 1–3 | Every count 1–12 |
+
+These are the old and new configurations, not selectable capacity profiles.
+
 ## Changes under test
 
 - Topic/bootstrap, CRC32 key routing, source-offset completion, lag export and
@@ -66,7 +76,8 @@ and zero remaining lag across all twelve partitions.
 Current measured summaries are in [the capacity report](results/capacity-12/report.md),
 with machine-readable acceptance and calibration data. Full workflow acceptance
 remains pending; the report separates correctness from the missed latency target.
-The complete launcher log for this run is `/tmp/streamscale-twelve-all.log`.
+The initial launcher log is retained at `artifacts/capacity/full-launcher-initial.log`;
+the resumed full workflow writes `artifacts/capacity/full-launcher.log`.
 Generated evidence is ignored under `artifacts/`; historical milestone evidence
 and `docs/results/current` remain available.
 
@@ -95,7 +106,12 @@ features.
 Final backend checks after the controller correction: **194 pipeline/unit tests**,
 **149 console unit tests**, **31 live local integration tests** (including real
 3-to-12 Kafka expansion with retained records and SQL partitions 3/11 accepted,
-12 rejected), Ruff and formatting all pass. The web build and 25 web unit tests
-pass. Seven real Chrome Docs/usability/map-access checks and a separate browser
-manual-12 rescue pass; the requested focused UI subagent review remains underway.
+12 rejected), Ruff and formatting all pass. The web build and 26 web unit tests
+pass. The requested UI subagent completed nine real Chrome checks covering
+Docs/usability plus twelve-consumer control and retained three-partition replay.
+Measured node heights prevent overlap during rebalances, maps scroll within
+their own region, all twelve chart series remain visible, and all thirteen manual
+choices (including pause at zero) fit on a phone. Older replay topology remains
+unchanged. The current README image is a native browser capture of twelve ready
+consumers, each assigned one partition during a real sale.
 Raw check output is retained under `artifacts/capacity/`.

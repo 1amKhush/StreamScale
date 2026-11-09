@@ -23,7 +23,7 @@ import { useLens } from "../lens";
 
 type Data = Record<string, unknown>;
 
-const LANE_Y = [140, 280, 420];
+const ROW_SPACING = 140;
 const ALERT_TEXT: Record<string, [string, string]> = {
   lane: ["Queue building", "Lag growing"],
   cashier: ["At capacity", "Saturated"],
@@ -281,13 +281,14 @@ const ManagerNode = memo(function ManagerNode({ data, selected }: NodeProps<Node
   const lens = useLens();
   const manager = data.manager as FloorModel["manager"];
   const label = MODE_LABELS[manager.mode] ?? { store: manager.mode, system: manager.mode, explain: "" };
+  const modeText = label[lens].replace("–12", `–${data.partitionCount}`);
   const hpa = manager.controllers.find((row) => row.kind === "HorizontalPodAutoscaler");
   const keda = manager.controllers.find((row) => row.kind === "ScaledObject");
   return (
     <NodeFrame kind="manager" title={word("controller", lens)} caption={word("controller", lens === "store" ? "system" : "store")} alert={null} selected={selected} icon={<ClipboardIcon />} testId="node-manager"
       tooltip={hpa && !hpa.owned_by_keda ? `CPU ${percent(hpa.cpu_utilization)} / ${percent(hpa.cpu_target)} target` : keda ? `Lag threshold per consumer: ${keda.lag_threshold ?? "—"}` : label.explain}>
       <p className="node-state" title={label.explain}>
-        {label[lens]}
+        {modeText}
         {manager.override && <strong className="override"> · manual override</strong>}
       </p>
       <dl className="node-dl">
@@ -420,24 +421,46 @@ export function FlowMap({
   reducedMotion: boolean;
   cpuTarget: number | null;
 }) {
+  const [nodeHeights, setNodeHeights] = useState<Record<string, number>>({});
   const cashierCount = Math.max(1, floor.cashiers.length);
+  const rows = Math.max(floor.lanes.length, cashierCount);
+  const expanded = rows > 6;
+  // Assignments and fault notices can change a card's height during handover.
+  // Stack measured cards instead of assuming each consumer occupies one row.
+  const { laneY, cashierY, extent } = useMemo(() => {
+    const laneY: number[] = [];
+    const cashierY: number[] = [];
+    let laneBottom = 140;
+    let cashierBottom = 140;
+    for (const lane of floor.lanes) {
+      laneY.push(laneBottom);
+      laneBottom += (nodeHeights[`lane${lane.partition}`] ?? 150) + 18;
+    }
+    for (const cashier of floor.cashiers) {
+      cashierY.push(cashierBottom);
+      const estimatedHeight = 200 + Math.max(0, Math.ceil(cashier.lanes.length / 3) - 1) * 24 + (cashier.faults.length ? 28 : 0);
+      cashierBottom += (nodeHeights[`cashier:${cashier.name}`] ?? estimatedHeight) + 24;
+    }
+    return { laneY, cashierY, extent: Math.max(laneBottom, cashierBottom) };
+  }, [floor.lanes, floor.cashiers, nodeHeights]);
+  const middle = 140 + ((rows - 1) * ROW_SPACING) / 2;
   const built = useMemo<Node<Data>[]>(() => {
     const list: Node<Data>[] = [
-      { id: "doors", type: "doors", position: { x: 0, y: 270 }, data: { doors: floor.doors } },
+      { id: "doors", type: "doors", position: { x: 0, y: rows > 6 ? 270 : middle }, data: { doors: floor.doors } },
       {
         id: "manager",
         type: "manager",
         position: { x: 660, y: 0 },
-        data: { manager: floor.manager },
+        data: { manager: floor.manager, partitionCount: floor.lanes.length },
       },
-      { id: "ledger", type: "ledger", position: { x: 1030, y: 180 }, data: { ledger: floor.ledger } },
-      { id: "desk", type: "desk", position: { x: 1030, y: 430 }, data: { desk: floor.desk } },
+      { id: "ledger", type: "ledger", position: { x: 1030, y: rows > 6 ? 180 : middle - 100 }, data: { ledger: floor.ledger } },
+      { id: "desk", type: "desk", position: { x: 1030, y: rows > 6 ? 430 : middle + 150 }, data: { desk: floor.desk } },
     ];
-    floor.lanes.forEach((lane) =>
+    floor.lanes.forEach((lane, index) =>
       list.push({
         id: `lane${lane.partition}`,
         type: "lane",
-        position: { x: 300, y: LANE_Y[lane.partition] },
+        position: { x: 300, y: expanded ? laneY[index] : 140 + index * ROW_SPACING },
         data: { lane, scale: floor.queueScale },
       }),
     );
@@ -445,12 +468,12 @@ export function FlowMap({
       list.push({
         id: `cashier:${cashier.name}`,
         type: "cashier",
-        position: { x: 660, y: 140 + Math.max(0, 3 - cashierCount) * 70 + index * 140 },
+        position: { x: 660, y: expanded ? cashierY[index] : 140 + ((rows - cashierCount) * ROW_SPACING) / 2 + index * ROW_SPACING },
         data: { cashier, cpuTarget },
       }),
     );
     return list.map((node) => ({ ...node, selected: node.id === selected, draggable: false }));
-  }, [floor, selected, cashierCount, cpuTarget]);
+  }, [floor, selected, cashierCount, cpuTarget, rows, middle, expanded, laneY, cashierY]);
   // Controlled nodes: React Flow's measured sizes must survive each second's rebuild,
   // otherwise a node can stay unmeasured and therefore hidden.
   const [nodes, setNodes] = useState<Node<Data>[]>(built);
@@ -464,13 +487,24 @@ export function FlowMap({
     });
   }, [built]);
   const onNodesChange = useCallback(
-    (changes: NodeChange<Node<Data>>[]) =>
+    (changes: NodeChange<Node<Data>>[]) => {
+      setNodeHeights((current) => {
+        let next = current;
+        for (const change of changes) {
+          if (change.type !== "dimensions" || !change.dimensions?.height) continue;
+          if (current[change.id] === change.dimensions.height) continue;
+          if (next === current) next = { ...current };
+          next[change.id] = change.dimensions.height;
+        }
+        return next;
+      });
       setNodes((current) =>
         applyNodeChanges(
           changes.filter((change) => change.type === "dimensions"),
           current,
         ),
-      ),
+      );
+    },
     [],
   );
   const edges = useMemo<Edge<Data>[]>(
@@ -486,27 +520,36 @@ export function FlowMap({
     [floor.edges, reducedMotion],
   );
   return (
-    <div className="flow-map" data-testid="flow-map">
-      <ReactFlow
-        nodes={nodes}
-        onNodesChange={onNodesChange}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.04 }}
-        minZoom={0.15}
-        maxZoom={1.6}
-        nodesConnectable={false}
-        nodesDraggable={false}
-        elementsSelectable
-        onNodeClick={(_, node) => onSelect(node.id)}
-        onPaneClick={() => onSelect(null)}
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background gap={24} size={1} />
-        <Controls showInteractive={false} />
-      </ReactFlow>
+    <div
+      className={expanded ? "expanded-flow-scroll" : undefined}
+      role={expanded ? "region" : undefined}
+      aria-label={expanded ? "Scrollable pipeline map" : undefined}
+      tabIndex={expanded ? 0 : undefined}
+    >
+      <div className="flow-map" data-testid="flow-map" style={expanded ? { height: 160 + extent * 0.85 } : undefined}>
+        <ReactFlow
+          nodes={nodes}
+          onNodesChange={onNodesChange}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.04 }}
+          zoomOnScroll={rows <= 6}
+          preventScrolling={rows <= 6}
+          minZoom={0.15}
+          maxZoom={1.6}
+          nodesConnectable={false}
+          nodesDraggable={false}
+          elementsSelectable
+          onNodeClick={(_, node) => onSelect(node.id)}
+          onPaneClick={() => onSelect(null)}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background gap={24} size={1} />
+          <Controls showInteractive={false} />
+        </ReactFlow>
+      </div>
     </div>
   );
 }

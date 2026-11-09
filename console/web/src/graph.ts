@@ -1,5 +1,6 @@
 // Pure model of the checkout floor built from live telemetry. Rendering (React Flow)
 // and tests both consume this, so what the map claims is checkable in isolation.
+import { PARTITION_IDS } from "./capacity";
 import type { PodPoint, Point, Sample, Signal } from "./types";
 
 export type Severity = "critical" | "warning" | null;
@@ -158,14 +159,20 @@ export function buildFloor(points: Point[], sample: Sample | null, now: number):
     for (const partition of member.partitions) owners.set(partition, { name: name ?? member.host, known: !!name });
   }
   const laneAlert = worst(signals, ["partitions", "kafka"]);
-  const lanes: LaneModel[] = [0, 1, 2].map((partition) => {
+  // Older replay frames can have partition lag without a full Kafka snapshot.
+  // Preserve their recorded topology instead of inventing nine new lanes.
+  const recordedLag = points.findLast((item) => item.lag?.length)?.lag;
+  const partitionIds = partitions.length
+    ? partitions.map((p) => p.partition).sort((a, b) => a - b)
+    : recordedLag?.map((_, index) => index) ?? PARTITION_IDS;
+  const lanes: LaneModel[] = partitionIds.map((partition) => {
     const row = partitions.find((item) => item.partition === partition);
     const owner = owners.get(partition) ?? null;
     return {
       partition,
       high: row?.high ?? null,
       committed: row?.committed ?? null,
-      lag: point?.lag ? point.lag[partition] : null,
+      lag: point?.lag?.[partition] ?? null,
       trend: trend(points, partition),
       arrival: point?.rates.arrival_by_partition?.[partition] ?? null,
       drain: point?.rates.drain_by_partition?.[partition] ?? null,
@@ -185,7 +192,7 @@ export function buildFloor(points: Point[], sample: Sample | null, now: number):
       const laneList = [...owners.entries()]
         .filter(([, owner]) => owner.name === pod.name)
         .map(([partition]) => partition)
-        .sort();
+        .sort((a, b) => a - b);
       const { status, detail } = cashierStatus(pod, laneList, now);
       const own = signals.filter((signal) => signal.id.endsWith(pod.name));
       return {
@@ -221,7 +228,7 @@ export function buildFloor(points: Point[], sample: Sample | null, now: number):
     }
   }
   for (const cashier of cashiers) {
-    const handled = cashier.lanes.reduce((sum, lane) => sum + (lanes[lane].drain ?? 0), 0);
+    const handled = cashier.lanes.reduce((sum, lane) => sum + (lanes.find((item) => item.partition === lane)?.drain ?? 0), 0);
     edges.push({ id: `${cashier.name}-ledger`, source: `cashier:${cashier.name}`, target: "ledger", rate: cashier.lanes.length ? handled : 0, kind: "flow" });
     edges.push({ id: `${cashier.name}-desk`, source: `cashier:${cashier.name}`, target: "desk", rate: cashier.lanes.length ? point?.rates.dead_letters ?? null : 0, kind: "dlq" });
     edges.push({ id: `manager-${cashier.name}`, source: "manager", target: `cashier:${cashier.name}`, rate: null, kind: "control" });

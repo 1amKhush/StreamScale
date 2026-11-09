@@ -1,4 +1,5 @@
 import { useState, type KeyboardEvent } from "react";
+import { MAX_REPLICAS } from "../capacity";
 import type { Live } from "../api";
 import { MODE_LABELS, TERMS } from "../analogy";
 import { count, percent } from "../format";
@@ -53,7 +54,7 @@ const MODE_NAMES: Record<(typeof MODES)[number], string> = {
 };
 const MODE_HINTS: Record<(typeof MODES)[number], string> = {
   fixed: "Always 1 consumer",
-  manual: "You choose 0–3",
+  manual: "You choose 0–12",
   "cpu-hpa": "Respond to CPU use",
   "lag-keda": "Respond to backlog",
   "ml-predictive": "Anticipate traffic",
@@ -83,7 +84,7 @@ function ReplicaButtons({
 }) {
   return (
     <div className="replica-buttons" role="radiogroup" aria-label="Replicas" onKeyDown={moveRadio}>
-      {[0, 1, 2, 3].map((replicas) => (
+      {Array.from({ length: MAX_REPLICAS + 1 }, (_, n) => n).map((replicas) => (
         <button
           key={replicas}
           role="radio"
@@ -134,8 +135,8 @@ export function ScalingPanel({ live, onDocs }: { live: Live; onDocs?: () => void
     predictive?.status === "fallback" &&
     predictive.reason?.startsWith("Prepare model:");
   const settingsValid =
-    Number.isInteger(settings.min) && settings.min >= 1 && settings.min <= 3 &&
-    Number.isInteger(settings.max) && settings.max >= settings.min && settings.max <= 3 &&
+    Number.isInteger(settings.min) && settings.min >= 1 && settings.min <= MAX_REPLICAS &&
+    Number.isInteger(settings.max) && settings.max >= settings.min && settings.max <= MAX_REPLICAS &&
     Number.isInteger(settings.latency_target) && settings.latency_target >= 1 && settings.latency_target <= 30 &&
     Number.isInteger(settings.cpu_target) && settings.cpu_target >= 10 && settings.cpu_target <= 400 &&
     Number.isInteger(settings.lag_threshold) && settings.lag_threshold >= 5 && settings.lag_threshold <= 10000 &&
@@ -378,7 +379,7 @@ export function ScalingPanel({ live, onDocs }: { live: Live; onDocs?: () => void
                 <input
                   type="number"
                   min={1}
-                  max={3}
+                  max={MAX_REPLICAS}
                   value={settings.min}
                   onChange={(event) =>
                     setDraft({
@@ -389,11 +390,11 @@ export function ScalingPanel({ live, onDocs }: { live: Live; onDocs?: () => void
                 />
               </label>
               <label className="number-field">
-                <span>Maximum replicas (3 partitions)</span>
+                <span>Maximum replicas (12 partitions)</span>
                 <input
                   type="number"
                   min={1}
-                  max={3}
+                  max={MAX_REPLICAS}
                   value={settings.max}
                   onChange={(event) =>
                     setDraft({

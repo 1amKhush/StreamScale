@@ -35,7 +35,9 @@ function presetName(value: unknown) {
 
 function modeName(value: unknown) {
   const id = typeof value === "string" ? value : "";
-  return MODE_LABELS[id]?.system ?? (id || "Mode not recorded");
+  // Historical sessions may use earlier replica bounds. Name their strategy
+  // without attaching today's capacity range to the recorded experiment.
+  return MODE_LABELS[id]?.system.split(" · ")[0] ?? (id || "Mode not recorded");
 }
 
 export function Replay({ detail }: { detail: Detail }) {
