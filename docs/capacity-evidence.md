@@ -115,3 +115,32 @@ choices (including pause at zero) fit on a phone. Older replay topology remains
 unchanged. The current README image is a native browser capture of twelve ready
 consumers, each assigned one partition during a real sale.
 Raw check output is retained under `artifacts/capacity/`.
+
+
+## Larger-workload memory correction
+
+The resumed launcher reached repeated-burst training after seven completed
+training captures. A 70,920-attempt sale published and drained without failed
+acknowledgements, but reconciliation caused the agent to exceed its 768 MiB
+memory limit (`OOMKilled`). Its source data and SQL facts were retained. The host
+then lost its port forward and left that reconciliation unfinished. This failure
+is part of the acceptance record, not a passing campaign result.
+
+Reconciliation now streams source records, acknowledgement logs and server-side
+SQL cursors into temporary SQLite proof tables with an 8 MiB page cache. It keeps
+exact identifier, state, DLQ and nearest-rank percentile checks without retaining
+multiple payload/row copies. Only its own temporary directory is removed; prior
+results are published atomically after completion. The agent's disk-backed `/tmp`
+allowance is 1 GiB for this transient work; its memory limit stays 768 MiB.
+Telemetry backfill is encoded and capped at 32 MiB / 1,200 frames, plus the latest
+live sample. Full session recordings on disk are preserved. Forecast observation
+fields, sampling cadence and the 60-second inference history are unchanged.
+
+Host reconciliation retries after reconnect and restarts lost jobs. Request
+identities prevent an older persisted success from satisfying a new operation.
+Regression checks cover large streamed proofs, duplicate/late/tied events, DLQ
+copies, missing facts, cleanup after failure, history bounds and lost POST replies
+or agent jobs. All **157 console unit tests** and repository lint/format checks
+pass; live recovery and the complete launcher remain pending for this correction.
+The interrupted launcher log is retained at
+`artifacts/capacity/full-launcher-before-memory-fix.log`.

@@ -162,3 +162,32 @@ def test_console_lock_excludes_another_holder(tmp_path):
     first.release()
     second.acquire("sale two")
     second.release()
+
+
+def test_twelve_consumer_backfill_is_byte_bounded_and_keeps_recorded_frames():
+    from streamscale_console_worker.observe import SampleHistory
+
+    history = SampleHistory(limit=1200, byte_limit=2048)
+    first = {"sequence": 1, "consumers": [{"pod": "p0", "metrics": {"accepted": 1}}]}
+    history.append(first)
+    first["consumers"][0]["metrics"]["accepted"] = 99
+    assert json.loads(history.since(0, 900)[0])["consumers"][0]["metrics"]["accepted"] == 1
+    for i in range(2, 100):
+        history.append(
+            {"sequence": i, "consumers": [{"pod": f"p{n}", "accepted": i} for n in range(12)]}
+        )
+    assert history.bytes <= 2048 and len(history.rows) < 1200
+    backfill = [json.loads(row) for row in history.since(0, 900)]
+    assert backfill[-1]["sequence"] == 99 and len(backfill[-1]["consumers"]) == 12
+    assert all(row["sequence"] > backfill[0]["sequence"] for row in backfill[1:])
+    assert history.latest["sequence"] == 99
+
+
+def test_backfill_retains_count_limit_and_requested_tail():
+    from streamscale_console_worker.observe import SampleHistory
+
+    history = SampleHistory(limit=3, byte_limit=10000)
+    for i in range(6):
+        history.append({"sequence": i})
+    assert [json.loads(row)["sequence"] for row in history.since(2, 2)] == [4, 5]
+    assert len(history.rows) == 3

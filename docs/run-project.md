@@ -369,3 +369,12 @@ stabilization, manual rescue and predictive resource savings. Partition count
 must grow with the replica ceiling so added consumers can receive useful work.
 This does not guarantee linear throughput or a latency improvement; use the
 measured evidence in [M21 acceptance](capacity-evidence.md).
+
+
+Large twelve-consumer workloads use bounded agent backfill (32 MiB / 1,200 frames)
+and streamed reconciliation with temporary disk-backed proof tables. The agent
+has up to 1 GiB of transient `/tmp` space and retains its 768 MiB memory limit.
+Session recordings, source records and SQL facts remain retained. Reconciliation
+reconnects after agent/forward loss; its request identity prevents reuse of an
+older result for a new check. See [capacity evidence](capacity-evidence.md) for
+validation status and the failure that motivated this correction.

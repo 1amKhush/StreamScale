@@ -421,20 +421,40 @@ class Component:
             if time.monotonic() > deadline:
                 raise RuntimeError("The cluster agent did not become reachable")
             await asyncio.sleep(1)
-        try:
-            await client.call("POST", "/v1/command/reconcile", {"run_name": record["run_name"]})
-        except AgentRejected as error:
-            raise Rejected(str(error)) from None
         self.console.coordinator.report(operation, "Reading the source range, SQL and DLQ")
         deadline = time.monotonic() + 600
+        needs_start = True
         while True:
-            job = await client.call(
-                "GET", f"/v1/query/reconciliation?run={record['run_name']}", timeout=30
-            )
-            if job["state"] != "running":
-                break
             if time.monotonic() > deadline:
                 raise RuntimeError("Reconciliation did not finish within ten minutes")
+            if self.console.hub.status["agent"] != "connected":
+                await asyncio.sleep(1)
+                continue
+            try:
+                if needs_start:
+                    await client.call(
+                        "POST",
+                        "/v1/command/reconcile",
+                        {"run_name": record["run_name"], "request_id": operation.id},
+                    )
+                    needs_start = False
+                job = await client.call(
+                    "GET",
+                    f"/v1/query/reconciliation?run={record['run_name']}&request_id={operation.id}",
+                    timeout=30,
+                )
+            except AgentRejected as error:
+                raise Rejected(str(error)) from None
+            except AgentUnavailable:
+                # The hub reconnects independently. POST is idempotent while a
+                # job runs; query again to recover its result after a lost reply.
+                await asyncio.sleep(1)
+                continue
+            if job["state"] == "not-started":
+                # An agent restart can lose the in-memory job before publication.
+                needs_start = True
+            elif job["state"] != "running":
+                break
             await asyncio.sleep(1)
         if job["state"] == "error":
             raise RuntimeError(job.get("error", "Reconciliation failed"))

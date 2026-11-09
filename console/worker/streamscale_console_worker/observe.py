@@ -418,6 +418,32 @@ def resource_summary(items):
     return result
 
 
+class SampleHistory:
+    """Keep backfill encoded and byte-bounded as consumer telemetry expands.
+
+    The live sample stays available without decoding. At least its single encoded
+    frame is retained, even if a future frame itself exceeds the byte budget.
+    """
+
+    def __init__(self, limit=1200, byte_limit=32 * 1024**2):
+        self.limit = limit
+        self.byte_limit = byte_limit
+        self.rows = deque()
+        self.bytes = 0
+        self.latest = None
+
+    def append(self, sample):
+        encoded = json.dumps(sample, separators=(",", ":"), default=str).encode()
+        self.latest = sample
+        self.rows.append((sample["sequence"], encoded))
+        self.bytes += len(encoded)
+        while len(self.rows) > 1 and (len(self.rows) > self.limit or self.bytes > self.byte_limit):
+            self.bytes -= len(self.rows.popleft()[1])
+
+    def since(self, sequence, limit):
+        return [encoded for number, encoded in self.rows if number > sequence][-limit:]
+
+
 class Observer:
     """Collect one telemetry sample per interval and retain a bounded history."""
 
@@ -429,7 +455,7 @@ class Observer:
         self.kafka = None
         self.sql = SqlProbe(settings.database_url)
         self.extras = extras or {}
-        self.history = deque(maxlen=1200)
+        self.history = SampleHistory()
         self.sequence = 0
         self.lock = threading.Lock()
         self.last_request = 0.0
@@ -531,12 +557,12 @@ class Observer:
 
     def latest(self):
         with self.lock:
-            return self.history[-1] if self.history else None
+            return self.history.latest
 
     def since(self, sequence, limit=900):
         with self.lock:
-            rows = [row for row in self.history if row["sequence"] > sequence]
-        return rows[-limit:]
+            rows = self.history.since(sequence, limit)
+        return [json.loads(encoded) for encoded in rows]
 
     def run_forever(self, stop):
         while not stop.is_set():

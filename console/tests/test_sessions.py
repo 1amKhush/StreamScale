@@ -136,3 +136,53 @@ def test_sessions_left_open_by_an_earlier_server_are_marked_orphaned(setup):
     )
     feed(component, clock, sample("sale-y", "idle", (0, 0, 0)))
     assert stored(component, left)["state"] == "orphaned"
+
+
+def test_reconciliation_recovers_lost_forward_and_agent_job_after_restart(setup, monkeypatch):
+    from types import SimpleNamespace
+
+    from streamscale_console.telemetry import AgentUnavailable
+
+    console, component, _ = setup
+    record = started(component)
+    result = {
+        "status": "passed",
+        "latency_s": {"p95": 1.5},
+        "stored_facts": 10,
+        "missing_acknowledged_count": 0,
+        "duplicate_stored_ids": 0,
+        "state_regressions": 0,
+    }
+    # Lose the POST reply, recover its in-flight job, then lose it in an agent restart.
+    replies = iter(
+        [
+            AgentUnavailable("lost POST reply"),
+            {"state": "running"},
+            {"state": "running"},
+            AgentUnavailable("forward restarting"),
+            {"state": "not-started"},
+            {"state": "running"},
+            {"state": "passed", "result": result},
+        ]
+    )
+    calls = []
+
+    async def call(method, path, *args, **kwargs):
+        calls.append((method, path))
+        reply = next(replies)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
+    async def immediate(_):
+        pass
+
+    console.hub.client = SimpleNamespace(call=call)
+    monkeypatch.setattr("streamscale_console.sales.asyncio.sleep", immediate)
+    monkeypatch.setattr(console.coordinator, "report", lambda *args: None)
+    operation = SimpleNamespace(id="op-reconcile-test", params={"session": record["id"]})
+    assert asyncio.run(component.reconcile(operation))["status"] == "passed"
+    assert len([method for method, _ in calls if method == "POST"]) == 3
+    final = stored(component, record)
+    assert final["reconciliation_status"] == "passed"
+    assert (component.store.path(record["id"]) / "reconciliation.json").exists()

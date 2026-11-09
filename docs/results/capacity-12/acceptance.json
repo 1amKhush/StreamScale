@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T16:26:06.775776+00:00",
+  "updated_at": "2026-11-09T16:39:14.150690+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -77,7 +77,7 @@
   },
   "completed_checks": {
     "pipeline_unit": 194,
-    "console_unit": 149,
+    "console_unit": 157,
     "web_unit": 26,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
@@ -90,6 +90,7 @@
     "focused_capacity_docs_usability_browser": 9
   },
   "remaining": [
+    "live recovery of the large reconciliation OOM and fresh full workflow",
     "trained model and policy preparation",
     "complete live and browser acceptance",
     "36-run held-out predictive comparison",
@@ -104,7 +105,55 @@
     "local_integration": "artifacts/capacity/local-integration.log",
     "twelve_consumer_browser": "artifacts/console/e2e/capacity-twelve-consumers-desktop.png",
     "historical_browser": "artifacts/console/e2e/capacity-historical-three-lane-replay.png",
-    "mobile_browser": "artifacts/console/e2e/capacity-scaling-mobile.png"
+    "mobile_browser": "artifacts/console/e2e/capacity-scaling-mobile.png",
+    "capacity_recheck": "artifacts/capacity/capacity-check-launcher-recheck.json",
+    "console_memory_regression": "artifacts/capacity/console-memory-regression.log",
+    "interrupted_memory_launcher": "artifacts/capacity/full-launcher-before-memory-fix.log"
   },
-  "controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7"
+  "controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7",
+  "capacity_rechecks": [
+    {
+      "status": "passed",
+      "partitions": 12,
+      "ready_peak": 12,
+      "ready_after_downscale": 1,
+      "session": "session-20261109163245-2ca6f5",
+      "reconciliation": {
+        "status": "passed",
+        "outcome": "completed",
+        "acknowledged": 9450,
+        "stored_facts": 8820,
+        "missing_acknowledged_count": 0,
+        "duplicate_stored_ids": 0,
+        "state_regressions": 0,
+        "invalid_sources": 180,
+        "dlq_unique_sources": 180,
+        "dlq_copies": 180,
+        "missing_dlq_sources": 0,
+        "unacknowledged_in_log": 0,
+        "log_duplicates": 450,
+        "checks": {
+          "no_missing_acknowledged_ids": true,
+          "no_unexpected_ids": true,
+          "no_duplicate_stored_ids": true,
+          "no_state_regression": true,
+          "every_invalid_source_in_dlq": true,
+          "no_foreign_records": true,
+          "acknowledgements_in_log": true,
+          "backlog_drained": true
+        },
+        "latency_s": {
+          "p50": 1.236747,
+          "p95": 2.988731,
+          "p99": 3.399594,
+          "max": 3.922356,
+          "count": 8820,
+          "target_seconds": 2,
+          "above_target": 1877,
+          "source": "SQL ingested_at - produced_at for every stored fact"
+        },
+        "reconciled_at": "2026-11-09T16:33:35.711655Z"
+      }
+    }
+  ]
 }

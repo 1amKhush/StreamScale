@@ -46,7 +46,7 @@ for a Kafka → PostgreSQL order pipeline, with an interactive console to watch 
 ./streamscale.sh all --no-ui  # same checks, exits when verification finishes
 ```
 
-`all` prepares the environment, runs local and fault checks, deploys a fresh kind
+`all` prepares the environment, runs local and fault checks, deploys a fresh run on the kind
 cluster, exercises the historical scaling modes, runs or reuses the measured
 experiment and regenerates its report. It also prepares ML Predictive, runs its
 acceptance and held-out campaign, and checks the console. It then serves the

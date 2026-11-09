@@ -22,9 +22,16 @@ Its exact SQL p95 was **7.286299 seconds**, above the two-second objective.
 Correctness passed; the latency objective did not. This was a capacity acceptance
 sale with deliberate late/invalid/duplicate events, not a held-out mode comparison.
 
-CPU-HPA and lag-KEDA each reached five ready replicas in their independent
-acceptance workloads, with configured bounds 1–12 and no competing controller.
-These checks verify control behavior; they do not rank performance.
+A repeat through the complete launcher on 2026-11-09 reconciled the same
+9,450 attempts and 8,820 facts, again with zero correctness errors and the
+12-to-1 ownership check passing. Its exact p95 was **2.988731 seconds**; it also
+missed the two-second objective. These repeats demonstrate variability and
+control behavior, not an improvement attributed to a mode.
+
+CPU-HPA and lag-KEDA passed independent acceptance workloads with configured
+bounds 1–12 and no competing controller. Their first pass reached five ready
+replicas each; the repeated launcher pass reached four and five respectively.
+These checks do not rank performance.
 
 ![Observed per-count capacity, including the original three-replica boundary](calibration.svg)
 
