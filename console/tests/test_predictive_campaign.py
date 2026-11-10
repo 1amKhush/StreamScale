@@ -118,6 +118,38 @@ def test_complete_predictive_workload_is_eligible():
     assert summary(run)["performance_eligible"]
 
 
+@pytest.mark.parametrize("change", ["long_gap", "missing_start", "missing_end", "clock_reset"])
+def test_correct_complete_sale_with_missing_cost_measurements_is_not_eligible(change):
+    run = complete_run()
+    if change == "long_gap":
+        run["points"][1]["t"] = 3710
+    elif change == "missing_start":
+        run["points"][0]["ready"] = None
+    elif change == "missing_end":
+        run["points"][1]["ready"] = None
+    else:
+        run["points"][1]["t"] = -1
+    result = summary(run)
+    assert result["correct"] and result["target_met"]
+    assert not result["measurement_complete"]
+    assert not result["performance_eligible"]
+
+
+def test_fallback_does_not_fill_unobserved_time_and_zero_replicas_are_measured():
+    run = complete_run()
+    for p in run["points"]:
+        p["ready"] = 0
+        p["predictive"]["status"] = "fallback"
+    result = summary(run)
+    assert result["measurement_complete"]
+    assert result["replica_seconds"] == 0
+    assert result["replica_coverage"] == 1
+    run["points"][1]["t"] = 3710
+    result = summary(run)
+    assert result["fallback_fraction"] == 0
+    assert result["unknown_measurement_seconds"] == 3710
+
+
 def test_install_rejects_corrupt_artifacts_before_any_cluster_write(tmp_path, monkeypatch):
     from experiments.predictive import runtime
     from streamscale.predictive.model import publish

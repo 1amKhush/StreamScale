@@ -109,16 +109,19 @@ def config(family, seed, base=40, seconds=180):
 
 def summary(run):
     points = run["points"]
-    elapsed = sum(max(0, b["t"] - a["t"]) for a, b in zip(points, points[1:], strict=False))
-    replica_seconds = sum(
-        (b["t"] - a["t"]) * a["ready"]
-        for a, b in zip(points, points[1:], strict=False)
-        if a.get("ready") is not None and 0 < b["t"] - a["t"] <= 5
-    )
+    intervals = [(a, b, b["t"] - a["t"]) for a, b in zip(points, points[1:], strict=False)]
+    elapsed = sum(max(0, dt) for _, _, dt in intervals)
+    measured = [
+        (a, dt)
+        for a, b, dt in intervals
+        if a.get("ready") is not None and b.get("ready") is not None and 0 < dt <= 5
+    ]
+    measurement_complete = bool(intervals) and len(measured) == len(intervals)
+    replica_seconds = sum(dt * a["ready"] for a, dt in measured)
     predictive = [p.get("predictive") or {} for p in points]
     fallback = sum(
-        (b["t"] - a["t"])
-        for a, b in zip(points, points[1:], strict=False)
+        dt
+        for a, dt in measured
         if (a.get("predictive") or {}).get("status") in {"fallback", "warming up"}
     )
     latency = run["record"]["reconciliation"]["latency_s"]["p95"]
@@ -137,20 +140,18 @@ def summary(run):
         "performance_eligible": (
             complete_workload(run["record"])
             and (run.get("mode") != "ml-predictive" or forecast_samples > 0)
+            and measurement_complete
         ),
         "above_latency_target": run["record"]["reconciliation"]["latency_s"].get("above_target"),
         "recovery_seconds": max(0, drained - first - recovery_start)
         if drained is not None and run.get("family") == "overload-recovery"
         else None,
         "measurement_seconds": elapsed,
-        "replica_coverage": sum(
-            b["t"] - a["t"]
-            for a, b in zip(points, points[1:], strict=False)
-            if a.get("ready") is not None and 0 < b["t"] - a["t"] <= 5
-        )
-        / elapsed
-        if elapsed
-        else 0,
+        "measurement_complete": measurement_complete,
+        "unknown_measurement_seconds": elapsed - sum(dt for _, dt in measured),
+        "invalid_measurement_intervals": len(intervals) - len(measured),
+        "max_sample_gap_seconds": max((max(0, dt) for _, _, dt in intervals), default=0),
+        "replica_coverage": sum(dt for _, dt in measured) / elapsed if elapsed else 0,
         "session": run["id"],
         "p95": latency,
         "target_met": latency is not None and latency <= 2,
