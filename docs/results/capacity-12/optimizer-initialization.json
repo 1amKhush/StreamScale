@@ -1,0 +1,38 @@
+{
+  "at": "2026-11-10T06:36:36.752552+00:00",
+  "status": "passed",
+  "scope": "Actual Ax/BoTorch API acceptance with synthetic measurements; not live policy performance.",
+  "before": {
+    "sequence": [
+      "manual-default",
+      "Sobol",
+      "Sobol",
+      "Sobol",
+      "Sobol",
+      "Sobol"
+    ],
+    "first_gp_index": 6,
+    "reason": "The manual default has no Sobol generation node and is excluded from its trial counter."
+  },
+  "after": {
+    "status": "passed",
+    "scope": "Synthetic Ax API/order check only; not live tuning evidence",
+    "ax_version": "1.1.2",
+    "sequence": [
+      "manual-default",
+      "Sobol",
+      "Sobol",
+      "Sobol",
+      "Sobol",
+      "BoTorch"
+    ],
+    "first_gp_trial_index": 5,
+    "live_candidate_budget": 12,
+    "live_gp_candidates": 7
+  },
+  "compatible_manual_captures": 19,
+  "source_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886",
+  "corrected_fingerprint": "9e4706e7ddb2f5ecbe6104c951fd222a8d5c5705dd095366f74765339d9e2bcc",
+  "raw_evidence": "artifacts/capacity/optimizer-initialization-before-fix.log and optimizer-initialization-after-fix.log",
+  "compatibility_provenance": "artifacts/capacity/tuning-budget-compatible-captures.json"
+}

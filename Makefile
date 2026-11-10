@@ -120,6 +120,7 @@ predictive-install:
 	uv sync --project experiments/predictive --frozen
 
 predictive-prepare: console-deploy predictive-install
+	$(PREDICTIVE) python -m experiments.check_predictive_optimizer
 	$(PREDICTIVE) python -m experiments.predictive.campaign prepare
 
 predictive-check: console-install

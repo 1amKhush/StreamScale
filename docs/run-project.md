@@ -339,6 +339,10 @@ coverage, past-history probes and JSON/CSV evidence under
 See [model behavior and possible causes](predictive-model-analysis.md) for the
 reviewed explanation. No retraining or live policy change occurs during analysis.
 
+Before live preparation, `predictive-prepare` checks Ax's default/four-Sobol/GP
+ordering with synthetic objectives. This is an API check, separate from the
+twelve actual policy trials and their two reconciled workloads each.
+
 The maintained configuration uses **12 input and DLQ partitions**, starts at one
 consumer and permits **1–12 replicas** in CPU-HPA, lag-KEDA and ML Predictive.
 Fixed remains one; manual zero pauses processing. All comparisons use the same

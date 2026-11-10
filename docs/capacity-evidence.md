@@ -351,3 +351,28 @@ A host/cluster restart interrupted the first fresh calibration before the
 coordinator saved it. Reconnection reconciled all 40,000 acknowledged facts with
 zero correctness errors. That session is retained outside the experiment. The
 pre-restart launcher log and recovery proof remain in `artifacts/capacity/`.
+
+## Exact Bayesian initialization budget
+
+An actual Ax API check reproduced an initialization-count defect before live
+tuning began: the manually attached default has no Sobol generation node, so
+`num_initialization_trials=5` generated five additional Sobol policies. That would
+leave six GP candidates in the twelve-policy budget. The corrected setting is
+four Sobol trials after the manual default, leaving the requested seven GP trials.
+
+`predictive-prepare` now first exercises the real Ax/BoTorch transition with
+explicitly synthetic, infeasible objective values. It verifies the first GP
+suggestion is trial index five; it never publishes workload or contributes scores
+to live tuning. The check passes under Ax 1.1.2. All 210 pipeline and 180 console
+unit tests, Ruff and formatting pass. [Sequence proof](results/capacity-12/optimizer-initialization.json).
+
+Twelve fresh calibration and seven training captures completed before this
+post-collection correction. All nineteen were revalidated for completion,
+configuration and twelve-dimensional observations, then copied byte-for-byte
+with checksums to the corrected fingerprint. Collection, consumer behavior,
+features, resources and environment did not change. No model, optimizer state
+or policy-controlled result was copied. A following manual sale had already
+started when the coordinator stopped; it drained and reconciled all 88,380 facts
+but remains outside experimental captures. Full qualification resumes from the
+nineteen completed captures. Original logs and compatibility proof remain under
+`artifacts/capacity/`.

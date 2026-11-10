@@ -30,6 +30,12 @@ use disjoint seeds/runs. Environment fingerprints include source, runtime versio
 consumer resources and node information. The accepted artifact is published only
 after tuning; infeasible tuning retains the conservative default explicitly.
 
+Preparation also runs a real-library initialization-order acceptance check using
+synthetic, infeasible objectives. Ax excludes the manually attached default from
+its Sobol counter, so four generated Sobol trials precede seven GP candidates.
+The check verifies that the first GP suggestion is trial index five. Synthetic
+measurements never enter live experiments or performance reports.
+
 ## M19 — console
 
 One additional ML Predictive mode, inline decision/status, latency target, model

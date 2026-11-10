@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10T05:17:25.645998+00:00",
+  "updated_at": "2026-11-10T06:36:36.752552+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -119,7 +119,8 @@
     "consumer_manifest_live_recovery": "passed",
     "offline_diagnostic_regressions": 5,
     "measurement_gap_regressions": 5,
-    "offline_launcher_routing": "passed"
+    "offline_launcher_routing": "passed",
+    "ax_initialization_sequence": "default + 4 Sobol, first GP trial at index 5; synthetic API check passed"
   },
   "remaining": [
     "trained model and policy preparation",
@@ -156,7 +157,8 @@
     "manual_trace_compatibility": "artifacts/capacity/artifact-json-compatible-captures.json",
     "consumer_manifest_memory": "docs/results/capacity-12/consumer-manifest-memory.json",
     "model_analysis": "docs/predictive-model-analysis.md",
-    "diagnostic_slices": "docs/results/capacity-12/model-analysis/summary.json"
+    "diagnostic_slices": "docs/results/capacity-12/model-analysis/summary.json",
+    "optimizer_initialization": "docs/results/capacity-12/optimizer-initialization.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -238,9 +240,9 @@
     "latency_target_met": false,
     "preserved": true
   },
-  "preparation_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886",
+  "preparation_fingerprint": "9e4706e7ddb2f5ecbe6104c951fd222a8d5c5705dd095366f74765339d9e2bcc",
   "predictive_progress": {
-    "status": "fresh full launcher restarting after host restart and measurement gate",
+    "status": "resuming nineteen compatible completed manual traces after optimizer initialization correction",
     "completed_policy_trials": 0,
     "planned_policy_trials": 12,
     "completed_tuning_workloads": 0,
@@ -249,5 +251,5 @@
     "held_out_planned": 36,
     "accepted_model_published": false
   },
-  "previous_preparation_fingerprint": "66509ace6e694d50160f1415a8164b43c6ac5dd76918dc7f717d55c2ad7b5b0f"
+  "previous_preparation_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886"
 }
