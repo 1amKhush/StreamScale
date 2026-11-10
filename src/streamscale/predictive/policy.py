@@ -70,6 +70,10 @@ def recommend(
         if current and row["stable"]
         else [0.0] * PARTITIONS
     )
+    # Every candidate ends at the same timestamp. If readiness takes longer
+    # than the forecast, hold its mean rate through that planning window.
+    # Giving a changed target startup + horizon would grant it extra drain time.
+    projection_seconds = max(horizon, calibration["actuation_seconds"])
     scores = []
     for n in range(minimum, maximum + 1):
         capacity = capacities[n] * (1 - policy["headroom"])
@@ -79,7 +83,9 @@ def recommend(
             for q, r, s in zip(row["lag"], demand, old_service, strict=True)
         ]
         assignment = row["assignments"] if n == current and row["stable"] else None
-        score, saturated = project(after_start, demand, capacity, n, horizon, assignment)
+        score, saturated = project(
+            after_start, demand, capacity, n, projection_seconds - startup, assignment
+        )
         score += calibration.get("handling_seconds", 0)
         scores.append(
             {
@@ -97,6 +103,7 @@ def recommend(
     )
     return {
         "recommended": chosen["replicas"],
+        "projection_seconds": projection_seconds,
         "capacity_limited": not feasible,
         "candidates": scores,
         "reason": (

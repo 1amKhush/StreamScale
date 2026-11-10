@@ -60,6 +60,15 @@ extra replicas are not preferred merely because capacity is limited. The held-ou
 overload workload has 60 seconds of warm-up, a 30-second surge and 90 seconds
 of recovery, with the same logical sequence across compared modes.
 
+Replica candidates now use one common future timestamp: the greater of the
+forecast horizon and calibrated readiness delay. The forecast's mean rate is
+held constant over this planning window. Time spent awaiting readiness reduces
+the new target's service interval; it never grants extra drain time. The actual
+forecast horizon remains unchanged in the chart, and `projection_seconds` records
+the controller's planning window in decision exports. A prior unequal-window
+defect could favor a slower downscale during drain. Earlier policy measurements
+remain historical; the corrected controller requires fresh tuning and evaluation.
+
 See [run commands](run-project.md#ml-predictive-m16m20) and
 [validation evidence](predictive-evidence.md).
 

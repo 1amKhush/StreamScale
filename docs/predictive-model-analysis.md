@@ -192,6 +192,30 @@ Forecast accounting also deduplicates telemetry frames: the first default-policy
 sale has 135 forecast-bearing samples, but only **23 distinct forecast origins
 with observable future intervals** in its saved capture.
 
+## Confirmed controller projection error
+
+Fresh tuning diagnostics subsequently exposed an error distinct from forecasting:
+a changed target received startup time **plus** a full forecast horizon, while
+the unchanged target received only the horizon. The comparison therefore gave
+changed targets extra time to drain. With the fresh calibration, uniform backlog
+and zero arrivals, it chose three consumers at a projected 6.32 seconds rather
+than the faster four at 16.02 seconds. Comparing both at the same timestamp gives
+18.33 seconds for three and 16.02 for four; four is the correct recommendation.
+
+The correction uses one planning window covering the forecast horizon and startup
+delay, subtracting startup from the new target's service interval. Three analytical
+regressions cover zero delay, a slower downscale and delay beyond the forecast.
+All 213 pipeline and 193 console unit tests pass. Live policy tuning and held-out
+evaluation must be repeated under the corrected controller. The 28 manual traces
+remain compatible after validation; old policy scores are preserved separately.
+See the [counterexample](results/capacity-12/projection-horizon-counterexample.json).
+
+One saved old-controller run downscaled from four to three with 17,349 events
+still queued, then returned to four shortly afterward. The defect helps explain
+that avoidable churn. It does not establish the cause of the entire latency gap
+between that run and the default policy. Forecast bias and shared capacity remain
+separate issues.
+
 ## What to improve next
 
 Keep the single ML Predictive mode. A later model iteration should prioritize:

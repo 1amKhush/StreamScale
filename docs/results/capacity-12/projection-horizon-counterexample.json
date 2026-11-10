@@ -1,0 +1,282 @@
+{
+  "scope": "Deterministic policy counterexample with uniform positive backlog and zero future arrivals; staying at faster four consumers dominates switching to slower three when selecting minimum projected latency. Existing change-target projection adds startup time to its forecast horizon but compares it to an unchanged target at the shorter horizon.",
+  "row": {
+    "lag": [
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000
+    ],
+    "ready": 4,
+    "desired": 4,
+    "stable": true,
+    "assignments": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ],
+      [
+        6,
+        7,
+        8
+      ],
+      [
+        9,
+        10,
+        11
+      ]
+    ]
+  },
+  "policy": {
+    "horizon": 20,
+    "quantile": 0.9,
+    "headroom": 0.15,
+    "downscale": 60
+  },
+  "calibration": {
+    "capacity": {
+      "1": 105.96882306869823,
+      "2": 230.9746408936515,
+      "3": 358.4512759528465,
+      "4": 392.9428522253376,
+      "5": 348.9495831853365,
+      "6": 283.9647270148337,
+      "7": 307.88761138171503,
+      "8": 245.46774430059963,
+      "9": 257.96780255108024,
+      "10": 266.95162886668714,
+      "11": 255.95825876021576,
+      "12": 256.2142499500832
+    },
+    "actuation_seconds": 12.001673460006714,
+    "handling_seconds": 0.09474370503597121
+  },
+  "current": {
+    "recommended": 3,
+    "capacity_limited": true,
+    "candidates": [
+      {
+        "replicas": 1,
+        "latency_proxy_s": 68.81588814840089,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 2,
+        "latency_proxy_s": 20.799105108503646,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 3,
+        "latency_proxy_s": 6.323344044034695,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 4,
+        "latency_proxy_s": 16.022734197474307,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 5,
+        "latency_proxy_s": 13.773230909940704,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 6,
+        "latency_proxy_s": 13.203346160017052,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 7,
+        "latency_proxy_s": 15.720149628566825,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 8,
+        "latency_proxy_s": 31.16282617894923,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 9,
+        "latency_proxy_s": 34.762468698214505,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 10,
+        "latency_proxy_s": 38.792489172289734,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 11,
+        "latency_proxy_s": 47.435429343007065,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 12,
+        "latency_proxy_s": 16.789327475466507,
+        "saturated": false,
+        "feasible": false
+      }
+    ],
+    "reason": "Latency target infeasible: partition or shared capacity limit; 3 replicas give the lowest projected delay"
+  },
+  "common_horizon_scores": [
+    {
+      "replicas": 1,
+      "latency_proxy_s": 80.8175616084076
+    },
+    {
+      "replicas": 2,
+      "latency_proxy_s": 32.80077856851037
+    },
+    {
+      "replicas": 3,
+      "latency_proxy_s": 18.32501750404141
+    },
+    {
+      "replicas": 4,
+      "latency_proxy_s": 16.022734197474307
+    },
+    {
+      "replicas": 5,
+      "latency_proxy_s": 25.774904369947414
+    },
+    {
+      "replicas": 6,
+      "latency_proxy_s": 25.205019620023762
+    },
+    {
+      "replicas": 7,
+      "latency_proxy_s": 27.721823088573537
+    },
+    {
+      "replicas": 8,
+      "latency_proxy_s": 43.164499638955945
+    },
+    {
+      "replicas": 9,
+      "latency_proxy_s": 46.764142158221226
+    },
+    {
+      "replicas": 10,
+      "latency_proxy_s": 50.79416263229644
+    },
+    {
+      "replicas": 11,
+      "latency_proxy_s": 59.43710280301379
+    },
+    {
+      "replicas": 12,
+      "latency_proxy_s": 28.791000935473225
+    }
+  ],
+  "common_horizon_best": {
+    "replicas": 4,
+    "latency_proxy_s": 16.022734197474307
+  },
+  "corrected": {
+    "recommended": 4,
+    "projection_seconds": 20,
+    "capacity_limited": true,
+    "candidates": [
+      {
+        "replicas": 1,
+        "latency_proxy_s": 80.8175616084076,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 2,
+        "latency_proxy_s": 32.80077856851037,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 3,
+        "latency_proxy_s": 18.32501750404141,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 4,
+        "latency_proxy_s": 16.022734197474307,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 5,
+        "latency_proxy_s": 25.774904369947414,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 6,
+        "latency_proxy_s": 25.205019620023762,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 7,
+        "latency_proxy_s": 27.721823088573537,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 8,
+        "latency_proxy_s": 43.164499638955945,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 9,
+        "latency_proxy_s": 46.764142158221226,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 10,
+        "latency_proxy_s": 50.79416263229644,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 11,
+        "latency_proxy_s": 59.43710280301379,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 12,
+        "latency_proxy_s": 28.791000935473225,
+        "saturated": false,
+        "feasible": false
+      }
+    ],
+    "reason": "Latency target infeasible: partition or shared capacity limit; 4 replicas give the lowest projected delay"
+  },
+  "fix_validation": "Analytical regressions and 213 pipeline / 193 console unit tests pass; fresh live policy tuning and held-out evaluation pending."
+}
