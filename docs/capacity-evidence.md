@@ -4,10 +4,11 @@ Requested configuration: twelve input and DLQ partitions, initial one consumer,
 1–12 replicas for CPU-HPA, lag-KEDA and ML Predictive. Fixed remains one; manual
 zero retains the existing pause-processing behavior. No extra runtime mode was added.
 
-Status updated 2026-11-10 (India time): implementation complete enough for validation; **live
-acceptance is still running**. This document does not assert complete acceptance.
+Submission status updated 2026-11-10: **partial acceptance**. The user ended the
+remaining qualification campaign to submit the completed work. All StreamScale
+services are stopped. This document does not assert complete acceptance.
 
-Current totals: **210 pipeline unit tests, 180 console unit tests, 29 web unit
+Current totals: **213 pipeline unit tests, 193 console unit tests, 29 web unit
 tests and 31 local integration tests pass**. All twelve calibration, twelve
 training and four validation captures completed. Live tuning now records real
 trained forecasts and correct reconciliations. Preparation, the complete live/
@@ -446,10 +447,9 @@ accuracy, past-history probes and capacity context; the earlier analysis and
 figures are preserved separately. Candidate analysis also passes with the cluster
 stopped. [Preparation proof](results/capacity-12/corrected-candidate-preparation.json).
 
-Full remaining qualification is waiting for persistent disk capacity. A fresh
-complete campaign needs approximately 10 GiB of working room for builds, retained
-tuning evidence and evaluation admission; about 6 GiB remains after cleanup.
-Additional space was requested, without deleting database, Kafka or run data.
+The user cancelled remaining qualification for submission. Fresh tuning, current
+live/browser acceptance, the 36 held-out runs and full-launcher success/reuse
+remain unexecuted. No qualification process is waiting or running.
 
 Scoped cleanup removed verified task-created private build snapshots, obsolete
 image copies/import aliases, three byte-verified synthetic test files, duplicate
@@ -465,5 +465,11 @@ unchanged unrelated containers. The kind node's recorded stop used its image
 signal, followed by signal 9 at the configured 45-second deadline; its precise
 exit/OOM flag observations are preserved in the [shutdown audit](results/capacity-12/shutdown.json).
 This records stopped resources and retained storage, not restart-recovery or
-complete corrected-controller acceptance. After sufficient space is available,
-continue with `./streamscale.sh all --no-ui`; it restarts retained services.
+complete corrected-controller acceptance.
+
+Final submission cleanup removed the four ignored Python environments, downloaded
+project CLI tools, test/lint/bytecode caches and the Matplotlib font cache. Source,
+lockfiles, the built UI, reports, raw runs, models and saved service data remain.
+This final pass freed another 2.22 GiB, leaving approximately 8.20 GiB available.
+Dependencies and tools can be restored through the maintained launcher/Make targets
+if work is resumed. [Submission cleanup audit](results/capacity-12/submission-cleanup.json).

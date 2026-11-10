@@ -317,6 +317,11 @@ invalidate prior policy measurements; the current common-window correction needs
 fresh tuning and held-out evaluation. See the [current diagnosis](predictive-model-analysis.md)
 and [qualification status](capacity-evidence.md).
 
+The submitted snapshot stops at partial acceptance: the user cancelled remaining
+qualification on 2026-11-10. Project services are stopped, and disposable local
+environments/tools were removed while preserving source, locks, reports and run
+data. The launcher restores required dependencies when explicitly run again.
+
 After freeing the required space, resume the complete workflow with:
 
 ```sh

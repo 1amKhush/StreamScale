@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-10T10:31:30.394354+00:00",
-  "status": "partial_acceptance_projection_fixed_live_retuning_required",
+  "updated_at": "2026-11-10T11:36:12.696539+00:00",
+  "status": "partial_acceptance_remaining_qualification_cancelled_by_user_for_submission",
   "configuration": {
     "input_partitions": 12,
     "dlq_partitions": 12,
@@ -178,7 +178,8 @@
     "previous_model_analysis": "docs/predictive-model-analysis-before-startup-fix.md",
     "current_calibration": "docs/results/capacity-12/calibration-current.json",
     "projection_trace_compatibility": "docs/results/capacity-12/projection-time-compatible-captures.json",
-    "shutdown": "docs/results/capacity-12/shutdown.json"
+    "shutdown": "docs/results/capacity-12/shutdown.json",
+    "submission_cleanup": "docs/results/capacity-12/submission-cleanup.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -262,7 +263,7 @@
   },
   "preparation_fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
   "predictive_progress": {
-    "status": "resuming nineteen compatible completed manual traces after optimizer initialization correction",
+    "status": "stopped for submission by user; 28 compatible manual captures retained, fresh controlled runs unexecuted",
     "completed_policy_trials": 0,
     "planned_policy_trials": 12,
     "completed_tuning_workloads": 0,
@@ -294,11 +295,11 @@
     "status": "local_only_live_tuning_pending"
   },
   "storage": {
-    "status": "additional persistent space requested before fresh controlled campaign",
-    "requested_extra_GiB": 5,
+    "status": "additional-space request closed; remaining campaign cancelled by user",
+    "requested_extra_GiB": 0,
     "estimated_free_GiB_before_campaign": 10,
     "retain_volumes_and_raw_runs": true,
-    "available_GiB_after_cleanup": 5.990043640136719
+    "available_GiB_after_cleanup": 8.189
   },
   "shutdown": {
     "at": "2026-11-10T10:31:30.394005+00:00",
@@ -370,5 +371,11 @@
   "current_controlled_runs": {
     "tuning_workloads": 0,
     "heldout_runs": 0
+  },
+  "submission": {
+    "at": "2026-11-10T11:36:12.696539+00:00",
+    "remaining_qualification_cancelled_by_user": true,
+    "project_services_stopped": true,
+    "source_and_evidence_retained": true
   }
 }

@@ -5,8 +5,10 @@ unequal projection windows and passes 213 pipeline / 193 console unit tests.
 All 28 manual traces remain compatible; an offline refit reproduces the frozen
 forecaster payload exactly. The candidate has not been installed or promoted.
 Fresh twelve-policy tuning, the 45-case live suite, browser acceptance, 36 held-out
-runs and complete launcher success/reuse remain pending. Additional disk is needed
-to preserve old records alongside the remaining measured campaign.
+runs and complete launcher success/reuse remain unexecuted. The user cancelled
+remaining qualification for submission on 2026-11-10. All project services are
+stopped; source, reports and raw evidence are retained. Final disposable cleanup
+is recorded in the [submission audit](submission-cleanup.json).
 
 The previous runtime completed twelve policies / twenty-four workloads, all
 correctness passing, with tuning infeasible and the default retained. A subsequent

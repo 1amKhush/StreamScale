@@ -1,0 +1,77 @@
+{
+  "at": "2026-11-10T11:36:12.696539+00:00",
+  "submission_status": "partial_acceptance_remaining_qualification_cancelled_by_user",
+  "cleanup_scope": "Rebuildable ignored project dependencies and caches only; no source, lockfiles, reports, raw runs, models, built UI, volumes, containers or unrelated resources deleted.",
+  "removed_paths": [
+    ".venv",
+    "console/.venv",
+    "experiments/predictive/.venv",
+    "experiments/analysis/.venv",
+    ".tools",
+    ".pytest_cache",
+    ".ruff_cache",
+    "console/.pytest_cache",
+    "artifacts/matplotlib-cache",
+    "tools/workload/streamscale_workload/__pycache__",
+    "src/streamscale/__pycache__",
+    "src/streamscale/predictive/__pycache__",
+    "deploy/__pycache__",
+    "deploy/k8s/__pycache__",
+    "console/tests/__pycache__",
+    "console/tests/live/__pycache__",
+    "console/server/streamscale_console/__pycache__",
+    "console/worker/streamscale_console_worker/__pycache__",
+    "tests/__pycache__",
+    "tests/integration/__pycache__",
+    "tests/predictive/__pycache__",
+    "experiments/__pycache__",
+    "experiments/predictive/__pycache__"
+  ],
+  "observed_freed_GiB": 2.221,
+  "free_GiB": 8.189,
+  "project_containers": [
+    {
+      "name": "streamscale-control-plane",
+      "running": false
+    },
+    {
+      "name": "streamscale-local-postgres-1",
+      "running": false
+    },
+    {
+      "name": "streamscale-local-kafka-1",
+      "running": false
+    }
+  ],
+  "project_host_services": 0,
+  "retained_volume_mounts": [
+    {
+      "container": "streamscale-control-plane",
+      "name": "a580291f1663083e973d63a83137e84073981177c7a7d955c290d484d45fa9ec",
+      "destination": "/var"
+    },
+    {
+      "container": "streamscale-local-postgres-1",
+      "name": "streamscale-local_postgres-data",
+      "destination": "/var/lib/postgresql/data"
+    },
+    {
+      "container": "streamscale-local-kafka-1",
+      "name": "1078cb32ab65d8d2a3a058f584dbc179f52d0a59b011a7878c366d5318ca56e2",
+      "destination": "/etc/kafka/secrets"
+    },
+    {
+      "container": "streamscale-local-kafka-1",
+      "name": "3f83ab69935f7a1966344118cc1f14662644a8bfc5eed8ba2b6aa91cced8fed3",
+      "destination": "/mnt/shared/config"
+    },
+    {
+      "container": "streamscale-local-kafka-1",
+      "name": "streamscale-local_kafka-data",
+      "destination": "/var/lib/kafka/data"
+    }
+  ],
+  "built_ui_retained": true,
+  "resume": "Local environments and CLI tools are recreated through the maintained launcher/Make targets when explicitly requested.",
+  "qualification": "Fresh corrected-controller tuning, 45-case live acceptance, browser acceptance, 36 held-out runs and full launcher success/reuse remain unexecuted."
+}

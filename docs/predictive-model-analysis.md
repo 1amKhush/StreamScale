@@ -204,9 +204,10 @@ source `ea0c07a`, campaign
 It is not installed or promoted. Refit payload matches the previous fit bit-for-bit;
 its controller compatibility and preparation fingerprint changed.
 
-Additional persistent disk is needed to retain both the historical records and
-fresh controlled evidence. Full live/browser acceptance and complete launcher
-success/reuse remain pending. No held-out improvement is claimed.
+The user cancelled remaining qualification for submission on 2026-11-10. Full
+live/browser acceptance and complete launcher success/reuse remain unexecuted;
+all project services are stopped. No held-out improvement is claimed. Source,
+models and raw evidence remain available after disposable dependency/cache cleanup.
 
 After compatible preparation, `./streamscale.sh predictive-analyze` regenerates
 accepted-artifact diagnostics with the cluster stopped. To reproduce this candidate:
