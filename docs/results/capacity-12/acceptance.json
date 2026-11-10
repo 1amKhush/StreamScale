@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09T23:44:15.456828+00:00",
+  "updated_at": "2026-11-10T00:02:39.099720+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -93,7 +93,7 @@
     "validated_for_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
   },
   "completed_checks": {
-    "pipeline_unit": 195,
+    "pipeline_unit": 204,
     "console_unit": 175,
     "web_unit": 29,
     "local_integration_before_expansion_test": 28,
@@ -114,7 +114,8 @@
     "publisher_memory_regressions": 8,
     "publisher_memory_recovery": "passed",
     "twelve_key_artifact_round_trip": "passed",
-    "invalid_artifact_install_preflight": "passed"
+    "invalid_artifact_install_preflight": "passed",
+    "manifest_memory_regressions": 9
   },
   "remaining": [
     "trained model and policy preparation",
@@ -148,7 +149,8 @@
     "artifact_unit": "artifacts/capacity/pipeline-artifact-json.log",
     "artifact_console_unit": "artifacts/capacity/console-artifact-json.log",
     "forecast_validation": "docs/results/capacity-12/forecast-validation.json",
-    "manual_trace_compatibility": "artifacts/capacity/artifact-json-compatible-captures.json"
+    "manual_trace_compatibility": "artifacts/capacity/artifact-json-compatible-captures.json",
+    "consumer_manifest_memory": "docs/results/capacity-12/consumer-manifest-memory.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -230,14 +232,16 @@
     "latency_target_met": false,
     "preserved": true
   },
-  "preparation_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e",
+  "preparation_fingerprint": "66509ace6e694d50160f1415a8164b43c6ac5dd76918dc7f717d55c2ad7b5b0f",
   "predictive_progress": {
-    "completed_policy_trials": 3,
+    "completed_policy_trials": 4,
     "planned_policy_trials": 12,
-    "completed_tuning_workloads": 7,
+    "completed_tuning_workloads": 9,
     "planned_tuning_workloads": 24,
     "held_out_completed": 0,
     "held_out_planned": 36,
-    "accepted_model_published": false
-  }
+    "accepted_model_published": false,
+    "status": "previous fingerprint paused after consumer startup OOM; fresh qualification pending"
+  },
+  "previous_preparation_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
 }

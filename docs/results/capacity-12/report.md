@@ -4,6 +4,10 @@ Status: partial acceptance, updated 2026-11-10 (India time). All twelve calibrat
 twelve training and four validation captures completed. Trained forecasts are
 operating in live tuning runs; the twelve-policy preparation, complete browser
 acceptance, held-out comparison and launcher reuse remain unfinished.
+Sustained tuning subsequently exposed a consumer startup OOM. The streaming
+manifest fix passes 204 pipeline and 175 console unit tests. Its fresh live
+qualification is pending; calibration and forecast results below retain their
+original runtime provenance and are not final evidence for the corrected consumer.
 These measurements are separate from
 the historical three-partition M7 report under `../current/`.
 
@@ -176,3 +180,13 @@ is infeasible for the two-second constraint. Preparation must finish all twelve
 candidates before publishing an accepted artifact; if none is feasible, it keeps
 the conservative default and labels tuning infeasible. No successful optimum or
 performance gain is claimed while this campaign is incomplete.
+
+## Consumer startup follow-up
+
+The original consumer checked an entire large manifest in memory before joining
+Kafka. One long-lived consumer was OOM-killed when starting a repeated-burst
+sale under its unchanged 256 MiB limit. Streaming the same canonical checksum
+reduced isolated host-process peak RSS from 214.55 to 24.23 MiB on the exact live
+manifest. [The proof](consumer-manifest-memory.json) records its scope and the
+nine regressions. Fresh live calibration, model preparation and qualification
+will replace the interim results before final acceptance; earlier raw runs remain.

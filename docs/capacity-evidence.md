@@ -7,7 +7,7 @@ zero retains the existing pause-processing behavior. No extra runtime mode was a
 Status updated 2026-11-10 (India time): implementation complete enough for validation; **live
 acceptance is still running**. This document does not assert complete acceptance.
 
-Current totals: **195 pipeline unit tests, 175 console unit tests, 29 web unit
+Current totals: **204 pipeline unit tests, 175 console unit tests, 29 web unit
 tests and 31 local integration tests pass**. All twelve calibration, twelve
 training and four validation captures completed. Live tuning now records real
 trained forecasts and correct reconciliations. Preparation, the complete live/
@@ -295,3 +295,29 @@ dependency caches has reclaimed roughly 5 GiB during verification. Each deletion
 was matched to StreamScale build metadata and audited under `artifacts/capacity/`.
 Volumes, node containers, current images, run evidence and unrelated resources
 were retained. Final shutdown remains pending until the verification gates finish.
+
+## Consumer startup manifest memory
+
+Sustained tuning exposed a consumer OOM at the start of the 92,340-attempt
+repeated-burst workload. The long-lived consumer still verified the manifest by
+loading every attempt and serializing a second full canonical copy. The agent
+remained healthy; the consumer restarted and recovered, but that is not clean
+qualification. Four complete earlier policy trials and the next ramp remain
+preserved separately under their original fingerprint.
+
+Consumer startup now streams one attempt at a time into the unchanged canonical
+list checksum. Publisher APIs and manifest bytes remain unchanged. On the exact
+28,490,180-byte live manifest, separate host proof processes measured 214.55 MiB
+peak RSS with the original verifier and 24.23 MiB with streaming. These are host
+process peaks, not isolated live consumer cgroup measurements. Nine regressions
+cover real workload profiles, canonical equivalence, consumer-path routing,
+corrupt/partial input and a 40 MiB file with less than 3 MiB traced allocation.
+All **204 pipeline unit tests**, **175 console unit tests** and lint/format checks
+pass. Live startup recovery and fresh preparation/evaluation remain pending.
+See [memory proof](results/capacity-12/consumer-manifest-memory.json).
+
+Because startup behavior affects calibration and run conditions, the next
+qualification collects fresh calibration, training, validation and tuning.
+Earlier captures and forecast scores remain historical evidence; policy results
+are not copied into the new fingerprint. The prior launcher log is retained at
+`artifacts/capacity/full-launcher-before-consumer-manifest-fix.log`.

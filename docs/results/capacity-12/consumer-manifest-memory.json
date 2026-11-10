@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-09T23:59:57.380434+00:00",
+  "status": "unit_verified_live_recovery_pending",
+  "cause": "Consumer startup loaded the entire manifest and built a second canonical serialization before Kafka connection, causing large transient memory alongside the long-lived worker. A large-sale consumer was OOMKilled under its unchanged 256 MiB limit.",
+  "observed_pod": "streamscale-console-consumer-59dfdb7fb5-g29jd",
+  "oom_finished_at": "2026-11-09T23:43:46Z",
+  "resource_limit_MiB": 256,
+  "proof": {
+    "scope": "Separate fresh host processes on the exact live synthetic manifest; total peak RSS, not consumer cgroup high-water.",
+    "attempts": 92340,
+    "manifest_bytes": 28490180,
+    "manifest_sha256": "cf6a717e5b4fd20a270670f3be59f72cb862f4bef7ea4f60c5aead9d4c3a623c",
+    "original_peak_RSS_MiB": 214.55078125,
+    "streamed_peak_RSS_MiB": 24.23046875,
+    "canonical_digest_identical": true
+  },
+  "tests": {
+    "manifest_regressions": 9,
+    "pipeline_unit": 204,
+    "console_unit": 175,
+    "lint_format": "passed"
+  },
+  "evidence": "artifacts/capacity/agent-health-tuning.json",
+  "prior_tuning": "Retained separately under b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e; not reused for qualification after consumer change."
+}

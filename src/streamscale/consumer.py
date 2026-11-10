@@ -12,7 +12,7 @@ from streamscale.config import Settings
 from streamscale.contract import ContractError, validate_event
 from streamscale.dlq import DeadLetterQueue
 from streamscale.metrics import measured_database
-from streamscale.run_artifacts import read_run, utc_now, verify_manifest, write_json
+from streamscale.run_artifacts import read_run, utc_now, verify_manifest_checksum, write_json
 from streamscale.storage import EventStore, IntegrityFailure
 from streamscale.topics import INPUT_TOPIC, ensure_topics
 
@@ -105,7 +105,7 @@ def consume(
         raise ValueError("Consumer group must not be empty")
     run = read_run(directory) if directory else None
     if run is not None:
-        verify_manifest(directory, run)
+        verify_manifest_checksum(directory, run)
         if run["status"] not in ({"publishing", "published"} if follow_publish else {"published"}):
             raise RuntimeError("Bounded consumption requires a successfully published run")
     group_id = group_id or (run["group_id"] if run else "streamscale.consumer.v1")

@@ -58,6 +58,31 @@ def verify_manifest(directory: Path, run: dict) -> list[dict]:
     return attempts
 
 
+def verify_manifest_checksum(directory: Path, run: dict) -> None:
+    """Verify the existing canonical-list digest while retaining one attempt at a time.
+
+    Consumers need integrity verification, not the publisher's complete attempt
+    list. Hashing the list delimiters and each canonical object separately is
+    byte-equivalent to ``manifest_hash`` for the unchanged artifact format.
+    """
+    digest = hashlib.sha256(b"[")
+    separator = b""
+    with (directory / "manifest.jsonl").open(encoding="utf-8") as stream:
+        for line in stream:
+            line = line.rstrip("\r\n")
+            if not line:
+                continue
+            attempt = json.loads(line)
+            if not isinstance(attempt, dict):
+                raise ValueError("Manifest attempt must be an object")
+            digest.update(separator)
+            digest.update(json.dumps(attempt, sort_keys=True, separators=(",", ":")).encode())
+            separator = b","
+    digest.update(b"]")
+    if digest.hexdigest() != run["manifest_sha256"]:
+        raise RuntimeError("Workload manifest checksum mismatch")
+
+
 def read_acknowledgements(directory: Path, run: dict) -> list[dict]:
     path = directory / "acknowledgements.jsonl"
     if hashlib.sha256(path.read_bytes()).hexdigest() != run["acknowledgements_sha256"]:

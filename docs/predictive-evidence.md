@@ -113,3 +113,8 @@ identities are [published separately](results/capacity-12/forecast-validation.js
 No final policy optimum, held-out improvement or full acceptance is claimed yet.
 See the evolving
 [M21 evidence](capacity-evidence.md) and [measured capacity report](results/capacity-12/report.md).
+
+The sustained campaign then exposed a consumer startup manifest OOM. Streaming
+checksum verification passes 204 pipeline and 175 console unit checks. The
+consumer change starts a fresh qualification fingerprint, including calibration;
+prior tuning results are preserved separately and are not reused as final evidence.
