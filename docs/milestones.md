@@ -48,7 +48,7 @@ implemented code from unexecuted live training and performance campaigns.
 
 | Milestone | Scope estimate | Dependencies | Acceptance | State |
 | --- | --- | --- | --- | --- |
-| M21 | Large: one twelve-partition configuration and 1–12 scaling | M0–M20 | SQL/topic upgrade, all replica counts, predictive calibration, full launcher and browser acceptance | In progress, updated 2026-11-10; 210 pipeline, 193 console and 29 web unit tests pass; twelve-consumer and large-reconciliation recovery checks pass; all 28 fresh manual traces reconcile after the startup memory fix; shared-resource cache compatibility corrected; live tuning and full qualification pending |
+| M21 | Large: one twelve-partition configuration and 1–12 scaling | M0–M20 | SQL/topic upgrade, all replica counts, predictive calibration, full launcher and browser acceptance | In progress, updated 2026-11-10; 213 pipeline, 193 console and 29 web unit tests pass; all 28 manual traces and 24 tuning workloads reconcile; model diagnostics exposed a projection-window defect, now corrected; fresh policy tuning, 45-case live acceptance and full qualification pending |
 
 M21 retains the historical three-partition milestones and measured reports above.
 Current configuration and acceptance evidence: [twelve-partition capacity](capacity-evidence.md).

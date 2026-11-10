@@ -14,6 +14,13 @@ import pytest
 from streamscale_console.cluster import ARTIFACTS, ROOT, kubectl
 
 
+def pytest_collection_modifyitems(items):
+    # The launcher lifecycle test owns its console process and forwards. Run it
+    # before any test can start the shared session server, independent of names
+    # added elsewhere (for example, the twelve-partition capacity check).
+    items.sort(key=lambda item: item.path.name != "test_console_lifecycle.py")
+
+
 class ConsoleClient:
     def __init__(self, record):
         self.url = record["url"]

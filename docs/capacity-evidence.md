@@ -401,3 +401,35 @@ This supports a shared database CPU limit, not linear replica scaling. The
 [analysis](predictive-model-analysis.md) distinguishes that evidence from causal
 attribution and from the historical model's forecast weaknesses. Full tuning,
 held-out evaluation, browser acceptance and launcher reuse remain pending.
+
+## Completed tuning, then projection correction
+
+The `b5ab062` runtime completed all twelve policies on twenty-four live workloads.
+Every workload reconciled correctly and passed continuous measurement coverage.
+No policy met the two-second constraint on both workloads: per-policy worst p95
+ranged from 48.25 to 123.55 seconds. Preparation correctly retained the conservative
+default with `tuning=infeasible`; this was not a feasible optimum. Its artifact is
+preserved under fingerprint `57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0`.
+
+Analysis then reproduced an unequal projection-window error. A changed target
+received startup delay plus a full horizon, which could make a slower downscale
+look preferable during drain. The correction compares every candidate at one
+timestamp, at least as far ahead as readiness, using the remaining interval for
+new-target service. Three analytical regressions pass; all 213 pipeline and
+193 console unit tests pass. [Counterexample](results/capacity-12/projection-horizon-counterexample.json).
+The manual data and forecaster features are unchanged. The earlier policy scores
+remain historical and cannot qualify the corrected controller; fresh tuning and
+the thirty-six held-out runs are required.
+
+The first full console live suite on the earlier runtime passed 41 of 43 checks.
+Both failures were acceptance assumptions: the new capacity filename started the
+shared server before the isolated launcher lifecycle test, and the comparison
+assertion still expected three modes. The actual comparison reconciled all four
+modes at 9,781 facts each, including model-identified ML forecasts. Collection now
+explicitly puts launcher isolation first, and comparison checks include ML mode
+and its artifact identity. Two additional live cases cover direct owner round
+trips and predictive agent restart/history/override recovery. The resulting
+45-case live suite still requires execution under the corrected controller.
+
+The held-out campaign and a complete successful `all`, followed by its reuse
+verification, remain pending. Generated data and previous artifacts are retained.

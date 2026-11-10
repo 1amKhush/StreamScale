@@ -43,13 +43,27 @@ def comparison(console_server, measured_before):
 
 def test_a_formal_comparison_runs_each_mode_on_the_same_workload(console, comparison):
     assert comparison["state"] == "completed", comparison.get("error")
-    assert [run["mode"] for run in comparison["runs"]] == ["fixed", "cpu-hpa", "lag-keda"]
+    assert [run["mode"] for run in comparison["runs"]] == [
+        "fixed",
+        "cpu-hpa",
+        "lag-keda",
+        "ml-predictive",
+    ]
     assert all(run["eligible"] for run in comparison["runs"]), comparison["runs"]
     assert all(run["exact_p95_s"] and run["stored_facts"] == 9781 for run in comparison["runs"])
     groups = console.get("/api/comparisons")["groups"]
     sessions = {run["session"] for run in comparison["runs"]}
     holding = [group for group in groups if sessions <= {row["id"] for row in group["sessions"]}]
-    assert len(holding) == 1  # one logical workload for all three runs
+    assert len(holding) == 1  # one logical workload for all four modes
+    predictive = next(run for run in comparison["runs"] if run["mode"] == "ml-predictive")
+    record = json.loads(
+        (ARTIFACTS / "sessions" / predictive["session"] / "session.json").read_text()
+    )
+    pointer = ROOT / "artifacts/predictive/current.json"
+    campaign = json.loads(pointer.read_text())["fingerprint"]
+    model = json.loads((pointer.parent / campaign / "model/current.json").read_text())["id"]
+    assert record["predictive_evidence"]["forecast_samples"] > 0
+    assert record["predictive_evidence"]["model_ids"] == [model]
     assert console.state()["sample"]["scaling"]["mode"] == "fixed"
 
 

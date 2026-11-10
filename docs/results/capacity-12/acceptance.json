@@ -1,6 +1,6 @@
 {
   "updated_at": "2026-11-10T07:26:47.395622+00:00",
-  "status": "partial_acceptance_full_predictive_workflow_pending",
+  "status": "partial_acceptance_projection_fixed_live_retuning_required",
   "configuration": {
     "input_partitions": 12,
     "dlq_partitions": 12,
@@ -93,7 +93,7 @@
     "validated_for_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
   },
   "completed_checks": {
-    "pipeline_unit": 210,
+    "pipeline_unit": 213,
     "console_unit": 193,
     "web_unit": 29,
     "local_integration_before_expansion_test": 28,
@@ -122,13 +122,22 @@
     "offline_launcher_routing": "passed",
     "ax_initialization_sequence": "default + 4 Sobol, first GP trial at index 5; synthetic API check passed",
     "environment_compatibility_regressions": 13,
-    "fresh_post_startup_fix_manual_captures": 28
+    "fresh_post_startup_fix_manual_captures": 28,
+    "prior_runtime_live_acceptance": {
+      "passed": 41,
+      "failed": 2,
+      "runtime": "b5ab062",
+      "failure_scope": "lifecycle collection order and obsolete three-mode assertion",
+      "current_suite_cases": 45,
+      "current_suite_status": "not yet executed"
+    }
   },
   "remaining": [
-    "trained model and policy preparation",
-    "complete live and browser acceptance",
-    "36-run held-out predictive comparison",
-    "complete launcher rerun and evidence reuse"
+    "fresh policy tuning under common projection window",
+    "full45-case live and browser acceptance",
+    "36held-out runs",
+    "complete launcher success and reuse",
+    "scoped final cleanup and shutdown"
   ],
   "evidence": {
     "launcher_log": "artifacts/capacity/full-launcher.log",
@@ -162,7 +171,8 @@
     "diagnostic_slices": "docs/results/capacity-12/model-analysis/summary.json",
     "optimizer_initialization": "docs/results/capacity-12/optimizer-initialization.json",
     "environment_compatibility": "docs/results/capacity-12/environment-compatibility.json",
-    "loaded_cpu_profile": "docs/results/capacity-12/loaded-cpu-profile.json"
+    "loaded_cpu_profile": "docs/results/capacity-12/loaded-cpu-profile.json",
+    "projection_counterexample": "docs/results/capacity-12/projection-horizon-counterexample.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -255,5 +265,12 @@
     "held_out_planned": 36,
     "accepted_model_published": false
   },
-  "previous_preparation_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886"
+  "previous_preparation_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886",
+  "previous_controller_tuning": {
+    "fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
+    "model_id": "12d3a9e6d986ba756e50ff6a08d23efca6f8a61f3f02aa9d0fa89233401813f4",
+    "correct_policies": 12,
+    "workloads": 24,
+    "status": "infeasible; historical after controller projection correction"
+  }
 }

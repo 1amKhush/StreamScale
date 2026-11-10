@@ -1,7 +1,7 @@
 """M15 lifecycle: the maintained launcher's console command, its links and its shutdown.
 
-Runs before the shared live-session server starts (file order), because only one
-console server may run at a time.
+The live collection hook runs this before shared-server fixtures, because only
+one console server may run at a time.
 """
 
 import http.cookiejar
