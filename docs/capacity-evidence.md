@@ -376,3 +376,28 @@ started when the coordinator stopped; it drained and reconciled all 88,380 facts
 but remains outside experimental captures. Full qualification resumes from the
 nineteen completed captures. Original logs and compatibility proof remain under
 `artifacts/capacity/`.
+
+## Shared-capacity cache compatibility
+
+All 28 fresh manual calibration/training/validation captures have now reconciled
+successfully. Before live policy tuning, cache review found that preparation
+included consumer limits but omitted the shared database/broker limits and images.
+Those settings affect measured capacity. The fingerprint now includes resources
+for consumer, agent, PostgreSQL and Kafka, shared service images, node CPU/memory
+capacity and both runtime Dockerfiles. Replica counts and changing worker image
+provenance tags do not invalidate it; executable worker sources are already hashed.
+Prepared metadata retains this environment snapshot. Drift before candidate or
+accepted publication fails preparation and preserves the previous accepted model.
+
+Thirteen regressions exercise resource/image/node/build changes, stable replica
+actions and interrupted environment compatibility. The compatible 28 manual
+captures are preserved byte-for-byte with configuration, correctness, environment
+and checksum validation. No model, optimizer state or policy-controlled result
+is transferred. Resources and workload definitions remain unchanged.
+
+A loaded twelve-consumer profile found PostgreSQL at 0.499/0.5 CPU cores with
+all sampled periods throttled, while Kafka used 0.236/1 cores without throttling.
+This supports a shared database CPU limit, not linear replica scaling. The
+[analysis](predictive-model-analysis.md) distinguishes that evidence from causal
+attribution and from the historical model's forecast weaknesses. Full tuning,
+held-out evaluation, browser acceptance and launcher reuse remain pending.

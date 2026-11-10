@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10T06:36:36.752552+00:00",
+  "updated_at": "2026-11-10T07:26:47.395622+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -94,7 +94,7 @@
   },
   "completed_checks": {
     "pipeline_unit": 210,
-    "console_unit": 180,
+    "console_unit": 193,
     "web_unit": 29,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
@@ -120,7 +120,9 @@
     "offline_diagnostic_regressions": 5,
     "measurement_gap_regressions": 5,
     "offline_launcher_routing": "passed",
-    "ax_initialization_sequence": "default + 4 Sobol, first GP trial at index 5; synthetic API check passed"
+    "ax_initialization_sequence": "default + 4 Sobol, first GP trial at index 5; synthetic API check passed",
+    "environment_compatibility_regressions": 13,
+    "fresh_post_startup_fix_manual_captures": 28
   },
   "remaining": [
     "trained model and policy preparation",
@@ -158,7 +160,9 @@
     "consumer_manifest_memory": "docs/results/capacity-12/consumer-manifest-memory.json",
     "model_analysis": "docs/predictive-model-analysis.md",
     "diagnostic_slices": "docs/results/capacity-12/model-analysis/summary.json",
-    "optimizer_initialization": "docs/results/capacity-12/optimizer-initialization.json"
+    "optimizer_initialization": "docs/results/capacity-12/optimizer-initialization.json",
+    "environment_compatibility": "docs/results/capacity-12/environment-compatibility.json",
+    "loaded_cpu_profile": "docs/results/capacity-12/loaded-cpu-profile.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -240,7 +244,7 @@
     "latency_target_met": false,
     "preserved": true
   },
-  "preparation_fingerprint": "9e4706e7ddb2f5ecbe6104c951fd222a8d5c5705dd095366f74765339d9e2bcc",
+  "preparation_fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
   "predictive_progress": {
     "status": "resuming nineteen compatible completed manual traces after optimizer initialization correction",
     "completed_policy_trials": 0,

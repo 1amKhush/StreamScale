@@ -1,0 +1,29 @@
+{
+  "session": "session-20261110064451-91f46e",
+  "scope": "Read-only CPU quota/counter sampling during one manual twelve-consumer training burst/drain with positive lag on every partition; diagnostic, not an isolated causal experiment. Not an isolated causal performance experiment.",
+  "conditions": {
+    "minimum_total_lag": 8676,
+    "minimum_partition_lag": 636,
+    "ready_counts": [
+      12
+    ],
+    "max_context_age_seconds": 2.0293474197387695
+  },
+  "roles": {
+    "postgres": {
+      "cpu_limit_cores": 0.5,
+      "mean_used_cpu_cores": 0.4985194786880557,
+      "median_throttled_period_fraction": 1.0,
+      "max_throttled_period_fraction": 1.0,
+      "sampled_seconds": 58.1147141456604
+    },
+    "kafka": {
+      "cpu_limit_cores": 1.0,
+      "mean_used_cpu_cores": 0.23622285184967282,
+      "median_throttled_period_fraction": 0.0,
+      "max_throttled_period_fraction": 0.0,
+      "sampled_seconds": 58.103256702423096
+    }
+  },
+  "raw_evidence": "artifacts/capacity/loaded-cpu-profile.json"
+}

@@ -28,6 +28,38 @@ def save(path, value):
     os.replace(temp, path)
 
 
+def environment_snapshot():
+    """Capacity compatibility includes the shared services, not live replica counts."""
+    workloads = {}
+    for kind, name, shared in (
+        ("deployment", "streamscale-console-consumer", False),
+        ("deployment", "streamscale-console-agent", False),
+        ("statefulset", "streamscale-postgres", True),
+        ("statefulset", "streamscale-kafka", True),
+    ):
+        item = json.loads(kubectl("get", kind, name, "-o", "json").stdout)
+        workloads[name] = {
+            container["name"]: {"resources": container.get("resources", {})}
+            | ({"image": container["image"]} if shared else {})
+            for container in item["spec"]["template"]["spec"]["containers"]
+        }
+    node = json.loads(kubectl("get", "nodes", "-o", "json").stdout)["items"][0]
+    return {
+        "workloads": workloads,
+        "node": {
+            key: node["status"]["nodeInfo"][key]
+            for key in (
+                "architecture",
+                "kernelVersion",
+                "kubeletVersion",
+                "containerRuntimeVersion",
+                "osImage",
+            )
+        },
+        "capacity": {key: node["status"]["capacity"][key] for key in ("cpu", "memory")},
+    }
+
+
 def fingerprint():
     paths = [
         ROOT / "src/streamscale",
@@ -36,32 +68,23 @@ def fingerprint():
     ]
     files = [p for root in paths for p in root.rglob("*.py") if ".venv" not in p.parts]
     files.extend(
-        [ROOT / "uv.lock", ROOT / "console/uv.lock", ROOT / "experiments/predictive/uv.lock"]
+        ROOT / name
+        for name in (
+            "uv.lock",
+            "console/uv.lock",
+            "experiments/predictive/uv.lock",
+            "Dockerfile",
+            "console/deploy/worker.Dockerfile",
+        )
     )
     sources = {str(p.relative_to(ROOT)): p.read_text() for p in sorted(files)}
-    deployment = json.loads(
-        kubectl("get", "deployment", "streamscale-console-consumer", "-o", "json").stdout
-    )
-    resources = deployment["spec"]["template"]["spec"]["containers"][0]["resources"]
-    node = json.loads(kubectl("get", "nodes", "-o", "json").stdout)["items"][0]
     return digest(
         {
             "sources": sources,
             "versions": versions(),
-            "resources": resources,
+            "environment": environment_snapshot(),
             "partitions": PARTITIONS,
             "replica_bounds": [1, MAX_REPLICAS],
-            "node": {
-                key: node["status"]["nodeInfo"][key]
-                for key in (
-                    "architecture",
-                    "kernelVersion",
-                    "kubeletVersion",
-                    "containerRuntimeVersion",
-                    "osImage",
-                )
-            },
-            "cpu": node["status"]["capacity"]["cpu"],
         }
     )
 
@@ -282,7 +305,10 @@ async def prepare(console, directory, identity):
                     )
                 )
     models, scores = train(training, validation)
+    if fingerprint() != identity:
+        raise RuntimeError("Preparation environment changed; retained captures require review")
     metadata = {
+        "environment": environment_snapshot(),
         "fingerprint": identity,
         "calibration": measured,
         "policy": DEFAULT_POLICY,
@@ -301,6 +327,8 @@ async def prepare(console, directory, identity):
 
     policy, evidence = await tune(console, directory, models, metadata, base)
     metadata |= {"policy": policy, "tuning": evidence}
+    if fingerprint() != identity:
+        raise RuntimeError("Preparation environment changed; previous accepted artifact preserved")
     identifier = publish(folder, models, metadata)
     install(folder)
     print(f"[predictive] prepared {identifier}; tuning={evidence['status']}", flush=True)

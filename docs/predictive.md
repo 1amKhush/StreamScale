@@ -23,6 +23,12 @@ node fingerprints select immutable campaign directories; completed captures are
 reused and unfinished captures remain in console session history. The Ax state,
 selected candidate and finished scores are checkpointed atomically together.
 
+Compatibility includes consumer/agent resources, PostgreSQL/Kafka resources and
+images, node CPU/memory capacity and runtime Dockerfiles. Prepared metadata keeps
+that snapshot. Changing replica counts or worker provenance tags alone does not
+invalidate models; worker code is hashed separately. A changed environment before
+publication fails preparation and preserves the previous accepted artifact.
+
 The agent owns the loop, even without a browser. It serializes writes with mode
 transitions and manual overrides, checks for unexpected HPA/KEDA ownership, and
 waits for ready pods and stable assignments before issuing another action.

@@ -154,8 +154,21 @@ need to queue work under those assumptions.
 
 Twelve partitions enable twelve useful consumer assignments, but do not multiply
 database, node, transaction or synchronous offset-commit capacity. The curve
-demonstrates contention or another shared limit; it does not isolate PostgreSQL
-as the cause. Per-component profiling would be needed to make that attribution.
+demonstrates a shared limit, without isolating its cause.
+
+A later read-only profile during fresh twelve-consumer training provides more
+specific evidence: every partition remained backlogged (minimum 636 events),
+all twelve consumers were ready, and PostgreSQL averaged **0.499 cores against
+its 0.5-core limit** over 58 seconds. Every sampled PostgreSQL scheduling period
+was throttled. Kafka averaged **0.236 of its one-core limit**, with no CPU
+throttling. This supports PostgreSQL's CPU quota as a contributor to the capacity
+plateau. It does not prove that quota alone explains the complete curve or rule
+out storage, transaction and coordination costs. The resource limits remain
+unchanged across the comparison. See the [loaded CPU profile](results/capacity-12/loaded-cpu-profile.json).
+
+The fresh calibration separately measured 392.94 events/s with four consumers
+and 256.21 with twelve. Both this and the historical curve above use one trace
+per count; their difference cannot be attributed to the startup memory fix.
 
 The controller also waits for ready pods and stable assignments. Downscaling
 requires stabilization and removes at most one replica per action. Predictions,
