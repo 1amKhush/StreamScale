@@ -1,6 +1,6 @@
 {
   "at": "2026-11-09T23:59:57.380434+00:00",
-  "status": "unit_verified_live_recovery_pending",
+  "status": "unit_and_live_startup_recovery_passed_full_workflow_pending",
   "cause": "Consumer startup loaded the entire manifest and built a second canonical serialization before Kafka connection, causing large transient memory alongside the long-lived worker. A large-sale consumer was OOMKilled under its unchanged 256 MiB limit.",
   "observed_pod": "streamscale-console-consumer-59dfdb7fb5-g29jd",
   "oom_finished_at": "2026-11-09T23:43:46Z",
@@ -18,8 +18,156 @@
     "manifest_regressions": 9,
     "pipeline_unit": 204,
     "console_unit": 175,
-    "lint_format": "passed"
+    "lint_format": "passed",
+    "local_integration": 31
   },
   "evidence": "artifacts/capacity/agent-health-tuning.json",
-  "prior_tuning": "Retained separately under b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e; not reused for qualification after consumer change."
+  "prior_tuning": "Retained separately under b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e; not reused for qualification after consumer change.",
+  "live_recovery": {
+    "started_at": 1794269099.4334283,
+    "scope": "Retained 92,340-attempt manifest, new consumer startup and 12-to-1 ownership; not a performance comparison.",
+    "twelve_ready": 12,
+    "facts": 92340,
+    "pods": [
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-8wzt5",
+        "uid": "eb75981d-153c-4e06-a4f1-ec2377a3d106",
+        "assigned": [
+          4
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36999168,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-c5kh9",
+        "uid": "3a6cc9ca-18ce-4c69-817a-c51ef59d355a",
+        "assigned": [
+          5
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36413440,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-f6vrd",
+        "uid": "ec3b4124-117c-4d3b-8ad8-323c4be51fc6",
+        "assigned": [
+          7
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36233216,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-gvdlx",
+        "uid": "0c2ff9ed-c767-4d34-8f3c-3a6cb8f6fa6a",
+        "assigned": [
+          9
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 37576704,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-kdkff",
+        "uid": "dd6d8c48-107b-4ea1-aeef-46887f38365f",
+        "assigned": [
+          0
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36704256,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-km9x4",
+        "uid": "0b8ffd6f-e66f-40d3-aa2a-79252d77c15e",
+        "assigned": [
+          8
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36966400,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-qfkrd",
+        "uid": "b54bde3f-97a6-43b2-a5b7-6b990f6c0e9d",
+        "assigned": [
+          6
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 37007360,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-qft6x",
+        "uid": "5439b7f6-53a5-4b4c-bb16-4ed78fd207e5",
+        "assigned": [
+          11
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36765696,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-r85d4",
+        "uid": "c75cf7e9-dec0-4ff3-87ff-52a0d3628d73",
+        "assigned": [
+          1
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 36978688,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-rnrq6",
+        "uid": "ec0db919-2a56-46ba-9ffe-260826f1975f",
+        "assigned": [
+          10
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 35987456,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-rss5b",
+        "uid": "ecd856d6-19e8-4221-89fd-00d0612bc057",
+        "assigned": [
+          3
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 37224448,
+        "memory_limit_bytes": 268435456
+      },
+      {
+        "name": "streamscale-console-consumer-7c5d9cff6f-zrdxv",
+        "uid": "c7bf4a13-e130-42f7-a890-8e3706451dbb",
+        "assigned": [
+          2
+        ],
+        "restart_count": 0,
+        "cgroup_peak_bytes": 37253120,
+        "memory_limit_bytes": 268435456
+      }
+    ],
+    "maximum_consumer_peak_MiB": 35.8359375,
+    "ready_after_downscale": 1,
+    "single_assignment": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "facts_after_downscale": 92340,
+    "status": "passed",
+    "completed_at": 1794269136.6534195
+  }
 }

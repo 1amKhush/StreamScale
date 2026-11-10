@@ -188,5 +188,9 @@ Kafka. One long-lived consumer was OOM-killed when starting a repeated-burst
 sale under its unchanged 256 MiB limit. Streaming the same canonical checksum
 reduced isolated host-process peak RSS from 214.55 to 24.23 MiB on the exact live
 manifest. [The proof](consumer-manifest-memory.json) records its scope and the
-nine regressions. Fresh live calibration, model preparation and qualification
+nine regressions. Live recovery then started twelve corrected consumers against
+that already-drained manifest: one partition each, zero restarts, maximum cgroup
+peak 35.84 MiB, and all 92,340 facts preserved after returning to one consumer.
+That peak covers startup/idle verification, not processing a new sale.
+All 31 local integration checks pass. Fresh live calibration, model preparation and qualification
 will replace the interim results before final acceptance; earlier raw runs remain.

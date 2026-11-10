@@ -313,7 +313,13 @@ process peaks, not isolated live consumer cgroup measurements. Nine regressions
 cover real workload profiles, canonical equivalence, consumer-path routing,
 corrupt/partial input and a 40 MiB file with less than 3 MiB traced allocation.
 All **204 pipeline unit tests**, **175 console unit tests** and lint/format checks
-pass. Live startup recovery and fresh preparation/evaluation remain pending.
+pass; all **31 local Kafka/PostgreSQL integration checks** also pass. Live startup
+recovery passed: twelve new consumers opened that same already-drained manifest,
+each owned one partition and all had zero restarts. Maximum recorded container
+cgroup peak was **35.84 MiB** during this startup/idle check under the unchanged
+256 MiB limit. This is not the peak while processing a new sale. Downscaling to
+one restored ownership of all twelve partitions and retained all 92,340 facts.
+Fresh complete-launcher preparation/evaluation is now running.
 See [memory proof](results/capacity-12/consumer-manifest-memory.json).
 
 Because startup behavior affects calibration and run conditions, the next
