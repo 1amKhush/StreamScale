@@ -1,0 +1,12 @@
+{
+  "scope": "Offline candidate from verified retained manual data. No cluster install, source writes, workload, live tuning or accepted pointer promotion.",
+  "fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
+  "candidate_id": "ccf0afec3699f317a48e9108218ddeaa33b02fee92a268be4cb896538e512975",
+  "source_commit": "ea0c07a853227df9e6aac438d65d8dbf87e212ee",
+  "model_sha256": "08f5818889e35f96b3edb35a6a068f99f33f34c8279d7a189987148589b7dfb7",
+  "data_sha256": "febf730e254993bb84efe95d1922d6752472e9ad98ec597ac378b58f09c98fe7",
+  "payload_matches_previous_fit": true,
+  "training_runs": 12,
+  "validation_runs": 4,
+  "tuning": "pending"
+}

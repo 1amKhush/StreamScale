@@ -1,264 +1,224 @@
-# Why the predictive model behaves this way
+# Predictive model: measured behavior and likely explanations
 
-Analysis date: 2026-11-10 (India time). **Interim, frozen-model diagnostics**:
-the artifact below predates the consumer startup memory correction. Fresh full
-qualification is pending. These findings describe observed predictions; they
-are not a successful tuning result or held-out performance claim.
+Updated 2026-11-10. **Current local candidate; live retuning and held-out evaluation
+are pending.** The corrected controller passes unit checks, and refitting from the
+verified manual traces reproduces the model payload exactly. This is not completed
+release acceptance or a performance improvement claim. The [earlier analysis](predictive-model-analysis-before-startup-fix.md) and its artifacts are preserved.
 
-The main finding is that this model has learned useful traffic patterns, but
-its upper forecast is too conservative on steady traffic and still misses
-abrupt rises. Several apparent scaling problems also come from capacity limits,
-warm-up, stabilization or interrupted measurements rather than the forecaster.
+The forecaster recognizes repeated traffic patterns, but its upper estimate is
+excessive during steady traffic and misses the start of abrupt surges. The replica
+controller also faces a shared processing limit: twelve consumers do not create
+more database CPU. These are distinct reasons for apparently surprising behavior.
 
-## What actually runs
+## What runs during a sale
 
-There are three separate components:
+One shared histogram gradient-boosted model is trained for each combination of
+10/20/30-second horizon and .50/.80/.90/.95 quantile: twelve models, each applied
+to all twelve partitions. Seven inputs describe observed partition arrivals:
+5/10/20/30/60-second averages, plus 5s−60s and 10s−30s differences. There are no
+scenario labels, seeds, future schedules or absolute phase clocks. Backlog,
+assignments, readiness and database health are collected for the controller;
+they are not forecaster features.
 
-1. **Traffic forecaster:** twelve histogram gradient-boosted models, covering
-   10/20/30-second horizons at quantiles .50/.80/.90/.95. Each predicts future
-   arrival counts for a partition. Inputs are only five observed arrival-rate
-   averages (5/10/20/30/60 seconds) and two differences (5s−60s and 10s−30s).
-   Collected backlog, assignments, ready replicas and DB health do **not** enter
-   these seven model features; the controller uses them separately.
-2. **Replica controller:** every five seconds it combines current arrivals,
-   forecast arrivals, backlog, assignments, measured capacity at each count and
-   startup/rebalance delay. It tests 1–12 replicas and selects the smallest
-   feasible target or the lowest projected delay when none is feasible.
-3. **Offline Bayesian tuner:** Ax/BoTorch searches four controller settings in
-   twelve trials. It does not predict traffic, run during a sale, tune the
-   forecaster's tree hyperparameters or increase physical processing capacity.
+Every five seconds the controller tests 1–12 targets using backlog, the larger
+of observed and forecast arrivals, measured per-count capacity, partition groups,
+startup/rebalance delay and headroom. It chooses the smallest feasible target;
+if none is feasible it chooses the lowest projected delay and reports a limit.
+Its queue-delay proxy is distinct from exact reconciled SQL p95.
 
-The tree models have 80 boosting iterations, at most 15 leaves per tree and ten
-samples per leaf. They use quantile/pinball loss. A high quantile deliberately
-penalizes underprediction more than overprediction; it is not an expected mean
-or a guarantee that latency stays below two seconds.
-[scikit-learn 1.7.2 estimator documentation](https://scikit-learn.org/1.7/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html).
+Ax/BoTorch tunes four controller settings offline. It does not predict traffic,
+change the trained tree models or run an optimizer during a pilot.
 
-The figure aligns forecasts and observed interval means at the **end of their
-20-second interval**. The vertical dotted line marks publication ending. Actual
-labels use the first observation at/after the horizon, within two seconds, and
-normalize by actual elapsed time. Unknown or discontinuous intervals are excluded.
+## Forecast accuracy depends on the traffic condition
 
-![Aligned validation forecasts](results/capacity-12/model-analysis/validation-forecasts.svg)
+At 20 seconds and q90, per-partition pinball loss in horizon event-count units is:
 
-## 1. Why it overpredicts steady traffic
+| Validation workload | Model | Persistence | Trend |
+| --- | ---: | ---: | ---: |
+| Steady | 38.28 | 9.06 | 15.55 |
+| Ramp | 14.81 | 61.30 | 58.46 |
+| Repeated burst | 14.39 | 160.92 | 184.91 |
+| Abrupt step | 66.77 | 95.19 | 102.77 |
 
-At the default 20-second/.90 setting, the steady validation run averaged
-**39.16 actual events/s versus 301.05 forecast events/s**. Its median forecast
-is separate; the console's main forecast rate uses the conservative upper value.
-Per-partition pinball loss was **43.75**, compared with **9.53** for persistence
-and **16.08** for the trend baseline. This is a measured weakness.
+These are whole-run validation results, with one independent validation run per
+family. Overlapping windows and pooled partitions are correlated observations.
+Coverage includes ties, including zero-arrival drain windows. The model beating
+a baseline forecast loss does not establish better scaling.
 
-A plausible explanation is ambiguity in the short observed history. Low traffic
-occurs both in steady runs and before later bursts. The model never receives a
-scenario label, phase clock or future schedule. A high conditional quantile can
-therefore choose a possible future burst even while the current run stays quiet.
-There are only **three independent training realizations per workload family**,
-so the learned boundary between these cases has limited support. This is an
-inference from the data and model design, not a causal explanation of every tree.
+Curves place interval-mean forecasts at their future interval ends. Actual labels
+use Kafka offset deltas to the first observation at/after the horizon, within two
+seconds, normalized by actual elapsed time. Discontinuous windows are excluded.
 
-The controller then uses the greater of the upper forecast and current observed
-rate. A falsely high upper forecast can cause extra replicas or a conservative
-“capacity limited” warning under low actual traffic. That status describes the
-projection under its assumptions, not proof that the hardware is currently full.
+![Aligned forecasts](results/capacity-12/model-analysis/validation-forecasts.svg)
 
-## 2. Why abrupt spikes still surprise it
+**Steady overprediction:** mean actual arrivals were 37.36 events/s, median
+forecast 44.23, and upper forecast 267.05. The UI's conservative forecast is the
+upper value. A plausible reason is that a quiet recent history can also precede
+a burst in the training data. Three independent training realizations per family
+provide limited evidence to distinguish those cases. This is an inference from
+the dataset and model response, not proof about a particular tree split.
 
-The abrupt-step validation run's apparent aggregate coverage was 90.05% over all
-windows. During publishing it fell to **82.35%**. For the 22 diagnostic windows
-whose future average rose sharply above the recent observed rate, only **one**
-aggregate upper forecast covered actual arrivals. Mean forecast was 177.10
-events/s versus 435.22 actual events/s in those windows.
+**Abrupt-rise misses:** only 3 of 22 future-surge windows were covered by the
+aggregate upper estimate. Their mean actual rate was 407.44 events/s versus
+204.66 forecast. Overall abrupt-step aggregate coverage was 87.01%, falling to
+83.33% for publishing origins. Offline future-surge labels diagnose errors;
+they never enter inference. A history-only model has no signal before a new,
+unprecedented jump. Rolling averages also dilute the first high observations.
 
-Those windows are classified using future outcomes **only for offline diagnosis**;
-that information never enters inference. A history-only model cannot identify
-an unprecedented jump before any signal appears. Its rolling features also mix
-the new high rate with the preceding quiet period. The current-rate floor helps
-the controller react after arrivals rise, but it does not provide advance notice.
+**Easy drain windows:** repeated-burst loss was 14.39 overall and 26.14 during
+publishing. Of 202 origins, 102 were after publication ended. Across the twelve
+training runs, 20.01% of the 1,654 valid 20-second origins had zero future total
+arrivals. Report active and surge performance alongside overall scores.
 
-The controller initially needs 60 seconds of fresh run history. It uses reactive
-capacity recommendations during that warm-up. With the existing repeated-burst
-schedule, the first burst begins before forecasting is ready. Restarting or
-losing contiguous history starts warm-up again.
-
-## 3. Why the overall scores look better than the difficult moments
-
-At 20 seconds, **70.2%** of repeated-burst validation origins occurred after
-publication had ended. These easy near-zero drain windows lower its overall
-pinball loss from **30.82 during publishing to 10.17 overall**. Abrupt-step loss
-similarly changes from **95.89 to 55.45**. Around **20.1%** of pooled training
-origins at this horizon have zero future aggregate arrivals.
-
-| Family | Live per-partition upper coverage: all | During publishing |
-| --- | ---: | ---: |
-| Steady | 99.77% | 99.77% |
-| Ramp | 95.80% | 95.80% |
-| Repeated burst | 93.65% | 78.71% |
-| Abrupt step | 83.77% | 71.22% |
+A sum of partition q90 estimates is not guaranteed to be the total's q90.
+Separately fitted quantiles can cross; inference clamps upper values to at least
+the median. Neither a quantile label nor coverage on one run guarantees latency. Quantile loss
+penalizes underprediction more heavily at high quantiles: at q90, a one-event
+underforecast costs nine times a one-event overforecast. It estimates a conditional
+quantile rather than a mean. [Estimator documentation](https://scikit-learn.org/1.7/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html).
 
 ![Conditional coverage](results/capacity-12/model-analysis/conditional-coverage.svg)
 
-Coverage includes ties and many overlapping windows. There is one validation run
-per family; these are descriptive percentages, not independent trials or confidence
-intervals. A low overall loss does not establish reliable spike coverage. The
-nominal quantile needs checking in the operating conditions that matter.
-[scikit-learn's coverage evaluation example](https://scikit-learn.org/1.7/auto_examples/ensemble/plot_gradient_boosting_quantile.html).
+## Why higher past traffic can produce a lower forecast
 
-The live total also sums twelve per-partition upper forecasts. That sum is not
-automatically the 90th percentile of total traffic: dependence between partitions
-matters. Independently fitted quantiles can cross; inference raises the upper
-forecast to at least the median. Crossing occurs in only 0.08% of the steady
-run's partition windows here, so it does not explain the large steady bias.
+Valid past-only probes use integer Kafka-like counters and complete histories:
 
-## 4. Why a larger recent rate can produce a smaller forecast
-
-The model is a collection of tree regions, with no monotonicity constraint or
-physical trend-extrapolation rule. Valid past-only probes show:
-
-| Observed past pattern | Forecast median (events/s) | Upper forecast |
+| Observed history | Median events/s | Upper events/s |
 | --- | ---: | ---: |
-| Constant nominal 34/s for 81s | 46.27 | 520.42 |
-| Constant 300/s for 81s | 238.81 | 278.54 |
-| Constant 1,200/s for 81s | 39.41 | 308.07 |
-| New nominal 1,000/s surge for 2s | 708.84 | 819.55 |
-| Same surge observed for 10s | 869.03 | 918.06 |
-| Same surge observed for 30s | 40.74 | 414.43 |
+| Constant nominal 34/s | 43.64 | 506.86 |
+| Constant 300/s | 227.42 | 227.42 |
+| Constant 1,200/s | 23.20 | 245.57 |
+| New nominal 1,000/s surge for 2s | 628.71 | 698.72 |
+| Same surge observed for 10s | 814.97 | 883.35 |
+| Same surge observed for 30s | 47.28 | 388.19 |
 
-These are model-response probes, **not forecasts with known future ground truth**.
-Integer partition offsets slightly round nominal per-second rates. The full
-probe plot also includes 2,400/s, outside the publisher's configured limit, to
-show out-of-distribution response; it is not a proposed workload.
+These are response probes, not predictions with known future truth. Tree models
+have no general extrapolation rule or monotonic constraint here. The sharp fall
+after a sustained high segment is consistent with learning short repeated phases
+that often end soon. It may fail on unfamiliar plateaus. Current observed-rate
+floors help the controller react once actual demand rises, despite underforecast.
 
-![Constant-history probes](results/capacity-12/model-analysis/constant-history-probes.svg)
+![Past-only probes](results/capacity-12/model-analysis/constant-history-probes.svg)
 
-The sharp change after 30 seconds is consistent with learning the preparation
-workloads' short repeated phases: a long high segment often precedes a fall.
-The same pattern may fail on a sustained, unfamiliar plateau. Similar outputs
-at 1,200 and 2,400/s show why extrapolation should not be assumed. These probes
-support that hypothesis; they do not prove one particular split caused it.
+Complete-history probes preserve the relationships between rolling averages and
+trends. Shuffling individual correlated features could create impossible input
+histories; these probes do not establish the cause of an individual tree split.
+[Inspection guidance](https://scikit-learn.org/1.7/modules/permutation_importance.html).
 
-We use complete past histories for these probes because the seven features are
-strongly related: the trends are exact differences of the averages. Independently
-shuffling one column could create impossible histories, and correlated features
-can make individual importance scores misleading.
-[scikit-learn's inspection guidance](https://scikit-learn.org/1.7/modules/permutation_importance.html).
+## Why four consumers can be preferable to twelve
 
-## 5. Why the controller often chooses four rather than twelve
+Fresh separate saturated calibrations measured 392.94 events/s with four consumers
+and 256.21 with twelve. These are single traces per count, not replicated causal
+experiments. They retain the same database, broker and consumer resource limits.
+The controller uses this empirical curve rather than multiplying one-consumer
+capacity. Range-assignment projections also conservatively account for uneven
+partition groups and startup; stable current assignments use actual groups.
 
-The separately measured historical calibration peaked at **433.95 events/s with
-four consumers**, versus **345.96 with twelve**. With 15% headroom, the four-
-consumer projection allows about 368.86 events/s before partition skew and other
-delays. The repeated-burst tuning peak was **992 events/s**. That exceeds the
-calibrated processing curve; even a perfect traffic forecast cannot remove the
-need to queue work under those assumptions.
+A read-only, 58-second profile during a fully backlogged twelve-consumer trace
+found PostgreSQL using 0.499 of its 0.5-core quota, with every sampled scheduling
+period throttled. Kafka used 0.236 of its one-core quota without CPU throttling.
+This supports database CPU quota as a contributor to the plateau, without proving
+it explains every loss or excluding I/O and transaction/coordination costs.
 
-Twelve partitions enable twelve useful consumer assignments, but do not multiply
-database, node, transaction or synchronous offset-commit capacity. The curve
-demonstrates a shared limit, without isolating its cause.
+Twelve partitions reveal additional targets, contention and replica-cost tradeoffs
+that a three-replica ceiling hides. They do not imply proportional throughput.
+Keep resource limits fixed for this comparison; resource changes require fresh
+compatibility checks and capacity calibration. The [CPU quota profile](results/capacity-12/loaded-cpu-profile.json) and [capacity data](results/capacity-12/calibration-current.csv) identify the observations.
 
-A later read-only profile during fresh twelve-consumer training provides more
-specific evidence: every partition remained backlogged (minimum 636 events),
-all twelve consumers were ready, and PostgreSQL averaged **0.499 cores against
-its 0.5-core limit** over 58 seconds. Every sampled PostgreSQL scheduling period
-was throttled. Kafka averaged **0.236 of its one-core limit**, with no CPU
-throttling. This supports PostgreSQL's CPU quota as a contributor to the capacity
-plateau. It does not prove that quota alone explains the complete curve or rule
-out storage, transaction and coordination costs. The resource limits remain
-unchanged across the comparison. See the [loaded CPU profile](results/capacity-12/loaded-cpu-profile.json).
+![Per-count capacity](results/capacity-12/calibration-current.svg)
 
-The fresh calibration separately measured 392.94 events/s with four consumers
-and 256.21 with twelve. Both this and the historical curve above use one trace
-per count; their difference cannot be attributed to the startup memory fix.
+## Why forecast, recommended, desired and ready counts differ
 
-The controller also waits for ready pods and stable assignments. Downscaling
-requires stabilization and removes at most one replica per action. Predictions,
-desired replicas and ready replicas can therefore differ legitimately. The
-two-second queue projection is a control proxy, while final p95 comes from every
-committed SQL fact; those are different measurements.
+The controller first needs 60 seconds of fresh observed history and uses reactive
+capacity recommendations during warm-up. The first repeated burst starts before
+forecasting is ready. Restarting or discontinuous history requires rebuilding it.
 
-## 6. Why some historical runs have exceptionally bad latency
+Downscaling stabilizes for 60 seconds by default and removes at most one replica
+per action. In one recorded default-policy decision, observed arrivals were
+87.99/s and the upper forecast was 227.44/s. Three replicas were recommended,
+but desired and ready remained four, explicitly because stabilization was active.
+Readiness and rebalance delays can create further differences.
 
-One preserved tuning capture has a **3,710.60-second telemetry gap** and p95
-**3,931.04 seconds**. Only 456.08 seconds of its intervals have continuous
-measurements. That run cannot establish normal policy performance. Another
-large-sale startup OOM was fixed separately; neither failure is evidence that
-the model alone caused its latency.
+Under the previous controller, the first default-policy tuning ramp reconciled correctly at exact SQL p95
+1.2148 seconds. Its repeated burst also reconciled correctly but missed the
+objective at 49.707327 seconds. Both had continuous measurement coverage. These
+are historical tuning workloads, not the held-out comparison or a completed optimum.
 
-The new performance gate requires positive, continuous intervals no longer
-than the existing five-second freshness bound and known ready counts at both
-ends. Missing time stays unknown. Such captures cannot train Ax objectives or
-complete held-out evaluation; SQL correctness remains a separate result.
-Forecast accounting also deduplicates telemetry frames: the first default-policy
-sale has 135 forecast-bearing samples, but only **23 distinct forecast origins
-with observable future intervals** in its saved capture.
+Historical startup/reconciliation memory failures and a 3,710-second observation
+gap are preserved separately. They cannot establish normal model performance.
+The measurement gate excludes incomplete replica-cost intervals and keeps SQL
+correctness separate from latency success.
 
-## Confirmed controller projection error
+## A confirmed controller error, separate from the forecaster
 
-Fresh tuning diagnostics subsequently exposed an error distinct from forecasting:
-a changed target received startup time **plus** a full forecast horizon, while
-the unchanged target received only the horizon. The comparison therefore gave
-changed targets extra time to drain. With the fresh calibration, uniform backlog
-and zero arrivals, it chose three consumers at a projected 6.32 seconds rather
-than the faster four at 16.02 seconds. Comparing both at the same timestamp gives
-18.33 seconds for three and 16.02 for four; four is the correct recommendation.
+The old controller compared targets at different future timestamps. A changed
+replica count received startup delay plus the complete forecast horizon; the
+unchanged target received only the horizon. This gave changed targets extra
+time to drain. In a deterministic case using the actual calibration, it chose
+three consumers with a projected 6.32 seconds over four with 16.02 seconds.
+At one common future timestamp the values are 18.33 and 16.02: four is better.
 
-The correction uses one planning window covering the forecast horizon and startup
-delay, subtracting startup from the new target's service interval. Three analytical
-regressions cover zero delay, a slower downscale and delay beyond the forecast.
-All 213 pipeline and 193 console unit tests pass. Live policy tuning and held-out
-evaluation must be repeated under the corrected controller. The 28 manual traces
-remain compatible after validation; old policy scores are preserved separately.
-See the [counterexample](results/capacity-12/projection-horizon-counterexample.json).
+The correction compares every target at `max(forecast horizon, readiness delay)`.
+It holds the forecast mean rate through that planning window and subtracts
+startup from the new target's service interval. `projection_seconds` records
+that window; the traffic chart continues to show the actual forecast horizon.
+Three analytical cases cover zero startup, a slower downscale and readiness
+beyond the forecast horizon. All **213 pipeline and 193 console unit tests pass**.
+[Counterexample and corrected scores](results/capacity-12/projection-horizon-counterexample.json).
 
-One saved old-controller run downscaled from four to three with 17,349 events
-still queued, then returned to four shortly afterward. The defect helps explain
-that avoidable churn. It does not establish the cause of the entire latency gap
-between that run and the default policy. Forecast bias and shared capacity remain
-separate issues.
+One old policy downscaled from four to three with 17,349 events still queued,
+then returned to four shortly afterward. The unequal windows help explain that
+avoidable churn. They do not establish the cause of its complete p95 difference
+from another run. Shared capacity variation and forecasting remain separate issues.
 
-## What to improve next
+The old runtime completed twelve policies and twenty-four correctness-passing
+workloads, with no feasible policy: per-policy worst p95 ranged from 48.25 to
+123.55 seconds. It correctly retained the conservative default. Those scores are
+preserved under their old fingerprint and cannot qualify the corrected controller.
+All twenty-eight manual traces remain compatible after source/resource/configuration
+and checksum validation. New controlled tuning and thirty-six held-out runs remain
+required; no old policy state or controlled capture was copied.
 
-Keep the single ML Predictive mode. A later model iteration should prioritize:
+## Improvements supported by this diagnosis
 
-- More independent runs, varied burst durations and sustained plateaus, retaining
-  whole-run splits and a genuinely untouched final evaluation.
-- Conditional quantile calibration and active/surge/drop scores alongside overall
-  loss. Assess whether persistence should receive more weight during quiet traffic.
-- History features that distinguish observed burst duration and stability without
-  exposing schedules, scenario labels, seeds or future data.
-- Component profiling before changing capacity assumptions or claiming that more
-  replicas solve overload. Bayesian policy tuning cannot fix model bias or a
-  shared processing limit.
+Keep the single ML Predictive mode. Future model work should test more independent
+runs with varied durations and sustained plateaus, conditional quantile calibration,
+quiet-traffic baselines and history features describing observed stability/burst
+age. Retain whole-run splits and untouched final evaluation. Profile shared service
+capacity before assuming extra consumers solve overload. Bayesian policy tuning
+cannot remove forecast bias or a physical bottleneck.
 
-These are recommendations, not changes to the frozen forecaster in this release.
+The current release's forecaster and resources remain frozen during qualification.
+Run `./streamscale.sh predictive-analyze` after preparation to regenerate offline
+figures. It starts no services and does not retrain, tune, publish or scale.
 
-## Evidence and reproduction
+## Evidence, status and reproduction
 
-The [compact evidence](results/capacity-12/model-analysis/summary.json),
-[validation slices](results/capacity-12/model-analysis/validation-slices.csv) and
-[past probes](results/capacity-12/model-analysis/past-only-probes.csv) identify the
-frozen model, data hash, training/validation run IDs and historical tuning records.
-All 288 family/horizon/quantile/slice combinations remain available, including
-empty diagnostic slices. Raw aligned traces stay under ignored `artifacts/`.
+The [machine-readable summary](results/capacity-12/model-analysis/summary.json),
+[all 288 validation slices](results/capacity-12/model-analysis/validation-slices.csv)
+and [past-history probes](results/capacity-12/model-analysis/past-only-probes.csv)
+retain model/data identities and whole-run splits. The corrected local candidate
+is `ccf0afec3699f317a48e9108218ddeaa33b02fee92a268be4cb896538e512975`,
+source `ea0c07a`, campaign
+`9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f`.
+It is not installed or promoted. Refit payload matches the previous fit bit-for-bit;
+its controller compatibility and preparation fingerprint changed.
 
-For the currently accepted artifact, after preparation:
+Additional persistent disk is needed to retain both the historical records and
+fresh controlled evidence. Full live/browser acceptance and complete launcher
+success/reuse remain pending. No held-out improvement is claimed.
 
-```sh
-./streamscale.sh predictive-analyze
-```
-
-This command works with the cluster stopped. It never retrains, selects a policy,
-publishes workload or writes replicas. `all` invokes it after evaluation. Outputs
-are under `artifacts/predictive/<fingerprint>/analysis/`.
-
-To reproduce this explicitly historical candidate analysis:
+After compatible preparation, `./streamscale.sh predictive-analyze` regenerates
+accepted-artifact diagnostics with the cluster stopped. To reproduce this candidate:
 
 ```sh
 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 uv run --project experiments/predictive --frozen \
   python -m experiments.analyze_predictive \
-  --campaign artifacts/predictive/b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e \
-  --output artifacts/capacity/model-analysis-before-startup-fix
+  --campaign artifacts/predictive/9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f
 uv run --project experiments/analysis --frozen python -m experiments.plot_predictive \
-  --input artifacts/capacity/model-analysis-before-startup-fix/analysis.json \
-  --output artifacts/capacity/model-analysis-before-startup-fix
+  --input artifacts/predictive/9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f/analysis/analysis.json
 ```
+
+Model payload
+`08f5818889e35f96b3edb35a6a068f99f33f34c8279d7a189987148589b7dfb7`,
+data hash `febf730e254993bb84efe95d1922d6752472e9ad98ec597ac378b58f09c98fe7`.

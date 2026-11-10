@@ -1,0 +1,65 @@
+{
+  "at": "2026-11-10T10:31:30.394005+00:00",
+  "status": "stopped",
+  "project_containers": [
+    {
+      "name": "streamscale-control-plane",
+      "state": "exited"
+    },
+    {
+      "name": "streamscale-local-postgres-1",
+      "state": "exited"
+    },
+    {
+      "name": "streamscale-local-kafka-1",
+      "state": "exited"
+    }
+  ],
+  "project_host_services": 0,
+  "retained_volume_mounts": 5,
+  "current_kind_images_retained": true,
+  "unrelated_unchanged": true,
+  "free_GiB": 5.990043640136719,
+  "kind_exit": {
+    "ExitCode": 137,
+    "OOMKilled": true,
+    "Error": "",
+    "FinishedAt": "2026-11-10T10:20:34.697584856Z"
+  },
+  "kind_shutdown_events": [
+    {
+      "time": 1794305989,
+      "action": "kill",
+      "attributes": {
+        "name": "streamscale-control-plane",
+        "signal": "37"
+      }
+    },
+    {
+      "time": 1794306034,
+      "action": "kill",
+      "attributes": {
+        "name": "streamscale-control-plane",
+        "signal": "9"
+      }
+    },
+    {
+      "time": 1794306034,
+      "action": "stop",
+      "attributes": {
+        "name": "streamscale-control-plane"
+      }
+    },
+    {
+      "time": 1794306034,
+      "action": "die",
+      "attributes": {
+        "name": "streamscale-control-plane",
+        "exitCode": "137"
+      }
+    }
+  ],
+  "kind_shutdown_note": "Recorded stop sent the image stop signal37, then signal9 at the configured45-second deadline. Docker also retains OOMKilled=true; its origin was not isolated by this shutdown event sample. No graceful-shutdown or restart-recovery claim is made.",
+  "qualification": "partial; corrected controller needs fresh live tuning,45-case acceptance,browser checks,36held-out runs and full launcher success/reuse",
+  "raw_audit": "artifacts/capacity/shutdown-after.json"
+}

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10T07:26:47.395622+00:00",
+  "updated_at": "2026-11-10T10:31:30.394354+00:00",
   "status": "partial_acceptance_projection_fixed_live_retuning_required",
   "configuration": {
     "input_partitions": 12,
@@ -130,7 +130,9 @@
       "failure_scope": "lifecycle collection order and obsolete three-mode assertion",
       "current_suite_cases": 45,
       "current_suite_status": "not yet executed"
-    }
+    },
+    "corrected_candidate_analysis_with_cluster_stopped": "passed",
+    "launcher_command_tests": 27
   },
   "remaining": [
     "fresh policy tuning under common projection window",
@@ -172,7 +174,11 @@
     "optimizer_initialization": "docs/results/capacity-12/optimizer-initialization.json",
     "environment_compatibility": "docs/results/capacity-12/environment-compatibility.json",
     "loaded_cpu_profile": "docs/results/capacity-12/loaded-cpu-profile.json",
-    "projection_counterexample": "docs/results/capacity-12/projection-horizon-counterexample.json"
+    "projection_counterexample": "docs/results/capacity-12/projection-horizon-counterexample.json",
+    "previous_model_analysis": "docs/predictive-model-analysis-before-startup-fix.md",
+    "current_calibration": "docs/results/capacity-12/calibration-current.json",
+    "projection_trace_compatibility": "docs/results/capacity-12/projection-time-compatible-captures.json",
+    "shutdown": "docs/results/capacity-12/shutdown.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -254,7 +260,7 @@
     "latency_target_met": false,
     "preserved": true
   },
-  "preparation_fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
+  "preparation_fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
   "predictive_progress": {
     "status": "resuming nineteen compatible completed manual traces after optimizer initialization correction",
     "completed_policy_trials": 0,
@@ -265,12 +271,104 @@
     "held_out_planned": 36,
     "accepted_model_published": false
   },
-  "previous_preparation_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886",
+  "previous_preparation_fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
   "previous_controller_tuning": {
     "fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
     "model_id": "12d3a9e6d986ba756e50ff6a08d23efca6f8a61f3f02aa9d0fa89233401813f4",
     "correct_policies": 12,
     "workloads": 24,
     "status": "infeasible; historical after controller projection correction"
+  },
+  "current_controller_source": "ea0c07a853227df9e6aac438d65d8dbf87e212ee",
+  "current_candidate": {
+    "scope": "Offline candidate from verified retained manual data. No cluster install, source writes, workload, live tuning or accepted pointer promotion.",
+    "fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
+    "candidate_id": "ccf0afec3699f317a48e9108218ddeaa33b02fee92a268be4cb896538e512975",
+    "source_commit": "ea0c07a853227df9e6aac438d65d8dbf87e212ee",
+    "model_sha256": "08f5818889e35f96b3edb35a6a068f99f33f34c8279d7a189987148589b7dfb7",
+    "data_sha256": "febf730e254993bb84efe95d1922d6752472e9ad98ec597ac378b58f09c98fe7",
+    "payload_matches_previous_fit": true,
+    "training_runs": 12,
+    "validation_runs": 4,
+    "tuning": "pending",
+    "status": "local_only_live_tuning_pending"
+  },
+  "storage": {
+    "status": "additional persistent space requested before fresh controlled campaign",
+    "requested_extra_GiB": 5,
+    "estimated_free_GiB_before_campaign": 10,
+    "retain_volumes_and_raw_runs": true,
+    "available_GiB_after_cleanup": 5.990043640136719
+  },
+  "shutdown": {
+    "at": "2026-11-10T10:31:30.394005+00:00",
+    "status": "stopped",
+    "project_containers": [
+      {
+        "name": "streamscale-control-plane",
+        "state": "exited"
+      },
+      {
+        "name": "streamscale-local-postgres-1",
+        "state": "exited"
+      },
+      {
+        "name": "streamscale-local-kafka-1",
+        "state": "exited"
+      }
+    ],
+    "project_host_services": 0,
+    "retained_volume_mounts": 5,
+    "current_kind_images_retained": true,
+    "unrelated_unchanged": true,
+    "free_GiB": 5.990043640136719,
+    "kind_exit": {
+      "ExitCode": 137,
+      "OOMKilled": true,
+      "Error": "",
+      "FinishedAt": "2026-11-10T10:20:34.697584856Z"
+    },
+    "kind_shutdown_events": [
+      {
+        "time": 1794305989,
+        "action": "kill",
+        "attributes": {
+          "name": "streamscale-control-plane",
+          "signal": "37"
+        }
+      },
+      {
+        "time": 1794306034,
+        "action": "kill",
+        "attributes": {
+          "name": "streamscale-control-plane",
+          "signal": "9"
+        }
+      },
+      {
+        "time": 1794306034,
+        "action": "stop",
+        "attributes": {
+          "name": "streamscale-control-plane"
+        }
+      },
+      {
+        "time": 1794306034,
+        "action": "die",
+        "attributes": {
+          "name": "streamscale-control-plane",
+          "exitCode": "137"
+        }
+      }
+    ],
+    "kind_shutdown_note": "Recorded stop sent the image stop signal37, then signal9 at the configured45-second deadline. Docker also retains OOMKilled=true; its origin was not isolated by this shutdown event sample. No graceful-shutdown or restart-recovery claim is made.",
+    "qualification": "partial; corrected controller needs fresh live tuning,45-case acceptance,browser checks,36held-out runs and full launcher success/reuse",
+    "raw_audit": "artifacts/capacity/shutdown-after.json"
+  },
+  "current_full_launcher_passed": false,
+  "current_full_launcher_reuse_verified": false,
+  "current_controlled_runs": {
+    "tuning_workloads": 0,
+    "heldout_runs": 0
   }
 }

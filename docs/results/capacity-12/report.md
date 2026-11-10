@@ -1,15 +1,24 @@
 # Twelve-partition capacity evidence
 
-Status: partial acceptance, updated 2026-11-10 (India time). All twelve calibration,
-twelve training and four validation captures completed. Trained forecasts are
-operating in live tuning runs; the twelve-policy preparation, complete browser
-acceptance, held-out comparison and launcher reuse remain unfinished.
-Sustained tuning subsequently exposed a consumer startup OOM. The streaming
-manifest fix passes 204 pipeline and 175 console unit tests. Its fresh live
-qualification is pending; calibration and forecast results below retain their
-original runtime provenance and are not final evidence for the corrected consumer.
-These measurements are separate from
-the historical three-partition M7 report under `../current/`.
+Status: **partial acceptance**, updated 2026-11-10. The current controller fixes
+unequal projection windows and passes 213 pipeline / 193 console unit tests.
+All 28 manual traces remain compatible; an offline refit reproduces the frozen
+forecaster payload exactly. The candidate has not been installed or promoted.
+Fresh twelve-policy tuning, the 45-case live suite, browser acceptance, 36 held-out
+runs and complete launcher success/reuse remain pending. Additional disk is needed
+to preserve old records alongside the remaining measured campaign.
+
+The previous runtime completed twelve policies / twenty-four workloads, all
+correctness passing, with tuning infeasible and the default retained. A subsequent
+controller correction invalidates those controlled scores for current acceptance.
+The initial full live suite passed 41/43; two acceptance assumptions were corrected
+and two ownership/restart cases added. See the [current model diagnosis](../../predictive-model-analysis.md),
+[current capacity curve](calibration-current.svg), [candidate provenance](corrected-candidate-preparation.json)
+and [source compatibility](projection-time-compatible-captures.json).
+
+Measurements below preserve earlier runtime snapshots and distinguish their
+provenance. They are separate from the historical three-partition M7 report
+under `../current/`; none is a completed current held-out comparison.
 
 The configuration is twelve Kafka input and DLQ partitions, initial one consumer,
 and a 1–12 range for autoscaling. Three replicas offered only two upward steps;

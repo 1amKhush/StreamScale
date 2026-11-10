@@ -1,0 +1,112 @@
+{
+  "at": "2026-11-10T06:00:50.993438+00:00",
+  "fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886",
+  "scope": "Fresh twelve-count saturated calibration, one trace/count; not a replicated throughput comparison.",
+  "calibration": {
+    "capacity": {
+      "1": 105.96882306869823,
+      "2": 230.9746408936515,
+      "3": 358.4512759528465,
+      "4": 392.9428522253376,
+      "5": 348.9495831853365,
+      "6": 283.9647270148337,
+      "7": 307.88761138171503,
+      "8": 245.46774430059963,
+      "9": 257.96780255108024,
+      "10": 266.95162886668714,
+      "11": 255.95825876021576,
+      "12": 256.2142499500832
+    },
+    "actuation_seconds": 12.001673460006714,
+    "handling_seconds": 0.09474370503597121
+  },
+  "data_sha256": "11e0900939df5661eb8e12e27a15e3304bf01e340d187bff91b18160ac96e175",
+  "captures": [
+    {
+      "replicas": 1,
+      "session": "session-20261110052509-8bc73e",
+      "file_sha256": "3a856eabb35eb55096a1136c728bcedf1c9aa7dda543c3535f74ea1398650833",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 2,
+      "session": "session-20261110053138-95eb5c",
+      "file_sha256": "17641691f440b5d402b104b82a58132ea62777e7a97c96e6d14810f02e351fc8",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 3,
+      "session": "session-20261110053450-ea05e4",
+      "file_sha256": "55bf20a3c73ce0af8d1ee6e3d1f5ad025ed83022a1865bff328538663e681f54",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 4,
+      "session": "session-20261110053710-5d6b24",
+      "file_sha256": "8ebf5fc4f6ad27ccbaa5c7e08f1f3b5b8558331d7dbca7ef44ec6e64f8a5b3cb",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 5,
+      "session": "session-20261110053915-84c98f",
+      "file_sha256": "bcbe079aa1d3dfd201916a177625e5046f3d725939a71b7981e5785e7c6f3aa7",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 6,
+      "session": "session-20261110054140-eef164",
+      "file_sha256": "efc22014bd68f6a97ac36e7163a6d4a4ada8b4e639b0201d8e0dd14e3b6fd090",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 7,
+      "session": "session-20261110054402-829851",
+      "file_sha256": "be5dc78e130f400cda1088e68e8f5012a39906a68e5ad6bb8363355cbac41aaa",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 8,
+      "session": "session-20261110054625-cc96be",
+      "file_sha256": "22b0d87f2d58df570b50fa24da26477f3f02fea0aed142d43af038cf7ebe3718",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 9,
+      "session": "session-20261110054850-9a13d0",
+      "file_sha256": "8d9a3f53672b09e98aaf7c68ea3c6bf14c582f83e68a9a84018bd41bc65609b1",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 10,
+      "session": "session-20261110055114-b42675",
+      "file_sha256": "1aa0e77a83996867c6ab63ac468bfa308cd415cb519bdde2a1b4e60b859bacfd",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 11,
+      "session": "session-20261110055357-268106",
+      "file_sha256": "5628828b5d9e19b2477b6d89955caf17036f43a64d353b0e2ee117837232c2cb",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    },
+    {
+      "replicas": 12,
+      "session": "session-20261110055641-65f55c",
+      "file_sha256": "41143c5bc224aa409aefe119edd48abfa77323b5259d15c312b64024fa6a03d8",
+      "acknowledged": 40000,
+      "correctness": "passed"
+    }
+  ],
+  "validated_for_fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
+  "validation_proof": "environment-compatibility.json and projection-time-compatible-captures.json"
+}

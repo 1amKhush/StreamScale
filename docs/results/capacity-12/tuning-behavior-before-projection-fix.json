@@ -1,0 +1,102 @@
+{
+  "scope": "Two saved tuning runs, descriptive diagnosis only; not a randomized causal ablation. Timing from first captured observation.",
+  "runs": [
+    {
+      "index": 0,
+      "session": "session-20261110073759-afa412",
+      "p95": 49.707327,
+      "ready_seconds": {
+        "1": 35.006120681762695,
+        "4": 213.07414317131042,
+        "3": 9.00429368019104
+      },
+      "desired_changes": [
+        {
+          "seconds": 0.0,
+          "desired": 1,
+          "ready": 1,
+          "lag": 0,
+          "arrival": 0.0,
+          "forecast": null,
+          "reason": "Need 60 seconds of contiguous history"
+        },
+        {
+          "seconds": 32.0,
+          "desired": 4,
+          "ready": 1,
+          "lag": 2008,
+          "arrival": 937.9118954451549,
+          "forecast": null,
+          "reason": "Need 60 seconds of contiguous history"
+        },
+        {
+          "seconds": 248.1,
+          "desired": 3,
+          "ready": 3,
+          "lag": 0,
+          "arrival": 0.0,
+          "forecast": 0.3471990322164916,
+          "reason": "1 replicas: smallest predicted capacity meeting 2s"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "session": "session-20261110085830-48f880",
+      "p95": 123.545354,
+      "ready_seconds": {
+        "1": 35.00737714767456,
+        "2": 1.000138521194458,
+        "4": 277.10917258262634,
+        "3": 27.559271097183228
+      },
+      "desired_changes": [
+        {
+          "seconds": 0.0,
+          "desired": 1,
+          "ready": 1,
+          "lag": 0,
+          "arrival": 0.0,
+          "forecast": null,
+          "reason": "Need 60 seconds of contiguous history"
+        },
+        {
+          "seconds": 33.0,
+          "desired": 4,
+          "ready": 1,
+          "lag": 2602,
+          "arrival": 937.8868535166074,
+          "forecast": null,
+          "reason": "Need 60 seconds of contiguous history"
+        },
+        {
+          "seconds": 248.1,
+          "desired": 3,
+          "ready": 3,
+          "lag": 17349,
+          "arrival": 0.0,
+          "forecast": 0.3471990322164916,
+          "reason": "Latency target infeasible: partition or shared capacity limit; 3 replicas give the lowest projected delay"
+        },
+        {
+          "seconds": 251.3,
+          "desired": 4,
+          "ready": 3,
+          "lag": 16453,
+          "arrival": 0.0,
+          "forecast": 0.3471990322164916,
+          "reason": "Latency target infeasible: partition or shared capacity limit; 4 replicas give the lowest projected delay"
+        },
+        {
+          "seconds": 320.6,
+          "desired": 3,
+          "ready": 3,
+          "lag": 0,
+          "arrival": 0.0,
+          "forecast": 0.3471990322164916,
+          "reason": "1 replicas: smallest predicted capacity meeting 2s"
+        }
+      ]
+    }
+  ]
+}

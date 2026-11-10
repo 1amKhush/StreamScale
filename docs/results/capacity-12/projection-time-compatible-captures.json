@@ -1,0 +1,268 @@
+{
+  "at": "2026-11-10T09:52:04.848232+00:00",
+  "source_fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
+  "destination_fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
+  "reason": "Only predictive projection changed among runtime sources. Manual mode returns before predictive recommendation. Collection/config/calibration AST, consumer, publisher, features, training, dependency locks, active resources and shared images unchanged. All28 manual captures validated and copied byte-exact. No model, optimizer state or policy-controlled capture copied; all twelve policies require fresh live retuning.",
+  "environment": {
+    "workloads": {
+      "streamscale-console-consumer": {
+        "consumer": {
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      },
+      "streamscale-console-agent": {
+        "agent": {
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "768Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "192Mi"
+            }
+          }
+        }
+      },
+      "streamscale-postgres": {
+        "postgres": {
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
+          "image": "postgres:17.7-bookworm@sha256:86e0b703649d7a792bd9243ee28afc9d8f7c6b2b5638077c9d6882d4d472bbfd"
+        }
+      },
+      "streamscale-kafka": {
+        "kafka": {
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "1Gi"
+            },
+            "requests": {
+              "cpu": "250m",
+              "memory": "768Mi"
+            }
+          },
+          "image": "apache/kafka:4.1.2@sha256:5cc2a2fd93fa2687b44015eee04fb2c3edd9e526bd64bf8bec5ff1e268772e0e"
+        }
+      }
+    },
+    "node": {
+      "architecture": "amd64",
+      "kernelVersion": "7.0.0-42-generic",
+      "kubeletVersion": "v1.37.0",
+      "containerRuntimeVersion": "containerd://2.3.4",
+      "osImage": "Debian GNU/Linux 13 (trixie)"
+    },
+    "capacity": {
+      "cpu": "12",
+      "memory": "16088488Ki"
+    }
+  },
+  "calibration": {
+    "capacity": {
+      "1": 105.96882306869823,
+      "2": 230.9746408936515,
+      "3": 358.4512759528465,
+      "4": 392.9428522253376,
+      "5": 348.9495831853365,
+      "6": 283.9647270148337,
+      "7": 307.88761138171503,
+      "8": 245.46774430059963,
+      "9": 257.96780255108024,
+      "10": 266.95162886668714,
+      "11": 255.95825876021576,
+      "12": 256.2142499500832
+    },
+    "actuation_seconds": 12.001673460006714,
+    "handling_seconds": 0.09474370503597121
+  },
+  "capture_bundle_sha256": "c8e5e6cc8e6a0414c49e8e800c2ed31ef90d117f1ad68f0e29104891c47f7988",
+  "captures": [
+    {
+      "name": "calibration-1.json",
+      "session": "session-20261110052509-8bc73e",
+      "sha256": "3a856eabb35eb55096a1136c728bcedf1c9aa7dda543c3535f74ea1398650833",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-2.json",
+      "session": "session-20261110053138-95eb5c",
+      "sha256": "17641691f440b5d402b104b82a58132ea62777e7a97c96e6d14810f02e351fc8",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-3.json",
+      "session": "session-20261110053450-ea05e4",
+      "sha256": "55bf20a3c73ce0af8d1ee6e3d1f5ad025ed83022a1865bff328538663e681f54",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-4.json",
+      "session": "session-20261110053710-5d6b24",
+      "sha256": "8ebf5fc4f6ad27ccbaa5c7e08f1f3b5b8558331d7dbca7ef44ec6e64f8a5b3cb",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-5.json",
+      "session": "session-20261110053915-84c98f",
+      "sha256": "bcbe079aa1d3dfd201916a177625e5046f3d725939a71b7981e5785e7c6f3aa7",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-6.json",
+      "session": "session-20261110054140-eef164",
+      "sha256": "efc22014bd68f6a97ac36e7163a6d4a4ada8b4e639b0201d8e0dd14e3b6fd090",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-7.json",
+      "session": "session-20261110054402-829851",
+      "sha256": "be5dc78e130f400cda1088e68e8f5012a39906a68e5ad6bb8363355cbac41aaa",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-8.json",
+      "session": "session-20261110054625-cc96be",
+      "sha256": "22b0d87f2d58df570b50fa24da26477f3f02fea0aed142d43af038cf7ebe3718",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-9.json",
+      "session": "session-20261110054850-9a13d0",
+      "sha256": "8d9a3f53672b09e98aaf7c68ea3c6bf14c582f83e68a9a84018bd41bc65609b1",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-10.json",
+      "session": "session-20261110055114-b42675",
+      "sha256": "1aa0e77a83996867c6ab63ac468bfa308cd415cb519bdde2a1b4e60b859bacfd",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-11.json",
+      "session": "session-20261110055357-268106",
+      "sha256": "5628828b5d9e19b2477b6d89955caf17036f43a64d353b0e2ee117837232c2cb",
+      "acknowledged": 40000
+    },
+    {
+      "name": "calibration-12.json",
+      "session": "session-20261110055641-65f55c",
+      "sha256": "41143c5bc224aa409aefe119edd48abfa77323b5259d15c312b64024fa6a03d8",
+      "acknowledged": 40000
+    },
+    {
+      "name": "train-steady-0.json",
+      "session": "session-20261110055913-71bc48",
+      "sha256": "55cfeb7f568f34d2054deadb7b720cef559b1e3623ddfa961d325bae1d514369",
+      "acknowledged": 7200
+    },
+    {
+      "name": "train-steady-1.json",
+      "session": "session-20261110060228-c1a555",
+      "sha256": "0617da9c55550f2a2e21b77e763e5107f3b870a4e45b987a462b43c8196cd8fb",
+      "acknowledged": 7920
+    },
+    {
+      "name": "train-steady-2.json",
+      "session": "session-20261110060544-d3770a",
+      "sha256": "5976f4ef2fee34d51721a65060b4fbdee62157adb3ed88a24a6ff1717dd232e6",
+      "acknowledged": 7560
+    },
+    {
+      "name": "train-ramp-0.json",
+      "session": "session-20261110060901-7a1966",
+      "sha256": "736817a2a7624196d3c0fda24d40e020badd7f0aa591dc62defdb1be977d8a12",
+      "acknowledged": 24840
+    },
+    {
+      "name": "train-ramp-1.json",
+      "session": "session-20261110061221-bd5d10",
+      "sha256": "f0217e45989be99008bdf9a1105fc8e7ae7763f186fee8dfa6a3e0e1152fe175",
+      "acknowledged": 28980
+    },
+    {
+      "name": "train-ramp-2.json",
+      "session": "session-20261110061541-38c553",
+      "sha256": "46630eba4b51be078a6ecb0018940a933d3b435da2c608ddee741b6426b0f0bd",
+      "acknowledged": 26220
+    },
+    {
+      "name": "train-repeated-burst-0.json",
+      "session": "session-20261110061901-393c21",
+      "sha256": "5a6ea2169bfce88efc883cf8257fafdf35fe76a49f9e0cb720ef2cb26c8b11c8",
+      "acknowledged": 63360
+    },
+    {
+      "name": "train-repeated-burst-1.json",
+      "session": "session-20261110064451-91f46e",
+      "sha256": "44585a507784c221a33f66c311da6c0afd3e1cf4f2de476b8f9b6227db3ad637",
+      "acknowledged": 88380
+    },
+    {
+      "name": "train-repeated-burst-2.json",
+      "session": "session-20261110065024-72371f",
+      "sha256": "2f739a32af2bd1a88a0714187f14ae5632da9f96332be57f33bca4860b3ec907",
+      "acknowledged": 71280
+    },
+    {
+      "name": "train-abrupt-step-0.json",
+      "session": "session-20261110065513-a9c5b4",
+      "sha256": "ac5456312f7fb54b9b63e629e1885c7ce592375874de6b611fceddf4d6eaa48d",
+      "acknowledged": 43440
+    },
+    {
+      "name": "train-abrupt-step-1.json",
+      "session": "session-20261110065913-e6ce6c",
+      "sha256": "2bc6e78d4603eb0ba4b0d58cdb32a8f8e3c3bb2c36017cb6272f04b68cbaa627",
+      "acknowledged": 52920
+    },
+    {
+      "name": "train-abrupt-step-2.json",
+      "session": "session-20261110070340-3278ad",
+      "sha256": "f4b61bc52c83860e43e94111a5d2395ed62b8696cf381664ae0a95c2c6d86d15",
+      "acknowledged": 43200
+    },
+    {
+      "name": "validation-steady-0.json",
+      "session": "session-20261110070741-92baeb",
+      "sha256": "f91e731fd7a4c8f2725af68b2bf60258451891e69ff329ef9588acbbe403b922",
+      "acknowledged": 6840
+    },
+    {
+      "name": "validation-ramp-0.json",
+      "session": "session-20261110071057-6fdc2a",
+      "sha256": "63fc724d01f6e41bd06a5e9fb0a73cf1336474fc9166ffcc2d4c08d059a27ca6",
+      "acknowledged": 24840
+    },
+    {
+      "name": "validation-repeated-burst-0.json",
+      "session": "session-20261110071415-10e3f9",
+      "sha256": "06ae8abdf9bcd45aa637a358fe4a5069a2207101b92a4082c7e6d8d4aa15fa30",
+      "acknowledged": 88020
+    },
+    {
+      "name": "validation-abrupt-step-0.json",
+      "session": "session-20261110071935-f3362b",
+      "sha256": "9d6acfcecf5c5c1b456062f5b65ed9a5f2b2b7c1514f402a1bae2ec74d4bf46d",
+      "acknowledged": 45240
+    }
+  ]
+}

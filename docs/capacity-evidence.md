@@ -330,7 +330,7 @@ are not copied into the new fingerprint. The prior launcher log is retained at
 
 ## Model diagnostics and continuous measurement
 
-The [model analysis](predictive-model-analysis.md) now includes production-window
+The [earlier model analysis](predictive-model-analysis-before-startup-fix.md) includes production-window
 parity checks, interval-aligned actuals, conditional coverage, valid past-history
 probes and the original model/data identities. It diagnoses the preserved
 pre-startup-fix candidate; these are historical diagnostics, not final acceptance.
@@ -433,3 +433,37 @@ trips and predictive agent restart/history/override recovery. The resulting
 
 The held-out campaign and a complete successful `all`, followed by its reuse
 verification, remain pending. Generated data and previous artifacts are retained.
+
+## Current candidate, cleanup and shutdown
+
+The corrected-controller candidate is prepared locally under fingerprint
+`9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f`.
+Refitting the twelve training runs reproduces the previous forecaster payload
+bit-for-bit, with four disjoint validation runs and the same data hash. It has
+not been installed or promoted, and no old policy-controlled score was reused.
+The [current analysis](predictive-model-analysis.md) publishes its conditional
+accuracy, past-history probes and capacity context; the earlier analysis and
+figures are preserved separately. Candidate analysis also passes with the cluster
+stopped. [Preparation proof](results/capacity-12/corrected-candidate-preparation.json).
+
+Full remaining qualification is waiting for persistent disk capacity. A fresh
+complete campaign needs approximately 10 GiB of working room for builds, retained
+tuning evidence and evaluation admission; about 6 GiB remains after cleanup.
+Additional space was requested, without deleting database, Kafka or run data.
+
+Scoped cleanup removed verified task-created private build snapshots, obsolete
+image copies/import aliases, three byte-verified synthetic test files, duplicate
+host build images and the `node_modules` recreated by this task's `npm ci`.
+Identical current runtime images remain inside kind; the launcher rebuilds host
+copies/dependencies when needed. No shared global caches or unrelated resources
+were removed.
+
+The authorized `./streamscale.sh stop` then stopped both `streamscale-local`
+services and the labelled kind node. Verification found zero running project
+containers and zero project host services, five retained volume mounts and
+unchanged unrelated containers. The kind node's recorded stop used its image
+signal, followed by signal 9 at the configured 45-second deadline; its precise
+exit/OOM flag observations are preserved in the [shutdown audit](results/capacity-12/shutdown.json).
+This records stopped resources and retained storage, not restart-recovery or
+complete corrected-controller acceptance. After sufficient space is available,
+continue with `./streamscale.sh all --no-ui`; it restarts retained services.

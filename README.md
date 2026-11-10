@@ -261,7 +261,9 @@ it. Warm-up and reactive fallback are internal statuses, not extra UI modes.
 
 Select **ML Predictive pilot** for enough history to observe forecasting. Initial
 preparation and the 36-run comparison are long live campaigns. The maintained
-`all` workflow includes them. See [run instructions](docs/run-project.md#ml-predictive-m16m20)
+`all` workflow includes them. Budget about **10 GiB free** for a fresh campaign;
+completed compatible evidence is reused. The current projection correction passes
+unit checks; fresh controlled qualification remains pending. See [run instructions](docs/run-project.md#ml-predictive-m16m20)
 and [implementation evidence](docs/predictive-evidence.md) for validation status,
 cache/resume behavior and the history-only forecasting limitation. Earlier M7
 results remain unchanged; no predictive performance improvement is presumed.

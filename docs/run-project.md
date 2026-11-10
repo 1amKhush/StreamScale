@@ -310,6 +310,23 @@ comparison. Its first execution can take several hours. Performance improvements
 must come from the held-out report; correctness and meeting the latency target
 are separate outcomes. Existing stop/resume commands above retain every artifact.
 
+Budget about **10 GiB free** before a fresh full predictive campaign, including
+image builds and retained evidence. Preparation and evaluation enforce admission
+checks and preserve earlier records when space is insufficient. Controller changes
+invalidate prior policy measurements; the current common-window correction needs
+fresh tuning and held-out evaluation. See the [current diagnosis](predictive-model-analysis.md)
+and [qualification status](capacity-evidence.md).
+
+After freeing the required space, resume the complete workflow with:
+
+```sh
+./streamscale.sh all --no-ui
+```
+
+The launcher restarts retained services and rebuilds disposable dependencies or
+host image copies as needed. `./streamscale.sh stop` closes only this project's
+Compose services and kind nodes; its volumes, node images and run evidence remain.
+
 ## Using the refined console
 
 Open the printed login URL from `./streamscale.sh console`. Use Overview to watch

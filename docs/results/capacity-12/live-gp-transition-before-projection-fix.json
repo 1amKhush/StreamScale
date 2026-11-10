@@ -1,0 +1,41 @@
+{
+  "at": "2026-11-10T08:17:03.007628+00:00",
+  "fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
+  "scope": "Actual completed live initial-policy measurements followed by the first GP policy, currently executing; not a completed optimum.",
+  "completed_policies": 5,
+  "sequence": [
+    {
+      "trial": 0,
+      "model_key": null
+    },
+    {
+      "trial": 1,
+      "model_key": "Sobol"
+    },
+    {
+      "trial": 2,
+      "model_key": "Sobol"
+    },
+    {
+      "trial": 3,
+      "model_key": "Sobol"
+    },
+    {
+      "trial": 4,
+      "model_key": "Sobol"
+    },
+    {
+      "trial": 5,
+      "model_key": "BoTorch"
+    }
+  ],
+  "pending": {
+    "index": 5,
+    "policy": {
+      "horizon": 20,
+      "quantile": 0.9,
+      "headroom": 0.1285102632716031,
+      "downscale": 54
+    }
+  }
+}

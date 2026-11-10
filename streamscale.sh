@@ -58,6 +58,8 @@ Grafana login: artifacts/k8s/credentials.json
 Close the dashboard terminal with Ctrl+C before running stop in another terminal.
 all/local/cluster create fresh executions and preserve earlier runs.
 experiments uses a frozen pilot-calibrated protocol and may take over an hour.
+Fresh predictive preparation/evaluation can take several hours. Budget about
+10 GiB free for retained evidence; completed compatible artifacts are reused.
 --fresh creates a new measured campaign while retaining earlier results.
 After resume, use all or cluster for a fresh counter-based acceptance check.
 Cluster verification waits up to 60 seconds for metrics to reflect SQL reconciliation.
