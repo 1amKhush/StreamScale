@@ -332,6 +332,13 @@ looking up a record opens the same keyboard-accessible inspector.
 
 ## Twelve-partition configuration (M21)
 
+`./streamscale.sh predictive-analyze` reads the accepted model and saved traces
+without starting services. It produces aligned forecast plots, conditional
+coverage, past-history probes and JSON/CSV evidence under
+`artifacts/predictive/<fingerprint>/analysis/`. It also runs at the end of `all`.
+See [model behavior and possible causes](predictive-model-analysis.md) for the
+reviewed explanation. No retraining or live policy change occurs during analysis.
+
 The maintained configuration uses **12 input and DLQ partitions**, starts at one
 consumer and permits **1–12 replicas** in CPU-HPA, lag-KEDA and ML Predictive.
 Fixed remains one; manual zero pauses processing. All comparisons use the same

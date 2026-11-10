@@ -39,6 +39,7 @@ Usage: ./streamscale.sh [command] [options]
   predictive-check    Verify predictive control, overrides and recovery
   predictive-demo     Run a reconciled ML Predictive pilot
   predictive-evaluate Run/resume the separate 36-run held-out comparison
+  predictive-analyze  Explain frozen forecasts and generate offline diagnostic figures
   console-check Console unit, web, live-cluster and browser acceptance (M9–M20),
                 including real sales, scaling modes, faults, replay and the full journey.
   status        Show this project's containers and, when running, Kubernetes resources.
@@ -323,6 +324,7 @@ case "$command" in
         printf '\n[M19–M20] Verifying predictive control and its held-out comparison.\n'
         make predictive-check
         make predictive-evaluate
+        make predictive-analyze
         status
         printf '\nM0–M21 passed. Historical report: docs/results/current/report.md; current evidence: artifacts/predictive/ and artifacts/console/.\n'
         if [[ "$no_ui" == false ]]; then console_serve; fi
@@ -336,7 +338,7 @@ case "$command" in
         start_cluster_nodes
         if [[ "$fresh" == true ]]; then make experiments-fresh; else make experiments; fi
         ;;
-    analysis) require_command uv; require_command make; make analysis ;;
+    analysis|predictive-analyze) require_command uv; require_command make; make "$command" ;;
     verify) require_command make; make k8s-verify ;;
     inspect-local)
         require_command uv

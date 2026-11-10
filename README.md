@@ -64,6 +64,7 @@ pilot, use `./streamscale.sh cluster` followed by `./streamscale.sh console`.
 | `./streamscale.sh scaling` | Exercise fixed / CPU-HPA / lag-KEDA and their 1–12 replica bounds |
 | `./streamscale.sh experiments [--fresh]` | Run or resume the 27-run measured campaign |
 | `./streamscale.sh analysis` | Re-audit raw measurements and regenerate plots, report and PDF |
+| `./streamscale.sh predictive-analyze` | Explain the accepted model's forecasts and generate diagnostic figures |
 | `./streamscale.sh ui` | Open Grafana and Prometheus port forwards |
 | `./streamscale.sh status` | Show this project's containers and Kubernetes resources |
 | `./streamscale.sh stop` / `resume` | Stop or restart project services. **All data is kept.** |
@@ -284,3 +285,7 @@ and predictive experiments could show. Twelve provides a useful range for
 gradual scaling, rescue and resource tradeoffs, with matching partitions so
 added consumers can work. It remains one configuration. Database/node limits
 still apply; the wider limit alone is not evidence of a performance gain.
+
+For measured prediction behavior, limitations and possible causes, see the
+[model analysis](docs/predictive-model-analysis.md). It separates forecasting
+errors, controller decisions, capacity limits and interrupted measurements.

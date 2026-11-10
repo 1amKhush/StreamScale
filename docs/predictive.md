@@ -56,3 +56,8 @@ of recovery, with the same logical sequence across compared modes.
 
 See [run commands](run-project.md#ml-predictive-m16m20) and
 [validation evidence](predictive-evidence.md).
+
+[The model analysis](predictive-model-analysis.md) explains measured forecast
+bias, spike misses, quantile coverage, history-dependent predictions and capacity
+limits. `./streamscale.sh predictive-analyze` regenerates read-only diagnostics
+for the accepted artifact; it is included after evaluation in `all`.

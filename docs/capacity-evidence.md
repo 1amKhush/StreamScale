@@ -7,7 +7,7 @@ zero retains the existing pause-processing behavior. No extra runtime mode was a
 Status updated 2026-11-10 (India time): implementation complete enough for validation; **live
 acceptance is still running**. This document does not assert complete acceptance.
 
-Current totals: **204 pipeline unit tests, 175 console unit tests, 29 web unit
+Current totals: **210 pipeline unit tests, 180 console unit tests, 29 web unit
 tests and 31 local integration tests pass**. All twelve calibration, twelve
 training and four validation captures completed. Live tuning now records real
 trained forecasts and correct reconciliations. Preparation, the complete live/
@@ -327,3 +327,27 @@ qualification collects fresh calibration, training, validation and tuning.
 Earlier captures and forecast scores remain historical evidence; policy results
 are not copied into the new fingerprint. The prior launcher log is retained at
 `artifacts/capacity/full-launcher-before-consumer-manifest-fix.log`.
+
+## Model diagnostics and continuous measurement
+
+The [model analysis](predictive-model-analysis.md) now includes production-window
+parity checks, interval-aligned actuals, conditional coverage, valid past-history
+probes and the original model/data identities. It diagnoses the preserved
+pre-startup-fix candidate; these are historical diagnostics, not final acceptance.
+Five analysis regressions and all 210 pipeline unit tests pass. The launcher now
+includes `predictive-analyze` after held-out evaluation, with an offline standalone
+route that starts no services.
+
+Analysis exposed a 3,710.60-second telemetry gap in an old tuning capture. Exact
+SQL correctness can still pass, but an incomplete ready-replica integral cannot
+be used as a cost objective. Performance eligibility now requires continuous
+positive sample intervals within the existing five-second freshness limit and
+known ready counts at both ends. Missing time is reported explicitly, and fallback
+does not fill that gap. All 180 console unit tests pass, including five new gap/
+missing-readiness/clock-reset checks. Fresh preparation uses a new fingerprint;
+no earlier policy scores are reused.
+
+A host/cluster restart interrupted the first fresh calibration before the
+coordinator saved it. Reconnection reconciled all 40,000 acknowledged facts with
+zero correctness errors. That session is retained outside the experiment. The
+pre-restart launcher log and recovery proof remain in `artifacts/capacity/`.

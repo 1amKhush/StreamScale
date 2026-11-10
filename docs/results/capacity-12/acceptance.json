@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10T00:06:29.343675+00:00",
+  "updated_at": "2026-11-10T05:17:25.645998+00:00",
   "status": "partial_acceptance_full_predictive_workflow_pending",
   "configuration": {
     "input_partitions": 12,
@@ -93,8 +93,8 @@
     "validated_for_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
   },
   "completed_checks": {
-    "pipeline_unit": 204,
-    "console_unit": 175,
+    "pipeline_unit": 210,
+    "console_unit": 180,
     "web_unit": 29,
     "local_integration_before_expansion_test": 28,
     "local_sql_and_expansion_suite": 19,
@@ -116,7 +116,10 @@
     "twelve_key_artifact_round_trip": "passed",
     "invalid_artifact_install_preflight": "passed",
     "manifest_memory_regressions": 9,
-    "consumer_manifest_live_recovery": "passed"
+    "consumer_manifest_live_recovery": "passed",
+    "offline_diagnostic_regressions": 5,
+    "measurement_gap_regressions": 5,
+    "offline_launcher_routing": "passed"
   },
   "remaining": [
     "trained model and policy preparation",
@@ -151,7 +154,9 @@
     "artifact_console_unit": "artifacts/capacity/console-artifact-json.log",
     "forecast_validation": "docs/results/capacity-12/forecast-validation.json",
     "manual_trace_compatibility": "artifacts/capacity/artifact-json-compatible-captures.json",
-    "consumer_manifest_memory": "docs/results/capacity-12/consumer-manifest-memory.json"
+    "consumer_manifest_memory": "docs/results/capacity-12/consumer-manifest-memory.json",
+    "model_analysis": "docs/predictive-model-analysis.md",
+    "diagnostic_slices": "docs/results/capacity-12/model-analysis/summary.json"
   },
   "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
   "capacity_rechecks": [
@@ -233,9 +238,9 @@
     "latency_target_met": false,
     "preserved": true
   },
-  "preparation_fingerprint": "66509ace6e694d50160f1415a8164b43c6ac5dd76918dc7f717d55c2ad7b5b0f",
+  "preparation_fingerprint": "8d917c597ff50b40853d7c6754a9b025ddb77f2272fb8027aee815fb8ddfa886",
   "predictive_progress": {
-    "status": "fresh full launcher running after consumer startup correction",
+    "status": "fresh full launcher restarting after host restart and measurement gate",
     "completed_policy_trials": 0,
     "planned_policy_trials": 12,
     "completed_tuning_workloads": 0,
@@ -244,5 +249,5 @@
     "held_out_planned": 36,
     "accepted_model_published": false
   },
-  "previous_preparation_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
+  "previous_preparation_fingerprint": "66509ace6e694d50160f1415a8164b43c6ac5dd76918dc7f717d55c2ad7b5b0f"
 }

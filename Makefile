@@ -115,7 +115,7 @@ console-serve:
 # M16–M20: CPU-only preparation is isolated from the runtime worker environment.
 PREDICTIVE = OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 uv run --project experiments/predictive --frozen
 
-.PHONY: predictive-install predictive-prepare predictive-check predictive-demo predictive-evaluate
+.PHONY: predictive-install predictive-prepare predictive-check predictive-demo predictive-evaluate predictive-analyze
 predictive-install:
 	uv sync --project experiments/predictive --frozen
 
@@ -130,6 +130,10 @@ predictive-demo: predictive-install
 
 predictive-evaluate: predictive-install
 	$(PREDICTIVE) python -m experiments.predictive.campaign evaluate
+
+predictive-analyze: predictive-install
+	$(PREDICTIVE) python -m experiments.analyze_predictive
+	uv run --project experiments/analysis --frozen python -m experiments.plot_predictive
 
 .PHONY: capacity-check
 capacity-check: console-install

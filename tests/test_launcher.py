@@ -134,6 +134,7 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
         "console-check",
         "predictive-check",
         "predictive-evaluate",
+        "predictive-analyze",
     ]
     directory = (checkout / "artifacts/launcher/last-local-run.path").read_text().strip()
     assert Path(directory).parent.is_dir()
@@ -142,6 +143,12 @@ def test_complete_flow_preserves_env_uses_fresh_run_and_executes_current_milesto
     assert not any("serve" in call for call in calls if call[0] == "uv")
     # The generated directory itself must not exist before the generator runs.
     assert not Path(directory).exists()
+
+
+def test_predictive_analysis_runs_without_starting_services(launcher):
+    result, calls, _ = launcher("predictive-analyze", STREAMSCALE_TEST_DOCKER_DOWN="1")
+    assert result.returncode == 0, result.stderr
+    assert calls == [["make", "predictive-analyze"]]
 
 
 def test_resume_waits_for_api_and_rollouts_without_publishing(launcher):
