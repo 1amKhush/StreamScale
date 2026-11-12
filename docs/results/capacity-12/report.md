@@ -1,26 +1,32 @@
 # Twelve-partition capacity evidence
 
-Status: **partial acceptance**, updated 2026-11-10. The current controller fixes
-unequal projection windows and passes 213 pipeline / 193 console unit tests.
-All 28 manual traces remain compatible; an offline refit reproduces the frozen
-forecaster payload exactly. The candidate has not been installed or promoted.
-Fresh twelve-policy tuning, the 45-case live suite, browser acceptance, 36 held-out
-runs and complete launcher success/reuse remain unexecuted. The user cancelled
-remaining qualification for submission on 2026-11-10. All project services are
-stopped; source, reports and raw evidence are retained. Final disposable cleanup
-is recorded in the [submission audit](submission-cleanup.json).
+Updated 2026-11-12: a later supplied run records all **36 held-out summary rows**,
+all correctness passing and completely measured, with **15/36** meeting the
+latency objective. Preparation records twelve policies / twenty-four tuning
+captures; no candidate was feasible, so the default policy was retained.
+The [audited digest](sim-run-2026-11-12/README.md) and
+[model analysis](../../predictive-model-analysis.md) provide current observations
+and limitations. Broad live/browser, separate capacity-check and launcher claims
+are attributed to the supplied report where individual logs are missing.
+
+This remains an evidence history, not the final project report. The following
+local snapshots through 2026-11-10 predate the supplied run and retain their own
+models, environments, incomplete gates and [cleanup audit](submission-cleanup.json).
+
+## Historical local measurements through 2026-11-10
 
 The previous runtime completed twelve policies / twenty-four workloads, all
 correctness passing, with tuning infeasible and the default retained. A subsequent
 controller correction invalidates those controlled scores for current acceptance.
 The initial full live suite passed 41/43; two acceptance assumptions were corrected
-and two ownership/restart cases added. See the [current model diagnosis](../../predictive-model-analysis.md),
-[current capacity curve](calibration-current.svg), [candidate provenance](corrected-candidate-preparation.json)
+and two ownership/restart cases added. See the [2026-11-10 model diagnosis](../../predictive-model-analysis-2026-11-10.md),
+[then-current capacity curve](calibration-current.svg), [candidate provenance](corrected-candidate-preparation.json)
 and [source compatibility](projection-time-compatible-captures.json).
 
 Measurements below preserve earlier runtime snapshots and distinguish their
 provenance. They are separate from the historical three-partition M7 report
-under `../current/`; none is a completed current held-out comparison.
+under `../current/`; those older measurements are distinct from the new
+four-mode CSV in `sim_run/`.
 
 The configuration is twelve Kafka input and DLQ partitions, initial one consumer,
 and a 1–12 range for autoscaling. Three replicas offered only two upward steps;
@@ -205,3 +211,30 @@ peak 35.84 MiB, and all 92,340 facts preserved after returning to one consumer.
 That peak covers startup/idle verification, not processing a new sale.
 All 31 local integration checks pass. Fresh live calibration, model preparation and qualification
 will replace the interim results before final acceptance; earlier raw runs remain.
+
+## Supplied run digest — 2026-11-12
+
+This later dataset supersedes earlier pending notices for preparation and the
+held-out matrix. All 36 supplied rows are correctness passing and completely
+measured; 15 meet the two-second objective. Three repetitions per cell give:
+
+| Workload | Fixed mean p95 (s) | CPU-HPA | Lag-KEDA | ML Predictive |
+| --- | ---: | ---: | ---: | ---: |
+| Steady | 0.778 | 0.778 | 0.779 | 1.071 |
+| Flash sale | 314.285 | 91.936 | 37.619 | 0.851 |
+| Overload/recovery | 336.275 | 112.832 | 53.461 | 23.091 |
+
+These are means of per-run p95 values, not pooled percentiles. ML's mean replica
+costs are 1,510.2 / 1,665.7 / 1,655.0 replica-seconds for those workloads. Lower
+flash-sale latency accompanies greater capacity reservation; steady forecasts
+are biased high, and all overload runs miss the objective. The optimizer records
+`tuning=infeasible`, retaining the default after twelve policies / twenty-four
+workload captures.
+
+[Numeric digest and source hashes](sim-run-2026-11-12/summary.json),
+[all grouped outcomes](sim-run-2026-11-12/outcomes.csv),
+[diagnostic figures](sim-run-2026-11-12/README.md) and
+[model workings/possible causes](../../predictive-model-analysis.md) support
+analysis before the final report. The original narrative's broader test and
+capacity-check claims remain attributed where raw records are missing. Historical
+three-mode M7 figures are kept separate from the new four-mode comparison.

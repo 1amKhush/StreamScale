@@ -34,21 +34,24 @@ Evidence, defects, review and actual completion timestamps are recorded in
 `docs/m8-evidence.md`. Referenced TeX documents and external tracker were not
 available locally. No claims are made about reviewing or updating those artifacts.
 
-| M16 | Medium: observed-history features, quantile HGBT models and artifacts | M0–M15 | Leakage/split/integrity tests; live trace preparation | Implemented 2026-11-03; automated checks passed; live preparation pending |
-| M17 | Large: agent predictive controller and exclusive ownership | M16, M12 | Replica bounds, skew, stale data, override/release | Implemented 2026-11-03; automated checks and live missing-model fallback passed; trained acceptance pending |
-| M18 | Large: CPU-only Bayesian preparation, checkpoints and reuse | M16–M17 | Twelve live candidate policies; resumable accepted artifacts | Implemented 2026-11-03; Ax API smoke passed; live campaign pending |
-| M19 | Medium: single ML Predictive choice, chart, exports and replay | M17–M18 | Web tests/build and browser pilot | Implemented 2026-11-03; automated checks passed; live browser pilot pending |
-| M20 | Large: held-out campaign and complete launcher | M16–M19 | 36 held-out runs, reconciliation, full launcher and reuse | Implemented 2026-11-03; full launcher reached M5 then blocked by expired retained Kafka source; trained campaign pending |
+| M16 | Medium: observed-history features, quantile HGBT models and artifacts | M0–M15 | Leakage/split/integrity tests; live trace preparation | Supplied 2026-11-12 evidence records 12 training and 4 validation runs, disjoint IDs, model metadata and 288 diagnostic slices; metadata/runtime hashes checked locally |
+| M17 | Large: agent predictive controller and exclusive ownership | M16, M12 | Replica bounds, skew, stale data, override/release | Trained mode recorded in 9 held-out sessions, all correctness passing; source report declares full live acceptance, whose raw logs are not in the imported bundle |
+| M18 | Large: CPU-only Bayesian preparation, checkpoints and reuse | M16–M17 | Twelve live candidate policies; resumable accepted artifacts | Recorded preparation complete: 12 policies / 24 tuning captures; none feasible for p95 ≤ 2s, conservative default retained; imported summaries do not install the model |
+| M19 | Medium: single ML Predictive choice, chart, exports and replay | M17–M18 | Web tests/build and browser pilot | Supplied report records 193 console, 29 web, 45 live and 20 Playwright checks passing; detailed live/browser logs are report-only in this bundle |
+| M20 | Large: held-out campaign and complete launcher | M16–M19 | 36 held-out runs, reconciliation, full launcher and reuse | 36/36 unique complete correctness-passing summary rows audited on 2026-11-12; 15 meet latency target. Full-launcher/reuse logs were not supplied, so those gates are not independently established by this import |
 
 Predictive evidence and limitations: [ML Predictive](predictive.md) and
 [implementation acceptance](predictive-evidence.md). These states distinguish
-implemented code from unexecuted live training and performance campaigns.
+implemented code, directly auditable run summaries and source-report declarations.
+The [imported-run digest](results/capacity-12/sim-run-2026-11-12/README.md) and
+[model analysis](predictive-model-analysis.md) supersede earlier pending notices
+for preparation and the held-out matrix. A final project report is still to follow.
 
 ## Capacity expansion
 
 | Milestone | Scope estimate | Dependencies | Acceptance | State |
 | --- | --- | --- | --- | --- |
-| M21 | Large: one twelve-partition configuration and 1–12 scaling | M0–M20 | SQL/topic upgrade, all replica counts, predictive calibration, full launcher and browser acceptance | Partial acceptance; remaining qualification cancelled by user for submission, 2026-11-10. 213 pipeline, 193 console and 29 web unit tests pass; 28 manual traces and 24 earlier-controller tuning workloads reconcile. Projection-window defect corrected; fresh policy tuning, 45-case live acceptance and full qualification unexecuted. Services stopped; evidence retained. |
+| M21 | Large: one twelve-partition configuration and 1–12 scaling | M0–M20 | SQL/topic upgrade, all replica counts, predictive calibration, full launcher and browser acceptance | Supplied complete-run report declares acceptance on 2026-11-12; metadata confirms 12 partitions / 1–12 range, and 36 held-out summaries are audited. Its separate 1.16s capacity check and live/browser completion lack individual raw records in this bundle; historical local acceptance/cleanup evidence is retained |
 
 M21 retains the historical three-partition milestones and measured reports above.
 Current configuration and acceptance evidence: [twelve-partition capacity](capacity-evidence.md).

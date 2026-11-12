@@ -4,16 +4,21 @@ Requested configuration: twelve input and DLQ partitions, initial one consumer,
 1–12 replicas for CPU-HPA, lag-KEDA and ML Predictive. Fixed remains one; manual
 zero retains the existing pause-processing behavior. No extra runtime mode was added.
 
-Submission status updated 2026-11-10: **partial acceptance**. The user ended the
-remaining qualification campaign to submit the completed work. All StreamScale
-services are stopped. This document does not assert complete acceptance.
+Updated 2026-11-12: the user supplied a complete-run bundle under `sim_run/`.
+Its held-out matrix contains **36 unique correctness-passing rows**, all eligible
+for performance reporting with complete measurement. Fifteen meet p95 ≤ 2s.
+Twelve policy candidates / twenty-four tuning captures are recorded, with
+`tuning=infeasible` and the conservative default retained.
 
-Current totals: **213 pipeline unit tests, 193 console unit tests, 29 web unit
-tests and 31 local integration tests pass**. All twelve calibration, twelve
-training and four validation captures completed. Live tuning now records real
-trained forecasts and correct reconciliations. Preparation, the complete live/
-browser suite, 36 held-out runs and full-launcher reuse remain required gates.
-The chronological entries below retain earlier failures and intermediate totals.
+The source report declares all milestones passing, including 45 live and 20
+browser checks and a separate 1.16s capacity check. Their individual raw logs and
+session record are not in the bundle; those declarations remain report-only.
+The [audited digest](results/capacity-12/sim-run-2026-11-12/README.md) and
+[model analysis](predictive-model-analysis.md) record what the files directly
+support. Earlier totals of 213 pipeline, 193 console, 29 web and 31 integration
+checks remain historical local evidence, not newly executed tests in this import.
+Chronological entries below preserve earlier failures and pending states through
+2026-11-10; the supplied-run addendum supersedes preparation/held-out pending notices.
 
 
 ## Why the range changed from three to twelve
@@ -33,7 +38,9 @@ This is an experimental-capacity decision, not a promise of twelvefold throughpu
 The local node and shared PostgreSQL database still impose limits. Capacity is
 measured independently at every count, and overload remains explicitly visible.
 The historical three-partition results cannot establish improvements for the new
-configuration; those require the separate held-out twelve-partition comparison.
+configuration. The new separate held-out twelve-partition comparison records
+cross-mode behavior, but is not a paired experiment isolating the effect of
+changing only the replica limit from three to twelve.
 
 | Setting | Historical system | Maintained configuration |
 | --- | --- | --- |
@@ -435,21 +442,22 @@ trips and predictive agent restart/history/override recovery. The resulting
 The held-out campaign and a complete successful `all`, followed by its reuse
 verification, remain pending. Generated data and previous artifacts are retained.
 
-## Current candidate, cleanup and shutdown
+## 2026-11-10 candidate, cleanup and shutdown
 
 The corrected-controller candidate is prepared locally under fingerprint
 `9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f`.
 Refitting the twelve training runs reproduces the previous forecaster payload
 bit-for-bit, with four disjoint validation runs and the same data hash. It has
 not been installed or promoted, and no old policy-controlled score was reused.
-The [current analysis](predictive-model-analysis.md) publishes its conditional
+The [2026-11-10 analysis](predictive-model-analysis-2026-11-10.md) publishes its conditional
 accuracy, past-history probes and capacity context; the earlier analysis and
 figures are preserved separately. Candidate analysis also passes with the cluster
 stopped. [Preparation proof](results/capacity-12/corrected-candidate-preparation.json).
 
-The user cancelled remaining qualification for submission. Fresh tuning, current
-live/browser acceptance, the 36 held-out runs and full-launcher success/reuse
-remain unexecuted. No qualification process is waiting or running.
+At that cleanup, the user cancelled remaining qualification for submission.
+Fresh tuning, live/browser acceptance, the 36 held-out runs and full-launcher
+success/reuse were unexecuted in that local task. The later supplied-run addendum
+below records new evidence without rewriting that historical state.
 
 Scoped cleanup removed verified task-created private build snapshots, obsolete
 image copies/import aliases, three byte-verified synthetic test files, duplicate
@@ -473,3 +481,36 @@ lockfiles, the built UI, reports, raw runs, models and saved service data remain
 This final pass freed another 2.22 GiB, leaving approximately 8.20 GiB available.
 Dependencies and tools can be restored through the maintained launcher/Make targets
 if work is resumed. [Submission cleanup audit](results/capacity-12/submission-cleanup.json).
+
+## Supplied complete-run follow-up — 2026-11-12
+
+The imported campaign fingerprint is
+`bc351a94c10438773ed81e96833ce39a8d4d2f2f01c3fcce11ca5c2bfe024a23`.
+Its metadata identifies evaluated commit `7e01206`, twelve partitions, 1–12
+replicas and a 28-CPU node. The metadata checksum reproduces model ID
+`5c4e5c4c77c17c6c2adac0077d063b483a7987775f543ebab5850eada0bda355`;
+the predictive source hash matches this checkout. All nine predictive evaluation
+rows carry that ID. The recorded train/validation/tuning/evaluation IDs are disjoint.
+
+The bundle records twelve training runs, four validation runs and twenty-four
+tuning captures for twelve policies. Every candidate is correctness passing but
+infeasible for the two-second constraint on both tuning workloads; the default
+is retained. The held-out CSV supplies exactly one row for each family/mode/
+repetition combination: 36 unique sessions, all correctness passing, performance
+eligible and completely measured, with no unknown measurement intervals. Fifteen meet
+the latency target. These are recorded outcomes, not a rerun of the campaign.
+
+ML Predictive's mean flash-sale p95 is 0.851s versus 37.619s for KEDA, at
+1,665.7 versus 870.5 mean replica-seconds. Its steady resource use is about eight
+times KEDA's, and all overload repetitions miss the target. Capacity peaks near
+eight consumers at 1,117.24/s and is 1,108.39/s at twelve on this recorded node;
+it must not be combined with the earlier machine's capacity curve/CPU profile.
+
+The source narrative's 45 live checks, 20 browser checks, separate 1.16s capacity
+check and broad milestone-completion declaration have no individual raw records
+in this bundle. Model binary/campaign captures and a launcher-reuse log are also
+absent. The import updates the evidence, not the runtime model pointer.
+See the [digest](results/capacity-12/sim-run-2026-11-12/README.md),
+[updated acceptance record](results/capacity-12/acceptance.json) and
+[model analysis](predictive-model-analysis.md). The final project report is a
+separate next step.

@@ -17,6 +17,16 @@ Historical M0–M8 evidence below used three partitions and 1–3 replicas. It i
 retained as historical evidence, not a measurement of the expanded configuration.
 The original event payload and transactional ordering rules still apply.
 
+Latest evidence update (2026-11-12): `sim_run/` contains a supplied complete-run
+bundle. Its 36 unique held-out summary rows all report correctness and complete
+measurement; 15 meet p95 ≤ 2s. Twelve policies / twenty-four tuning captures are
+recorded, with infeasible tuning and the conservative default retained. Current
+docs distinguish directly audited summaries from the narrative's broader
+live/browser/capacity-check declarations, whose raw records were not supplied.
+See `docs/results/capacity-12/sim-run-2026-11-12/README.md` and
+`docs/predictive-model-analysis.md`. Preserve historical three-partition evidence
+and earlier twelve-partition models/environments when incorporating later runs.
+
 ## What the system does
 
 1. A seeded Python workload tool creates synthetic order events and publishes them to Kafka. It can deliberately inject malformed, duplicate, and late events. Generated files and run outputs are experiment artifacts; the generator's source belongs in the repo, but it is **not** part of the continuously running consumer service.

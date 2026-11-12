@@ -3,6 +3,33 @@
 M16–M20 extend the original scope with one history-only scaling mode. Acceptance
 results below distinguish automated checks from live experimental evidence.
 
+## Latest supplied-run evidence — 2026-11-12
+
+The imported `sim_run/` bundle supersedes earlier preparation and held-out pending
+notices below. Its metadata matches evaluated commit `7e01206` and the current
+predictive source hash. Recorded train/validation/tuning/evaluation IDs are
+disjoint. Twelve training and four validation runs, twelve policy candidates,
+twenty-four tuning captures and all thirty-six held-out summary rows are present
+as diagnostics/metadata/summaries. All held-out rows report correctness passing,
+performance eligibility and complete measurement; 15 meet the two-second target.
+
+Tuning is explicitly **infeasible**, with the default retained. ML Predictive
+meets the target in all three steady and three flash-sale repetitions, and none
+of the three overload repetitions. Flash-sale mean p95 is 0.851s at 1,665.7 mean
+replica-seconds, compared with KEDA's 37.619s at 870.5 replica-seconds. Higher
+steady resource use and uneven forecast calibration remain material limitations.
+
+The supplied narrative declares 45 live checks, 20 browser checks and full
+milestone completion. Raw test logs, the separate capacity-check session, model
+pickle, full campaign captures and launcher-reuse log are absent from this import.
+Those declarations remain report-only. Importing the summaries does not promote
+an artifact or change the runtime pointer. See the [source bundle](../sim_run/README.md),
+[audited digest](results/capacity-12/sim-run-2026-11-12/README.md) and
+[model behavior analysis](predictive-model-analysis.md). No cluster campaign or
+software test suite was rerun while preparing this documentation update.
+
+The sections below retain the earlier implementation/qualification chronology.
+
 ## M16 — data and model
 
 Shared allowlisted observation extraction, contiguous history features, whole-run

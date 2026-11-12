@@ -1,0 +1,164 @@
+{
+  "scope": "Policy-only diagnostic from a supplied constant-zero forecast. Zero lag and one ready consumer are the analyzer probe assumptions. This is not a live workload or a latency measurement.",
+  "upper_rate": 627.7607456866789,
+  "from_one_ready": {
+    "recommended": 12,
+    "projection_seconds": 20,
+    "capacity_limited": true,
+    "candidates": [
+      {
+        "replicas": 1,
+        "latency_proxy_s": 104.18312376868047,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 2,
+        "latency_proxy_s": 37.04697895276063,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 3,
+        "latency_proxy_s": 22.106012159492973,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 4,
+        "latency_proxy_s": 14.406254003382164,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 5,
+        "latency_proxy_s": 19.2594578794583,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 6,
+        "latency_proxy_s": 7.331036994558256,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 7,
+        "latency_proxy_s": 7.533346567691987,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 8,
+        "latency_proxy_s": 8.707796030234164,
+        "saturated": false,
+        "feasible": false
+      },
+      {
+        "replicas": 9,
+        "latency_proxy_s": 11.733238891903827,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 10,
+        "latency_proxy_s": 13.52284390329356,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 11,
+        "latency_proxy_s": 15.279250697015993,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 12,
+        "latency_proxy_s": 4.852303155176683,
+        "saturated": false,
+        "feasible": false
+      }
+    ],
+    "reason": "Latency target infeasible: partition or shared capacity limit; 12 replicas give the lowest projected delay"
+  },
+  "from_twelve_ready": {
+    "recommended": 6,
+    "projection_seconds": 20,
+    "capacity_limited": false,
+    "candidates": [
+      {
+        "replicas": 1,
+        "latency_proxy_s": 37.177077018588214,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 2,
+        "latency_proxy_s": 10.46773000000761,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 3,
+        "latency_proxy_s": 4.523637321337053,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 4,
+        "latency_proxy_s": 1.4603766423898854,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 5,
+        "latency_proxy_s": 3.391168272345081,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 6,
+        "latency_proxy_s": 0.039261772400261616,
+        "saturated": false,
+        "feasible": true
+      },
+      {
+        "replicas": 7,
+        "latency_proxy_s": 0.039261772400261616,
+        "saturated": false,
+        "feasible": true
+      },
+      {
+        "replicas": 8,
+        "latency_proxy_s": 0.039261772400261616,
+        "saturated": false,
+        "feasible": true
+      },
+      {
+        "replicas": 9,
+        "latency_proxy_s": 0.39694816590913284,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 10,
+        "latency_proxy_s": 1.1089220423725414,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 11,
+        "latency_proxy_s": 1.8076883878032188,
+        "saturated": true,
+        "feasible": false
+      },
+      {
+        "replicas": 12,
+        "latency_proxy_s": 0.039261772400261616,
+        "saturated": false,
+        "feasible": true
+      }
+    ],
+    "reason": "6 replicas: smallest predicted capacity meeting 2s"
+  }
+}

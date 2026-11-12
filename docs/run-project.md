@@ -313,16 +313,27 @@ are separate outcomes. Existing stop/resume commands above retain every artifact
 Budget about **10 GiB free** before a fresh full predictive campaign, including
 image builds and retained evidence. Preparation and evaluation enforce admission
 checks and preserve earlier records when space is insufficient. Controller changes
-invalidate prior policy measurements; the current common-window correction needs
-fresh tuning and held-out evaluation. See the [current diagnosis](predictive-model-analysis.md)
+invalidate prior policy measurements. The supplied 2026-11-12 campaign records
+fresh tuning and all 36 held-out rows for the corrected runtime. See the [current diagnosis](predictive-model-analysis.md)
 and [qualification status](capacity-evidence.md).
 
-The submitted snapshot stops at partial acceptance: the user cancelled remaining
-qualification on 2026-11-10. Project services are stopped, and disposable local
-environments/tools were removed while preserving source, locks, reports and run
-data. The launcher restores required dependencies when explicitly run again.
+The [supplied run bundle](../sim_run/README.md) supersedes the 2026-11-10 submission
+snapshot for training/tuning and held-out results. All 36 rows report correctness
+and complete measurement; 15 meet the latency objective. Its narrative also
+reports live/browser acceptance, but those raw logs and launcher-reuse evidence
+are not included. The [digest](results/capacity-12/sim-run-2026-11-12/README.md)
+can be inspected without starting services:
 
-After freeing the required space, resume the complete workflow with:
+```sh
+python3 -m json.tool docs/results/capacity-12/sim-run-2026-11-12/summary.json
+```
+
+`sim_run/` contains imported summaries and diagnostics, not the model pickle or
+resumable working campaign. Importing it does not install a model or change the
+runtime artifact pointer. The prior cleanup removed local environments/tools;
+the launcher restores required dependencies when explicitly run again.
+
+To run or resume the maintained workflow using its compatible working artifacts:
 
 ```sh
 ./streamscale.sh all --no-ui

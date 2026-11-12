@@ -262,13 +262,20 @@ it. Warm-up and reactive fallback are internal statuses, not extra UI modes.
 Select **ML Predictive pilot** for enough history to observe forecasting. Initial
 preparation and the 36-run comparison are long live campaigns. The maintained
 `all` workflow includes them. Budget about **10 GiB free** for a fresh campaign;
-completed compatible evidence is reused. The current projection correction passes
-unit checks; fresh controlled qualification remains unexecuted. Remaining qualification
-was cancelled for submission on 2026-11-10; services are stopped and evidence retained.
+completed compatible evidence is reused. The supplied 2026-11-12 run now records
+**36/36 correctness-passing held-out runs**, with complete measurements. ML
+Predictive's mean flash-sale p95 is **0.851s**, at **1,665.7 replica-seconds**;
+all overload runs miss the two-second target. Offline tuning evaluated twelve
+policies on twenty-four workloads and retained the default as **infeasible**.
+The [source bundle](sim_run/README.md), [audited digest](docs/results/capacity-12/sim-run-2026-11-12/README.md)
+and [model analysis](docs/predictive-model-analysis.md) explain resource cost,
+forecast weaknesses and which acceptance claims have only narrative evidence.
 See [run instructions](docs/run-project.md#ml-predictive-m16m20)
 and [implementation evidence](docs/predictive-evidence.md) for validation status,
 cache/resume behavior and the history-only forecasting limitation. Earlier M7
-results remain unchanged; no predictive performance improvement is presumed.
+results remain unchanged. The newer four-mode results describe the supplied
+twelve-partition environment; they do not isolate the benefit of forecasting
+from extra reserved capacity.
 
 The in-app **Docs** section explains the UI and the system together: a first-sale
 walkthrough, all scaling strategies, Kafka/SQL correctness, ML preparation,

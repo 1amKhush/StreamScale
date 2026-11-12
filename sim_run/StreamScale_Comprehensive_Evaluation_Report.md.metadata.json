@@ -1,0 +1,5 @@
+{
+  "summary":  "Comprehensive technical evaluation report and benchmark dataset for StreamScale (Milestones M0–M21), including full 36 held-out live run data, statistical aggregations across scaling modes (Fixed, CPU-HPA, Lag-KEDA, ML-Predictive), model training diagnostics, and embedded visualization charts.",
+  "updatedAt":  "2026-11-12T13:53:23.440239013Z",
+  "userFacing":  true
+}

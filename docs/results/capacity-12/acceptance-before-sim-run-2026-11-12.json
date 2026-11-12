@@ -1,0 +1,381 @@
+{
+  "updated_at": "2026-11-10T11:36:12.696539+00:00",
+  "status": "partial_acceptance_remaining_qualification_cancelled_by_user_for_submission",
+  "configuration": {
+    "input_partitions": 12,
+    "dlq_partitions": 12,
+    "initial_replicas": 1,
+    "autoscaler_min": 1,
+    "autoscaler_max": 12,
+    "fixed_replicas": 1,
+    "manual_pause_replicas": 0
+  },
+  "rationale": "Three replicas allowed only two upward steps; twelve expands scaling experiments with matching Kafka parallelism. Throughput is measured, not assumed linear.",
+  "capacity_check": {
+    "status": "passed",
+    "partitions": 12,
+    "ready_peak": 12,
+    "ready_after_downscale": 1,
+    "session": "session-20261109150144-91e5b3",
+    "reconciliation": {
+      "status": "passed",
+      "outcome": "completed",
+      "acknowledged": 9450,
+      "stored_facts": 8820,
+      "missing_acknowledged_count": 0,
+      "duplicate_stored_ids": 0,
+      "state_regressions": 0,
+      "invalid_sources": 180,
+      "dlq_unique_sources": 180,
+      "dlq_copies": 180,
+      "missing_dlq_sources": 0,
+      "unacknowledged_in_log": 0,
+      "log_duplicates": 450,
+      "checks": {
+        "no_missing_acknowledged_ids": true,
+        "no_unexpected_ids": true,
+        "no_duplicate_stored_ids": true,
+        "no_state_regression": true,
+        "every_invalid_source_in_dlq": true,
+        "no_foreign_records": true,
+        "acknowledgements_in_log": true,
+        "backlog_drained": true
+      },
+      "latency_s": {
+        "p50": 4.027955,
+        "p95": 7.286299,
+        "p99": 8.496003,
+        "max": 9.138916,
+        "count": 8820,
+        "target_seconds": 2,
+        "above_target": 8519,
+        "source": "SQL ingested_at - produced_at for every stored fact"
+      },
+      "reconciled_at": "2026-11-09T15:02:35.903190Z"
+    }
+  },
+  "calibration": {
+    "fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
+    "calibration": {
+      "capacity": {
+        "1": 111.98622301067445,
+        "2": 237.96624233384404,
+        "3": 365.94826142334364,
+        "4": 433.9549936241564,
+        "5": 347.4559670627142,
+        "6": 345.9313795786358,
+        "7": 395.94534197974053,
+        "8": 349.4673378012866,
+        "9": 344.9585487583699,
+        "10": 355.9614700061362,
+        "11": 353.94962314533535,
+        "12": 345.96197498548787
+      },
+      "actuation_seconds": 12.661959171295166,
+      "handling_seconds": 0.09303175554224086
+    },
+    "data_sha256": "464e05e0d1615c112827c2cc804df4034fce052e21e49a7a3757a7b357ebe521",
+    "sessions": [
+      "session-20261109171822-609904",
+      "session-20261109172434-e07fd4",
+      "session-20261109172744-3bed3c",
+      "session-20261109173002-e1b8a6",
+      "session-20261109173201-b91b89",
+      "session-20261109173421-366985",
+      "session-20261109173627-f89479",
+      "session-20261109173840-2aec16",
+      "session-20261109174050-3f7014",
+      "session-20261109174302-0026c2",
+      "session-20261109174525-0ad7d1",
+      "session-20261109174752-bdb375"
+    ],
+    "source_fingerprint": "d2673a0a029ec27ce745ea1573ac13623c07adfb4a18c221159af560753eee13",
+    "validated_for_fingerprint": "b2c38a20bd54fe57fcc198c635f55dd91ec5c6625caaf5a8afe5819f9fd6be5e"
+  },
+  "completed_checks": {
+    "pipeline_unit": 213,
+    "console_unit": 193,
+    "web_unit": 29,
+    "local_integration_before_expansion_test": 28,
+    "local_sql_and_expansion_suite": 19,
+    "cluster_sql_metrics_grafana": "passed",
+    "fixed_cpu_hpa_lag_keda_isolation": "passed",
+    "historical_m7_audit": "passed",
+    "local_integration": 31,
+    "docs_and_usability_browser": 7,
+    "manual_twelve_browser": 1,
+    "focused_capacity_docs_usability_browser": 9,
+    "large_reconciliation_recovery": "passed",
+    "previous_reconciler_equivalence": "passed",
+    "web_build_typecheck": "passed",
+    "fresh_calibration_captures": 12,
+    "completed_fresh_training_captures": 12,
+    "completed_fresh_validation_captures": 4,
+    "publisher_memory_regressions": 8,
+    "publisher_memory_recovery": "passed",
+    "twelve_key_artifact_round_trip": "passed",
+    "invalid_artifact_install_preflight": "passed",
+    "manifest_memory_regressions": 9,
+    "consumer_manifest_live_recovery": "passed",
+    "offline_diagnostic_regressions": 5,
+    "measurement_gap_regressions": 5,
+    "offline_launcher_routing": "passed",
+    "ax_initialization_sequence": "default + 4 Sobol, first GP trial at index 5; synthetic API check passed",
+    "environment_compatibility_regressions": 13,
+    "fresh_post_startup_fix_manual_captures": 28,
+    "prior_runtime_live_acceptance": {
+      "passed": 41,
+      "failed": 2,
+      "runtime": "b5ab062",
+      "failure_scope": "lifecycle collection order and obsolete three-mode assertion",
+      "current_suite_cases": 45,
+      "current_suite_status": "not yet executed"
+    },
+    "corrected_candidate_analysis_with_cluster_stopped": "passed",
+    "launcher_command_tests": 27
+  },
+  "remaining": [
+    "fresh policy tuning under common projection window",
+    "full45-case live and browser acceptance",
+    "36held-out runs",
+    "complete launcher success and reuse",
+    "scoped final cleanup and shutdown"
+  ],
+  "evidence": {
+    "launcher_log": "artifacts/capacity/full-launcher.log",
+    "capacity": "artifacts/console/capacity-check.json",
+    "calibration": "artifacts/console/capacity-calibration.json",
+    "pipeline_unit": "artifacts/capacity/pipeline-unit.log",
+    "console_unit": "artifacts/capacity/console-unit.log",
+    "local_integration": "artifacts/capacity/local-integration.log",
+    "twelve_consumer_browser": "artifacts/console/e2e/capacity-twelve-consumers-desktop.png",
+    "historical_browser": "artifacts/console/e2e/capacity-historical-three-lane-replay.png",
+    "mobile_browser": "artifacts/console/e2e/capacity-scaling-mobile.png",
+    "capacity_recheck": "artifacts/capacity/capacity-check-launcher-recheck.json",
+    "console_memory_regression": "artifacts/capacity/console-memory-regression.log",
+    "interrupted_memory_launcher": "artifacts/capacity/full-launcher-before-memory-fix.log",
+    "reconciliation_memory_recovery": "artifacts/capacity/reconciliation-memory-recovery.json",
+    "fault_mix_equivalence": "artifacts/capacity/fault-mix-reconciliation-equivalence.json",
+    "web_unit": "artifacts/console/capacity-ui-unit.log",
+    "web_build": "artifacts/console/capacity-ui-build.log",
+    "console_completion_gate": "artifacts/capacity/console-completion-gate.log",
+    "capture_compatibility": "artifacts/capacity/completion-gate-compatible-captures.json",
+    "agent_health": "artifacts/capacity/agent-health-calibration.json",
+    "interrupted_gate_launcher": "artifacts/capacity/full-launcher-before-completion-gate.log",
+    "publisher_memory_unit": "artifacts/capacity/console-publisher-memory.log",
+    "publisher_memory_recovery": "docs/results/capacity-12/publisher-memory-recovery.json",
+    "artifact_unit": "artifacts/capacity/pipeline-artifact-json.log",
+    "artifact_console_unit": "artifacts/capacity/console-artifact-json.log",
+    "forecast_validation": "docs/results/capacity-12/forecast-validation.json",
+    "manual_trace_compatibility": "artifacts/capacity/artifact-json-compatible-captures.json",
+    "consumer_manifest_memory": "docs/results/capacity-12/consumer-manifest-memory.json",
+    "model_analysis": "docs/predictive-model-analysis.md",
+    "diagnostic_slices": "docs/results/capacity-12/model-analysis/summary.json",
+    "optimizer_initialization": "docs/results/capacity-12/optimizer-initialization.json",
+    "environment_compatibility": "docs/results/capacity-12/environment-compatibility.json",
+    "loaded_cpu_profile": "docs/results/capacity-12/loaded-cpu-profile.json",
+    "projection_counterexample": "docs/results/capacity-12/projection-horizon-counterexample.json",
+    "previous_model_analysis": "docs/predictive-model-analysis-before-startup-fix.md",
+    "current_calibration": "docs/results/capacity-12/calibration-current.json",
+    "projection_trace_compatibility": "docs/results/capacity-12/projection-time-compatible-captures.json",
+    "shutdown": "docs/results/capacity-12/shutdown.json",
+    "submission_cleanup": "docs/results/capacity-12/submission-cleanup.json"
+  },
+  "controller_fingerprint": "295d255e4d094b5e37c35fb5cbbe13bce8280ae3a0501ed0374ef582324d8ec0",
+  "capacity_rechecks": [
+    {
+      "status": "passed",
+      "partitions": 12,
+      "ready_peak": 12,
+      "ready_after_downscale": 1,
+      "session": "session-20261109163245-2ca6f5",
+      "reconciliation": {
+        "status": "passed",
+        "outcome": "completed",
+        "acknowledged": 9450,
+        "stored_facts": 8820,
+        "missing_acknowledged_count": 0,
+        "duplicate_stored_ids": 0,
+        "state_regressions": 0,
+        "invalid_sources": 180,
+        "dlq_unique_sources": 180,
+        "dlq_copies": 180,
+        "missing_dlq_sources": 0,
+        "unacknowledged_in_log": 0,
+        "log_duplicates": 450,
+        "checks": {
+          "no_missing_acknowledged_ids": true,
+          "no_unexpected_ids": true,
+          "no_duplicate_stored_ids": true,
+          "no_state_regression": true,
+          "every_invalid_source_in_dlq": true,
+          "no_foreign_records": true,
+          "acknowledgements_in_log": true,
+          "backlog_drained": true
+        },
+        "latency_s": {
+          "p50": 1.236747,
+          "p95": 2.988731,
+          "p99": 3.399594,
+          "max": 3.922356,
+          "count": 8820,
+          "target_seconds": 2,
+          "above_target": 1877,
+          "source": "SQL ingested_at - produced_at for every stored fact"
+        },
+        "reconciled_at": "2026-11-09T16:33:35.711655Z"
+      }
+    }
+  ],
+  "earlier_controller_fingerprint": "0b94ec280671e0fcba6d013f7e88e397c34f3689454b17f98b313cd5bec1dda7",
+  "calibration_role": "fresh collector calibration, validated under the stricter complete-workload gate",
+  "initial_calibration": {
+    "fingerprint": "5daee841f8fced10448322204bdc805c220b10baa41724126ec3c5ed27fbb29e",
+    "calibration": {
+      "capacity": {
+        "1": 84.98372985480465,
+        "2": 172.96989535722474,
+        "3": 251.94852068847894,
+        "4": 264.957801863755,
+        "5": 255.95868586770715,
+        "6": 272.46161252290113,
+        "7": 348.8203739337963,
+        "8": 320.9592230876071,
+        "9": 294.45222693909835,
+        "10": 269.9618321975486,
+        "11": 277.4528904222547,
+        "12": 297.9447569816325
+      },
+      "actuation_seconds": 12.523733139038086,
+      "handling_seconds": 0.09422564935064934
+    }
+  },
+  "excluded_interrupted_validation": {
+    "session": "session-20261109185425-3fc60e",
+    "reason": "agent OOM during publisher finalization",
+    "acknowledged": 93060,
+    "stored_facts": 93060,
+    "correctness": "passed",
+    "performance_eligible": false,
+    "p95_seconds": 98.39849,
+    "latency_target_met": false,
+    "preserved": true
+  },
+  "preparation_fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
+  "predictive_progress": {
+    "status": "stopped for submission by user; 28 compatible manual captures retained, fresh controlled runs unexecuted",
+    "completed_policy_trials": 0,
+    "planned_policy_trials": 12,
+    "completed_tuning_workloads": 0,
+    "planned_tuning_workloads": 24,
+    "held_out_completed": 0,
+    "held_out_planned": 36,
+    "accepted_model_published": false
+  },
+  "previous_preparation_fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
+  "previous_controller_tuning": {
+    "fingerprint": "57d2976bea2051f78cd4f295b66d47f5897749a650ee00897a8d93a989cecca0",
+    "model_id": "12d3a9e6d986ba756e50ff6a08d23efca6f8a61f3f02aa9d0fa89233401813f4",
+    "correct_policies": 12,
+    "workloads": 24,
+    "status": "infeasible; historical after controller projection correction"
+  },
+  "current_controller_source": "ea0c07a853227df9e6aac438d65d8dbf87e212ee",
+  "current_candidate": {
+    "scope": "Offline candidate from verified retained manual data. No cluster install, source writes, workload, live tuning or accepted pointer promotion.",
+    "fingerprint": "9320d567df1ad9b7b085169a22b779879ac3de4e453c2d9c693c7cc5fb0c357f",
+    "candidate_id": "ccf0afec3699f317a48e9108218ddeaa33b02fee92a268be4cb896538e512975",
+    "source_commit": "ea0c07a853227df9e6aac438d65d8dbf87e212ee",
+    "model_sha256": "08f5818889e35f96b3edb35a6a068f99f33f34c8279d7a189987148589b7dfb7",
+    "data_sha256": "febf730e254993bb84efe95d1922d6752472e9ad98ec597ac378b58f09c98fe7",
+    "payload_matches_previous_fit": true,
+    "training_runs": 12,
+    "validation_runs": 4,
+    "tuning": "pending",
+    "status": "local_only_live_tuning_pending"
+  },
+  "storage": {
+    "status": "additional-space request closed; remaining campaign cancelled by user",
+    "requested_extra_GiB": 0,
+    "estimated_free_GiB_before_campaign": 10,
+    "retain_volumes_and_raw_runs": true,
+    "available_GiB_after_cleanup": 8.189
+  },
+  "shutdown": {
+    "at": "2026-11-10T10:31:30.394005+00:00",
+    "status": "stopped",
+    "project_containers": [
+      {
+        "name": "streamscale-control-plane",
+        "state": "exited"
+      },
+      {
+        "name": "streamscale-local-postgres-1",
+        "state": "exited"
+      },
+      {
+        "name": "streamscale-local-kafka-1",
+        "state": "exited"
+      }
+    ],
+    "project_host_services": 0,
+    "retained_volume_mounts": 5,
+    "current_kind_images_retained": true,
+    "unrelated_unchanged": true,
+    "free_GiB": 5.990043640136719,
+    "kind_exit": {
+      "ExitCode": 137,
+      "OOMKilled": true,
+      "Error": "",
+      "FinishedAt": "2026-11-10T10:20:34.697584856Z"
+    },
+    "kind_shutdown_events": [
+      {
+        "time": 1794305989,
+        "action": "kill",
+        "attributes": {
+          "name": "streamscale-control-plane",
+          "signal": "37"
+        }
+      },
+      {
+        "time": 1794306034,
+        "action": "kill",
+        "attributes": {
+          "name": "streamscale-control-plane",
+          "signal": "9"
+        }
+      },
+      {
+        "time": 1794306034,
+        "action": "stop",
+        "attributes": {
+          "name": "streamscale-control-plane"
+        }
+      },
+      {
+        "time": 1794306034,
+        "action": "die",
+        "attributes": {
+          "name": "streamscale-control-plane",
+          "exitCode": "137"
+        }
+      }
+    ],
+    "kind_shutdown_note": "Recorded stop sent the image stop signal37, then signal9 at the configured45-second deadline. Docker also retains OOMKilled=true; its origin was not isolated by this shutdown event sample. No graceful-shutdown or restart-recovery claim is made.",
+    "qualification": "partial; corrected controller needs fresh live tuning,45-case acceptance,browser checks,36held-out runs and full launcher success/reuse",
+    "raw_audit": "artifacts/capacity/shutdown-after.json"
+  },
+  "current_full_launcher_passed": false,
+  "current_full_launcher_reuse_verified": false,
+  "current_controlled_runs": {
+    "tuning_workloads": 0,
+    "heldout_runs": 0
+  },
+  "submission": {
+    "at": "2026-11-10T11:36:12.696539+00:00",
+    "remaining_qualification_cancelled_by_user": true,
+    "project_services_stopped": true,
+    "source_and_evidence_retained": true
+  }
+}

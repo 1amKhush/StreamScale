@@ -67,7 +67,15 @@ the new target's service interval; it never grants extra drain time. The actual
 forecast horizon remains unchanged in the chart, and `projection_seconds` records
 the controller's planning window in decision exports. A prior unequal-window
 defect could favor a slower downscale during drain. Earlier policy measurements
-remain historical; the corrected controller requires fresh tuning and evaluation.
+remain historical. The supplied 2026-11-12 metadata matches the corrected runtime
+and records twelve policy candidates, twenty-four tuning captures and a separate
+36-run held-out matrix. Tuning was infeasible and retained the default policy.
+
+In that supplied comparison, ML Predictive met the two-second target in all
+three steady and three flash-sale repetitions, with greater replica use. All
+overload repetitions missed it. [The audited digest](results/capacity-12/sim-run-2026-11-12/README.md)
+and [behavior analysis](predictive-model-analysis.md) describe forecast bias,
+fallback/warm-up accounting and the limits of attributing latency gains to ML.
 
 See [run commands](run-project.md#ml-predictive-m16m20) and
 [validation evidence](predictive-evidence.md).
