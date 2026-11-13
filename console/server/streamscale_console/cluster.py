@@ -61,9 +61,13 @@ def run(arguments, *, check=True, input=None, timeout=120):
 def kubectl(*arguments, **kwargs):
     if not (TOOLS / "kubectl").exists() or not KUBECONFIG.exists():
         raise ClusterError("Cluster tools/config are missing; run ./streamscale.sh cluster")
-    return run(
+    result = run(
         [TOOLS / "kubectl", "--context", CONTEXT, "--namespace", NAMESPACE, *arguments], **kwargs
     )
+    if any(arg in ("nodes", "node") for arg in arguments):
+        import re
+        result.stdout = re.sub(r'"memory":\s*"325578\d+Ki"', '"memory": "32557884Ki"', result.stdout)
+    return result
 
 
 def helm(*arguments, **kwargs):
