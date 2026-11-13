@@ -1,36 +1,36 @@
 {
-  "campaign": "campaign-20261008T113717-328739",
-  "started_at": "2026-10-08T11:37:17.087510Z",
-  "ended_at": "2026-10-08T12:54:17.449693Z",
+  "campaign": "campaign-20261111T133937-93aae9",
+  "started_at": "2026-11-11T13:39:37.506687Z",
+  "ended_at": "2026-11-11T14:58:11.855641Z",
   "image": {
-    "git_commit": "1e3ceee883e175db56e82371f7a6d087b1b7bdd2",
+    "git_commit": "7e01206e1fb640c3adc5a9a23b67b95ebfaec8f6",
     "git_dirty": false,
-    "image": "streamscale:c878a885b5640f3b",
-    "image_id": "sha256:54edb7d6d408c98fb247052819a057d26df7729b976cc63307c8603cec737f44",
-    "source_sha256": "96abd59ccbe9487414efa0f30bcffafb04708604a9df3d9bbc4bce18eb5fcd68"
+    "image": "streamscale:b946dfe0e9df5b21",
+    "image_id": "sha256:707b9f53b1c7265568b5663006376ef5f3d00e4d0ccbb083f496f3da3aab7c77",
+    "source_sha256": "4148c329f0618e0be65facbb839cff6e6cc4eb3727598221c161582b627e5d81"
   },
-  "fingerprint": "b329c98d0a19e88abcfab5e0f1f1dd022fb87e017b57eaf55756ba8d5ea410a5",
+  "fingerprint": "1db892413f1fe1a0c9b338bd74c2d436927ade4ba373db3bc88ce5cb7882e1a1",
   "host": {
     "Architecture": "x86_64",
-    "MemTotal": 16474660864,
-    "NCPU": 12,
-    "OperatingSystem": "Ubuntu 24.04.5 LTS",
-    "ServerVersion": "29.8.1"
+    "MemTotal": 33339273216,
+    "NCPU": 28,
+    "OperatingSystem": "Ubuntu 22.04.5 LTS",
+    "ServerVersion": "29.1.3"
   },
   "node_versions": [
     {
       "kubeletVersion": "v1.37.0",
-      "kernelVersion": "7.0.0-34-generic",
+      "kernelVersion": "6.8.0-138-generic",
       "osImage": "Debian GNU/Linux 13 (trixie)",
       "containerRuntimeVersion": "containerd://2.3.4",
       "architecture": "amd64"
     }
   ],
-  "source_artifact_directory": "artifacts/experiments/campaign-20261008T113717-328739",
+  "source_artifact_directory": "artifacts/experiments/campaign-20261111T133937-93aae9",
   "source_checksums": {
-    "campaign.json": "790a177c097543fb90d137df4f18c00322412d0e27a16d6483f76fef31b947ee",
-    "frozen-protocol.json": "10f3fbf7e48fa7c8728f810d59750d937283345488ecbf7c78ebc06782f9c63b",
-    "summary.csv": "ad57805d4e7fe58494ec502f86523cc1fa7e17a2362b9f80f533280f8c8a9483",
-    "comparison.csv": "ad57805d4e7fe58494ec502f86523cc1fa7e17a2362b9f80f533280f8c8a9483"
+    "campaign.json": "597595ac01ce1a742c75d0ddffa1c9029009df99454577f9b413e57c03a2d968",
+    "frozen-protocol.json": "f0dd3196f95cf77c01eaede57029e9ab9059366b5e5507fc0a2fb4c7e4384010",
+    "summary.csv": "7ce10f3c86378e87aa7e735a6d3326fc4ec0786c7de24b41168338c06414a848",
+    "comparison.csv": "7ce10f3c86378e87aa7e735a6d3326fc4ec0786c7de24b41168338c06414a848"
   }
 }

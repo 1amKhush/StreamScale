@@ -4,9 +4,9 @@
   "measured_runs": 27,
   "accepted_executions": 56,
   "excluded_attempts": 0,
-  "raw_samples": 3818,
+  "raw_samples": 3813,
   "actual_consumer_image_ids": [
-    "docker.io/library/import-2026-10-08@sha256:d4939132d5faa570fae131d109e18f4ef6033a4a6467b3efe81a3745d2aac99b"
+    "docker.io/library/import-2026-11-11@sha256:af43d6580bacaea655849c99a9ee217f0de2b9279d0ad5799e6de8786162502c"
   ],
   "consumer_resources": [
     {
@@ -22,13 +22,13 @@
   ],
   "scenario_logical_sha256": {
     "steady": [
-      "1f9d429ea8c14a1e536665caebbad5838e1911dbbdde8f213eb9b2a6c928dd71"
+      "f916d4d1d7fedc448c45fc1608a324556a80b90a35cefef2a0c2a1d864d8e09c"
     ],
     "flash-sale": [
-      "9f67a96e4e1e66c1c98af190a64d6f131e5b3c5245a062234230b30a75360df5"
+      "367fd0ff332a3793142b7ec889fb72cbec2160e2334fe5cbc3d45413460ee204"
     ],
     "overload-recovery": [
-      "fcae2c6e307120b6b0c08b42903d16c33236d98ae2831a21f87a31b1011a5463"
+      "99fc8c0afb99b31813487fb5ca4a45ea2b95fdc4b388c57e83015b0195648cee"
     ]
   }
 }

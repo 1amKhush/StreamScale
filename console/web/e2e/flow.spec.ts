@@ -23,6 +23,7 @@ test("a real flash sale moves the floor, stays bounded under burst, and drains",
     await expect.poll(() => lag(page, lane), { timeout: 120_000, intervals: [1000] }).toBeGreaterThan(200);
   }
   await expect(page.getByTestId("node-cashier-" + (await firstCashier(page)))).toContainText("Lane 0");
+  await expect.poll(() => page.locator("circle.particle").count(), { timeout: 10_000 }).toBeGreaterThan(0);
   const edges = await page.locator(".react-flow__edge").count();
   const particles = await page.locator("circle.particle").count();
   expect(particles).toBeGreaterThan(0);
